@@ -8,6 +8,7 @@ import Json.Decode exposing (..)
 import Time
 import Task
 
+--##########.MAIN.###########
 
 main =
   Browser.element
@@ -19,24 +20,42 @@ main =
         
         
 type alias Model =
-    { dropdownState : Bool 
+    { currentPage : Int
+    , dropdownState : Bool 
     , zone : Time.Zone
     , time : Time.Posix
     }
 
+--##########Page Index List#########
+--##  0 -> Main                   ##
+--##  1 -> Time (big)             ##
+--##
+--##################################
+
+
 init : () -> (Model, Cmd Msg)
 init _ =
-  ( { dropdownState = False
+  ( { currentPage = 0 -- 0 = Main Page
+    , dropdownState = False
     , zone = Time.utc 
     , time = Time.millisToPosix 0
     }
   , Task.perform AdjustTimeZone Time.here
   )
 
+--##########.Messages.and.Types.##########
+
 type Msg
     = ToggleDropdown
     | Tick Time.Posix
     | AdjustTimeZone Time.Zone
+    | TogglePage Int
+    
+--type Page 
+    
+
+    
+
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -55,49 +74,66 @@ update msg model =
             ( { model | zone = newZone }
             , Cmd.none
             )
+            
+        TogglePage newPage->
+            ( { model | currentPage = newPage }
+            , Cmd.none
+            )
 
 
     
 navigation : Model -> Html Msg
 navigation model = 
     div [class "dropdown_container"][ 
-         p [ class "level-item"][
-              case model.dropdownState of 
-                False -> --Dropdown zu
-                    div [ class "dropdown" ][
-                          div [ class "dropdown-trigger", onClick ToggleDropdown][
-                                button [ class "button is-success" ][
-                                         span [][ text "navigation options" ]
-                                       , span [ class "icon is-small" ][
-                                                i [ class "fas fa-angle-down" ][]
-                                              ]
-                                       ]
+        div [ class "container" ][
+                nav [ class "level" ][
+                      div [ class "level-left" ][
+                            p [ class "level-item"][
+           
+                                case model.dropdownState of 
+                                  False -> --Dropdown zu
+                                      div [ class "dropdown" ][
+                                            div [ class "dropdown-trigger", onClick ToggleDropdown][
+                                                  button [ class "button is-success" ][
+                                                           span [][ text "navigation options" ]
+                                                         , span [ class "icon is-small" ][
+                                                                  i [ class "fas fa-angle-down" ][]
+                                                                ]
+                                                         ]
+                                                ]
+                                          ]
+                                
+                                  True -> -- Dropdown offen
+                                      div [ class "dropdown is-active" ][
+                                            div [ class "dropdown-trigger", onClick ToggleDropdown][
+                                                  button [ class "button is-success" ][
+                                                           span [][
+                                                                  text "navigation options"
+                                                                ] 
+                                                         , span [ class "icon is-small" ][ 
+                                                                  i [ class " fas fa-angle-down"][]
+                                                                ]    
+                                                         ]
+                                                ]
+                                          , div [ class "dropdown-menu"][
+                                                  div [ class "dropdown-content" ][
+                                                        a [ class "dropdown-item" 
+                                                          , onClick ( TogglePage 1 )
+                                                          ][ text "ShowTime" ]        
+                                                      ]
+                                                , div [ class "dropdown-content" ][
+                                                        a [ class "dropdown-item"
+                                                          , onClick ( TogglePage 0 )
+                                                          ][ text "MAIN"
+                                                          ]
+                                                      ]
+                                                ]
+                                          ]             
                               ]
-                        ]
-                
-                True -> -- Dropdown offen
-                    div [ class "dropdown is-active" ][
-                          div [ class "dropdown-trigger", onClick ToggleDropdown][
-                                button [ class "button is-success" ][
-                                         span [][
-                                                text "navigation options"
-                                              ] 
-                                       , span [ class "icon is-small" ][ 
-                                                i [ class " fas fa-angle-down"][]
-                                              ]    
-                                       ]
-                              ]
-                        , div [ class "dropdown-menu"][
-                                div [ class "dropdown-content" ][
-                                      (text "print followers")
-                                    ]
-                              , div [ class "dropdown-content" ][
-                                      (text "zwei2")
-                                    ]
-                              ]
-                        ]                    
-            ]
-        ] 
+                          ]
+                    ]
+              ]
+        ]
           
 
 view : Model -> Html Msg
@@ -107,9 +143,17 @@ view model =
     minute = String.fromInt (Time.toMinute model.zone model.time)
     second = String.fromInt (Time.toSecond model.zone model.time)
   in
-
+    
     div [][ navigation model 
-          , text (hour ++ ":" ++ minute ++ ":" ++ second)
+          , div [][
+                  text (hour ++ ":" ++ minute ++ ":" ++ second)
+                  ]
+          , case model.currentPage of 
+                0 -> 
+                    div[][text "Main Page"]
+                
+                _ ->
+                    div [][text "page nothing"]
           ]
 
 -- SUBSCRIPTIONS
