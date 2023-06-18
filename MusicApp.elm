@@ -4,35 +4,57 @@ import Browser
 import Html exposing (Html, button, div, text, p, nav, a, span, i)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
-import Json exposing (..)
+import Json.Decode exposing (..)
+import Time
+import Task
 
 
-main : Program () Model Msg
 main =
-    Browser.sandbox
-        { init = initialModel
-        , view = view
-        , update = update
-        }
+  Browser.element
+    { init = init
+    , view = view
+    , update = update
+    , subscriptions = subscriptions
+    }
         
         
 type alias Model =
-    { dropdownState : Bool }
+    { dropdownState : Bool 
+    , zone : Time.Zone
+    , time : Time.Posix
+    }
 
-
-initialModel : Model
-initialModel =
-    { dropdownState = False }
-
+init : () -> (Model, Cmd Msg)
+init _ =
+  ( { dropdownState = False
+    , zone = Time.utc 
+    , time = Time.millisToPosix 0
+    }
+  , Task.perform AdjustTimeZone Time.here
+  )
 
 type Msg
     = ToggleDropdown
+    | Tick Time.Posix
+    | AdjustTimeZone Time.Zone
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
         ToggleDropdown ->
-            { model | dropdownState = not model.dropdownState}
+            ( { model | dropdownState = not model.dropdownState}
+            , Cmd.none
+            )
+            
+        Tick newTime ->
+            ( { model | time = newTime }
+            , Cmd.none
+            )
+
+        AdjustTimeZone newZone ->
+            ( { model | zone = newZone }
+            , Cmd.none
+            )
 
 
     
@@ -80,6 +102,19 @@ navigation model =
 
 view : Model -> Html Msg
 view model =
-    div [][ navigation model ]
+  let
+    hour   = String.fromInt (Time.toHour   model.zone model.time)
+    minute = String.fromInt (Time.toMinute model.zone model.time)
+    second = String.fromInt (Time.toSecond model.zone model.time)
+  in
 
+    div [][ navigation model 
+          , text (hour ++ ":" ++ minute ++ ":" ++ second)
+          ]
 
+-- SUBSCRIPTIONS
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+  Time.every 1000 Tick
+  
