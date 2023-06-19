@@ -1,1 +1,1 @@
-music app thing
+MusicApp.elm is the thing the other files are just for testing.
