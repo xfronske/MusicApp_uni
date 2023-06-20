@@ -27,6 +27,9 @@ type alias Model =
     , time : Time.Posix
     , currentQuote: Quote
     , httpState : HttpState
+    
+    -- Spotify API
+    , lengthOfRandomString : Int
     }
 
 
@@ -42,6 +45,7 @@ init _ =
                      , year = 0
                      }
     , httpState = Http_Loading
+    , lengthOfRandomString = 10
     }
   , Task.perform AdjustTimeZone Time.here
   )
@@ -57,6 +61,9 @@ type Msg
     -- Http Stuff
     | GetMore
     | GotQuote ( Result Http.Error Quote )
+    
+    -- Spotify API
+    | StartGenerator
      
     
 type HttpState
@@ -119,6 +126,28 @@ update msg model =
                     ( model
                     , Cmd.none
                     )
+        
+        --Spotify API
+        StartGenerator -> 
+            ( model
+            , Cmd.none
+            )
+            
+            
+--#############################
+--##########.SPOTIFY.##############################################################
+--#############################
+
+generateRandomString : Int -> String
+generateRandomString = 
+    let 
+        text = ""
+        possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+    in
+    
+    
+
+
 
 
 --##########.Navbar.uuuuh.##########
@@ -243,6 +272,12 @@ pageQuote : Model -> Html Msg
 pageQuote model = 
     div [ class "container" ][
           viewQuote model
+        ]
+        
+pageSpotifyLogin : Model -> Html Msg
+pageSpotifyLogin model = 
+    div [ class "container" ][
+          generateRandomString model.lengthOfRandomString 
         ]
 
 

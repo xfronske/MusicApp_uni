@@ -1,12 +1,13 @@
-module Main exposing (main)
+port module Main exposing (main)
 
 import Browser
-import Html exposing (Html, button, div, text, p, nav, a, span, i)
+import Html exposing (Html, button, div, text, p, nav, a, span, i, blockquote)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Json.Decode exposing (..)
 import Time
 import Task
+import Http
 
 --##########.MAIN.###########
 
@@ -17,28 +18,56 @@ main =
     , update = update
     , subscriptions = subscriptions
     }
-        
+    
+-- Ports
+port sendMessage: String -> Cmd msg
+-- if outgoing msg is 'requestToken' Token is gotten by JS side 
+port messageReciever : (String -> msg) -> Sub msg
+
         
 type alias Model =
     { currentPage : Int
     , dropdownState : Bool 
     , zone : Time.Zone
     , time : Time.Posix
+    , currentQuote: Quote
+    , httpState : HttpState
+    
+    -- Spotify API
+    , lengthOfRandomString : Int
+
+    -- flags
+    , currentTime : Int
+
+    -- ports
+    , draft : String
+    , message : String
     }
 
---##########Page Index List#########
---##  0 -> Main                   ##
---##  1 -> Time (big)             ##
---##
---##################################
 
-
-init : () -> (Model, Cmd Msg)
-init _ =
-  ( { currentPage = 0 -- 0 = Main Page
+init : Int -> (Model, Cmd Msg)
+init currentTime =
+  ( { currentPage = 1 -- 0 = Main Page
     , dropdownState = False
     , zone = Time.utc 
     , time = Time.millisToPosix 0
+    , currentQuote = { quote = ""
+                     , source = ""
+                     , author = ""
+                     , year = 0
+                     }
+    , httpState = Http_Loading
+
+    -- Spotify
+    , lengthOfRandomString = 10
+    
+    -- Flags
+    , currentTime = currentTime
+    
+    -- Ports
+    , draft = ""
+    , message = ""
+
     }
   , Task.perform AdjustTimeZone Time.here
   )
@@ -51,11 +80,31 @@ type Msg
     | AdjustTimeZone Time.Zone
     | TogglePage Int
     
---type Page 
+    -- Http Stuff
+    | GetMore
+    | GotQuote ( Result Http.Error Quote )
+    
+    -- Ports to JS
+    | Send 
+    | Recv String 
+     
+    
+type HttpState
+    = Http_Failure
+    | Http_Loading
+    | Http_Response Quote
+
+type alias Quote = 
+    { quote : String
+    , source : String
+    , author : String
+    , year : Int
+    }
+    
     
 
     
-
+--##########.Update.##########
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -79,12 +128,43 @@ update msg model =
             ( { model | currentPage = newPage }
             , Cmd.none
             )
+            
+         -- QUOTES   
+        GetMore ->
+            ( model 
+            , getQuote
+            )
+            
+        GotQuote result ->
+        
+            case result of 
+                Ok quote -> 
+                    ( { model | currentQuote = quote }
+                    , Cmd.none
+                    )
+                    
+                Err _ -> 
+                    ( model
+                    , Cmd.none
+                    )
+        
+        -- Port to JS
+        Send ->
+            ( { model | draft = "" }
+            , sendMessage model.draft
+            )
 
+        Recv newMessage ->
+            ( { model | message = newMessage }
+            , Cmd.none 
+            )
 
+       
+--##########.Navbar.uuuuh.##########
     
 navigation : Model -> Html Msg
 navigation model = 
-    div [class "dropdown_container"][ 
+    div [class ""][ 
         div [ class "container" ][
                 nav [ class "level" ][
                       div [ class "level-left" ][
@@ -124,8 +204,17 @@ navigation model =
                                                 , div [ class "dropdown-content" ][
                                                         a [ class "dropdown-item"
                                                           , onClick ( TogglePage 0 )
-                                                          ][ text "MAIN"
-                                                          ]
+                                                          ][ text "MAIN" ]
+                                                      ]
+                                                , div [ class "dropdown-content" ][
+                                                        a [ class "dropdown-item" 
+                                                          , onClick ( TogglePage 2 )
+                                                          ][ text "Http Page" ]
+                                                      ]
+                                                , div [ class "dropdown-content" ][
+                                                        a [ class "dropdown-item" 
+                                                          , onClick ( TogglePage 3 )
+                                                          ][ text "Spotify" ]
                                                       ]
                                                 ]
                                           ]             
@@ -134,26 +223,126 @@ navigation model =
                     ]
               ]
         ]
-          
+        
+        
+--##########.Quotes.##########
+
+viewQuote : Model -> Html Msg
+viewQuote model =
+
+  case model.httpState of
+    Http_Failure ->
+      div []
+        [ text "I could not load a random quote for some reason. "
+        , button [ onClick GetMore ] [ text "Try Again!" ]
+        ]
+
+    Http_Loading ->
+      div [][ text "Loading..."
+          , button [ onClick GetMore ][ text "hhhhhh"]
+          ]
+
+    Http_Response quote ->
+      div [][ 
+            blockquote [] [ text quote.quote ] 
+          ]
+         
+        
+  
+        
+        
+getQuote : Cmd Msg
+getQuote = 
+    Http.get 
+        { url = "https://elm-lang.org/api/random-quotes"
+        , expect = Http.expectJson GotQuote quoteDecoder
+        }
+        
+        
+quoteDecoder : Decoder Quote
+quoteDecoder = 
+    map4 Quote
+        ( field "quote" string)
+        ( field "source" string)
+        ( field "author" string)
+        ( field "year" int)
+
+      
+       
+--##########.PAGES.##########
+
+pageMain : Model -> Html Msg
+pageMain model = 
+    div [ class "container" ][
+          text "This is the main Page"
+        ]
+        
+pageTime : Model -> Html Msg
+pageTime model = 
+    let
+      hour   = String.fromInt (Time.toHour   model.zone model.time)
+      minute = String.fromInt (Time.toMinute model.zone model.time)
+      second = String.fromInt (Time.toSecond model.zone model.time)
+    in
+    div [ class "container" ][
+          text "TIME" 
+
+           
+        , div [][
+                  text (hour ++ ":" ++ minute ++ ":" ++ second)
+                , text "Time from Flag"
+                , text (String.fromInt model.currentTime)
+                ]
+
+
+        ]
+        
+pageQuote : Model -> Html Msg
+pageQuote model = 
+    div [ class "container" ][
+          viewQuote model
+        ]
+        
+pageSpotify : Model -> Html Msg
+pageSpotify model = 
+    div [ class "container for spotify" ][
+          text "Spotify API"
+        , text model.message
+        , text "hier sollte jtzt eigentlich was stehen"
+        ]
+
+
+--##########.VIEW.##########
+
+--When adding a page you habe to ->
+--    1. add a number in the index list 
+--    2. add a page function
+--    3. add dropdown thing
+
+--##########Page Index List#########
+--##  0 -> Main                   ##
+--##  1 -> Time (big)             ##
+--##  2 -> Http Stuff             ##
+--##
+--##################################
 
 view : Model -> Html Msg
 view model =
-  let
-    hour   = String.fromInt (Time.toHour   model.zone model.time)
-    minute = String.fromInt (Time.toMinute model.zone model.time)
-    second = String.fromInt (Time.toSecond model.zone model.time)
-  in
+
     
     div [][ navigation model 
-          , div [][
-                  text (hour ++ ":" ++ minute ++ ":" ++ second)
-                  ]
           , case model.currentPage of 
                 0 -> 
-                    div[][text "Main Page"]
+                    div[][ pageMain model ]
             
                 1 -> 
-                    div[][text "WOW THERE IS THE TIME"]
+                    div[][ pageTime model ]
+                
+                2 -> 
+                    div[][ pageQuote model ]
+
+                3 ->
+                    div[][ pageSpotify model ]
                 
                 _ ->
                     div [][text "page nothing"]
