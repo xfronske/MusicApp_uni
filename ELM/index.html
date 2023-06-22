@@ -1,4 +1,4 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html>
 
 <head>
@@ -13,27 +13,64 @@
 
 <script type="text/javascript">
 
-// Start the Elm application.
-var app = Elm.Main.init({
-    node: document.getElementById('myapp'),
-    flags: Date.now()
-});
+  // Start the Elm application.
 
-// Create your WebSocket.
+  var app = Elm.Main.init({
+      node: document.getElementById('myapp'),
+      flags: Date.now()
+  });
 
-var socket = new WebSocket('wss://echo.websocket.org');
+  // When a command goes to the `sendMessage` port in ELM, 
+  // we check what command it is carrying with it
 
-// When a command goes to the `sendMessage` port, we pass the message
-// along to the WebSocket.
-app.ports.sendMessage.subscribe(
-  function(message) {
-    if (message == 'requestToken') {
-      const clientId = 'ad5f16e209564d798b5748d2e91d7b86'
-      const redirectUri = 'http://localhost:8000'
+  app.ports.sendMessage.subscribe(
+    function(message) {
+      if (message == 'requestToken') {
+        requestToken();
+      }
 
-      let codeVerifier = generateRandomString(128);
+    }
+  );
 
-      localStorage.setItem('code_verifier', codeVerifier)
+  function generateRandomString(length) {
+    let text = '';
+    let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+    for (let i=0; i<length; i++) {
+      text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return text;
+  }
+
+  async function generateCodeChallenge(codeVerifier) {
+    function base64encode(string) {
+      return btoa(String.fromCharCode.apply(null, new Uint8Array(string)))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+    }
+
+    const encoder = new TextEncoder();
+    const data = encoder.encode(codeVerifier);
+    const digest = await window.crypto.subtle.digest('SHA-256', data);
+
+    return base64encode(digest);
+  }
+
+
+
+
+  function requestToken(){
+    const clientId = 'c294decfda3b412bb97b8c7951d93631';
+    const redirectUri = 'http://localhost:8000/index.html';
+
+    let codeVerifier = generateRandomString(128);
+
+    generateCodeChallenge(codeVerifier).then(codeChallenge => {
+      let state = generateRandomString(16);
+      let scope = 'user-read-private';
+
+      localStorage.setItem('code_verifier', codeVerifier);
 
       let args = new URLSearchParams({
         response_type: 'code',
@@ -45,85 +82,52 @@ app.ports.sendMessage.subscribe(
         code_challenge: codeChallenge
       });
 
-      window.location = 'http://accounts.spotify.com/authorize?' + args;
+      window.location = 'https://accounts.spotify.com/authorize?' + args;
+    });
 
-      // parse RUL and save code parameter to request access token 
-      const urlParams = new URLSearchParams(window.location.search);
-      let code = urlParams.get('code');
+    // parse URL to save CODE to request accessToken later
 
-      // HTTP Request to get access token
-      codeVerifier = localStorage.getItem('code_verifier');
+    const urlParams = new URLSearchParams(window.location.search);
+    let code = urlParams.get('code');
 
-      let postBody = new URLSearchParams({
-        grant_type: 'authorization_code',
-        code: code,
-        redirect_uri: redirectUri,
-        client_id: clientId,
-        code_verifier: codeVerifier
+    // HTTP Request to get access token
+    codeVerifier = localStorage.getItem('code_verifier');
+
+    let body = new URLSearchParams({
+      grant_type: 'authorization_code',
+      code: code,
+      redirect_uri: redirectUri,
+      client_id: clientId,
+      code_verifier: codeVerifier
+    });
+
+    const response = fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: body
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('HTTP status ' + response.status);
+        }
+        return response.json();
+      })
+      .then(data => {
+        localStorage.setItem('access_token', data.access_token);
+      })
+      .catch(error => {
+        console.error('Error:', error);
       });
 
-      const response = fetch('https//accounts.spotify.com/api/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-      })
 
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('HTTP status ' + response.status);
-          }
-          return response.json();
-        })
+   // window.alert("help");
+  };
 
-        .then(data => {
-          localStorage.setItem('access_token', data.access_token);
-        })
-
-        .catch(error => {
-          console.error('Error', error);
-        });
-      }
-    }
-  );
-
-  // When a message comes into our WebSocket, we pass the message along
-  // to the `messageReceiver` port.
-  socket.addEventListener("message", function(event) {
-      app.ports.messageReceiver.send(event.data);
-  });
-
-  // If you want to use a JavaScript library to manage your WebSocket
-  // connection, replace the code in JS with the alternate implementation.
-
-
-
-  ///jdafjldgbvaljdycvgnldavnljcy
-
-
-    function generateRandomString(length) {
-      let text = '';
-      let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-
-      for (let i=0; i<length; i++) {
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
-      }
-      return text;
-  }
 
   
 
-    async function getProfile(assessToken) {
-      let accessToken = localStorage.getItem('access_token');
-
-      const response = await fetch('http://api.spotify.com/v1/me', {
-        headers: {
-          Authorization: 'Bearer' + accessToken
-        }
-      });
-
-      const data = await response.json();
-    }
 </script>
 
 </html>

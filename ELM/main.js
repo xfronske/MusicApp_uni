@@ -5404,10 +5404,10 @@ var $elm$time$Time$utc = A2($elm$time$Time$Zone, 0, _List_Nil);
 var $author$project$Main$init = function (currentTime) {
 	return _Utils_Tuple2(
 		{
-			currentPage: 1,
+			currentPage: 3,
 			currentQuote: {author: '', quote: '', source: '', year: 0},
 			currentTime: currentTime,
-			draft: '',
+			draft: 'requestToken',
 			dropdownState: false,
 			httpState: $author$project$Main$Http_Loading,
 			lengthOfRandomString: 10,
@@ -6920,6 +6920,7 @@ var $author$project$Main$pageQuote = function (model) {
 				$author$project$Main$viewQuote(model)
 			]));
 };
+var $author$project$Main$Send = {$: 'Send'};
 var $author$project$Main$pageSpotify = function (model) {
 	return A2(
 		$elm$html$Html$div,
@@ -6929,9 +6930,18 @@ var $author$project$Main$pageSpotify = function (model) {
 			]),
 		_List_fromArray(
 			[
-				$elm$html$Html$text('Spotify API'),
-				$elm$html$Html$text(model.message),
-				$elm$html$Html$text('hier sollte jtzt eigentlich was stehen')
+				$elm$html$Html$text('Spotify API      '),
+				A2(
+				$elm$html$Html$button,
+				_List_fromArray(
+					[
+						$elm$html$Html$Events$onClick($author$project$Main$Send)
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('requestToken')
+					])),
+				$elm$html$Html$text(model.message)
 			]));
 };
 var $elm$time$Time$flooredDiv = F2(

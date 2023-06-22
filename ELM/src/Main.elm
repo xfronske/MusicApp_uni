@@ -47,7 +47,7 @@ type alias Model =
 
 init : Int -> (Model, Cmd Msg)
 init currentTime =
-  ( { currentPage = 1 -- 0 = Main Page
+  ( { currentPage = 3 -- 0 = Main Page
     , dropdownState = False
     , zone = Time.utc 
     , time = Time.millisToPosix 0
@@ -65,7 +65,7 @@ init currentTime =
     , currentTime = currentTime
     
     -- Ports
-    , draft = ""
+    , draft = "requestToken" --hardcoded just for testing
     , message = ""
 
     }
@@ -150,7 +150,7 @@ update msg model =
         
         -- Port to JS
         Send ->
-            ( { model | draft = "" }
+            ( { model | draft = "" }  -------- hier muss vllt ohne draft =""
             , sendMessage model.draft
             )
 
@@ -306,9 +306,9 @@ pageQuote model =
 pageSpotify : Model -> Html Msg
 pageSpotify model = 
     div [ class "container for spotify" ][
-          text "Spotify API"
+          text "Spotify API      "
+        , button [ onClick Send ][text "requestToken"]
         , text model.message
-        , text "hier sollte jtzt eigentlich was stehen"
         ]
 
 
@@ -317,13 +317,14 @@ pageSpotify model =
 --When adding a page you habe to ->
 --    1. add a number in the index list 
 --    2. add a page function
---    3. add dropdown thing
+--    3. add dropdown-item
 
 --##########Page Index List#########
 --##  0 -> Main                   ##
 --##  1 -> Time (big)             ##
 --##  2 -> Http Stuff             ##
---##
+--##  3 -> Spotify                ##
+--##  4 -> 
 --##################################
 
 view : Model -> Html Msg
