@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 
+<link rel="stylesheet"        href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+
 <head>
   <meta charset="UTF-8">
   <title>MusicApp</title>
@@ -27,10 +29,13 @@
     function(message) {
       if (message == 'requestToken') {
         requestToken();
+        
       }
 
     }
   );
+
+ 
 
 
 // To understand this code please follow https://developer.spotify.com/documentation/web-api/tutorials/code-pkce-flow. There is an explaination on Authorization Code with PKCE Flow
@@ -63,9 +68,6 @@
 
     return base64encode(digest);
   }
-
-
-
 
   function requestToken(){
     const clientId = 'c294decfda3b412bb97b8c7951d93631';
@@ -100,13 +102,14 @@
     // HTTP Request to get access token
     codeVerifier = localStorage.getItem('code_verifier');
 
-    let body = new URLSearchParams({
+      let body = new URLSearchParams({
       grant_type: 'authorization_code',
       code: code,
       redirect_uri: redirectUri,
       client_id: clientId,
       code_verifier: codeVerifier
     });
+
 
     const response = fetch('https://accounts.spotify.com/api/token', {
       method: 'POST',
@@ -128,15 +131,29 @@
         console.error('Error:', error);
       });
 
+      //getProfile(localStorage.getItem('access_token'));
 
-   // window.alert("help");
+
   };
+
+  async function getProfile(accessToken) {
+    accessToken = localStorage.getItem('access_token');
+
+    const response = await fetch('https://api.spotify.com/v1/me', {
+      headers: {
+        Authorization: 'Bearer' + accessToken
+      }
+    });
+
+    const data = await response.json();
+
+    console.log(data);
+  }
 
 
   // Port to get access Code to elm 
 
-  
-
+  //app.ports.messageReciever.send(data.access_token);
 
 
 </script>
