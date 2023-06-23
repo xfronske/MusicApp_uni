@@ -11,6 +11,8 @@
 
 <body>
     <div id="myapp"></div>
+
+    <button id="ClickMe" type="button" onClick="requestToken();">Request Token</button>
 </body>
 
 <script type="text/javascript">
@@ -28,8 +30,9 @@
   app.ports.sendMessage.subscribe(
     function(message) {
       if (message == 'requestToken') {
+        localStorage.setItem("hallo", 345);
         requestToken();
-        
+        //console.log("Ausgeführt");
       }
 
     }
@@ -79,7 +82,7 @@
       let state = generateRandomString(16);
       let scope = 'user-read-private';
 
-      localStorage.setItem('code_verifier', codeVerifier);
+      //localStorage.setItem('code_verifier', codeVerifier);
 
       let args = new URLSearchParams({
         response_type: 'code',
@@ -100,40 +103,50 @@
     let code = urlParams.get('code');
 
     // HTTP Request to get access token
-    codeVerifier = localStorage.getItem('code_verifier');
+    //let codeVerifier2 = localStorage.getItem('code_verifier');
+    
 
-      let body = new URLSearchParams({
-      grant_type: 'authorization_code',
-      code: code,
-      redirect_uri: redirectUri,
-      client_id: clientId,
-      code_verifier: codeVerifier
-    });
+      
 
+/**/
 
-    const response = fetch('https://accounts.spotify.com/api/token', {
-      method: 'POST',
+      console.log("Still_CODE_VERIFIER?" + codeVerifier);
+      console.log("CODE " + code);
+
+    const response = fetch("https://accounts.spotify.com/api/token" , {
+      method:  "post",
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: body
+        },
+      body: {
+        grant_type: 'authorization_code',
+        code: code,
+        redirect_uri: redirectUri,
+        client_id: clientId,
+        code_verifier: codeVerifier
+      }
     })
       .then(response => {
         if (!response.ok) {
           throw new Error('HTTP status ' + response.status);
         }
+        console.log(response);
+
         return response.json();
       })
       .then(data => {
-        localStorage.setItem('access_token', data.access_token);
+        console.log(data);
+        //let accessToken = data.access_token;
       })
       .catch(error => {
         console.error('Error:', error);
       });
 
+
+      //console.log("ACCESS_TOKEN= " + accessToken);
       //getProfile(localStorage.getItem('access_token'));
 
-
+    
   };
 
   async function getProfile(accessToken) {
@@ -148,6 +161,10 @@
     const data = await response.json();
 
     console.log(data);
+  
+
+  /**/
+
   }
 
 
