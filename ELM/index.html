@@ -113,18 +113,20 @@
       console.log("Still_CODE_VERIFIER?" + codeVerifier);
       console.log("CODE " + code);
 
+      const body = new URLSearchParams();
+      body.append(grant_type: 'authorization_code');
+      body.append(code: code);
+      body.append(redirect_uri: redirectUri);
+      body.append(client_id: clientId);
+      body.append(code_verifier: codeVerifier);
+
+
     const response = fetch("https://accounts.spotify.com/api/token" , {
       method:  "post",
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
         },
-      body: {
-        grant_type: 'authorization_code',
-        code: code,
-        redirect_uri: redirectUri,
-        client_id: clientId,
-        code_verifier: codeVerifier
-      }
+      body: body.toString();
     })
       .then(response => {
         if (!response.ok) {
