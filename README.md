@@ -1,12 +1,6 @@
 This is just a little MusicApp that connects you to Spotify and is able to acccess the Spotify Data you request.
 
-# elm-music-player
-# How to start the Project 
-
-## 1. Install Elm
-First of all you need to install elm, so you can start the project
-
-[install elm from here](https://guide.elm-lang.org/install/elm.html)
+This project is written in ELM. So if you do not have ELM installed on your device go do that [here](https://guide.elm-lang.org/install/elm.html).
 
 ## 2. Clone Project
 - Open a Folder where you want to save the project and then clone it from GitHub
