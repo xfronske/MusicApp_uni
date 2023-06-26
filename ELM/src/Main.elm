@@ -20,7 +20,7 @@ main =
     }
     
 -- Ports
-port send: String -> Cmd msg
+port sendMessage: String -> Cmd msg
 -- if outgoing msg is 'requestToken' Token is gotten by JS side 
 port reciever : (String -> msg) -> Sub msg
 
@@ -66,7 +66,7 @@ init currentTime =
     
     -- Ports
     , draft = "requestToken" --hardcoded just for testing
-    , message = "000000"
+    , message = ""
 
     }
   , Task.perform AdjustTimeZone Time.here
@@ -85,7 +85,8 @@ type Msg
     | GotQuote ( Result Http.Error Quote )
     
     -- Ports to JS
-    | Send 
+    | LoginToSpotify
+    | LogoutFromSpotify
     | Recv String 
      
     
@@ -149,10 +150,14 @@ update msg model =
                     )
         
         -- Port to JS
-        Send ->
-            ( { model | draft = "requestToken" }  -------- hier muss vllt ohne draft =""
-            , send model.draft
+        LoginToSpotify ->
+            ( model
+            , sendMessage "login"
             )
+
+        LogoutFromSpotify ->
+            ( model
+            , sendMessage "logout")
 
         Recv newMessage ->
             ( { model | message = newMessage }
@@ -306,9 +311,9 @@ pageQuote model =
 pageSpotify : Model -> Html Msg
 pageSpotify model = 
     div [ class "container for spotify" ][
-          text "Spotify API      "
-        , button [ onClick Send ][text "requestToken"]
+          button [ onClick LoginToSpotify ][text "Login to Spotify"]
         , text model.message
+        , button [ onClick LogoutFromSpotify ][text "Logout"]
         ]
 
 
@@ -352,6 +357,5 @@ view model =
 -- SUBSCRIPTIONS
 
 subscriptions : Model -> Sub Msg
-subscriptions _{-model-} =
-  --Time.every 1000 Tick
-  reciever Recv
+subscriptions model =
+  Time.every 1000 Tick

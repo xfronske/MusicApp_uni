@@ -6,7 +6,7 @@
 <head>
   <meta charset="UTF-8">
   <title>MusicApp</title>
-  <script type="text/javascript" src="Main.js"></script>
+  <script type="text/javascript" src="main.js"></script>
 </head>
 
 <body>
@@ -27,9 +27,13 @@
 
   app.ports.sendMessage.subscribe(
     function(message) {
-      if (message == 'requestToken') {
-        
+      if (message == 'login') {
+        redirectToSpotifyAuthorizeEndpoint();
         console.log(message);
+      }
+
+      if (message == 'logout') {
+        logout();
       }
     }
   );
@@ -38,9 +42,10 @@
 
   function generateRandomString(length) {
     let text = '';
-    let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const possible =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
-    for (let i=0; i<length; i++) {
+    for (let i = 0; i < length; i++) {
       text += possible.charAt(Math.floor(Math.random() * possible.length));
     }
     return text;
@@ -71,14 +76,11 @@
     generateCodeChallenge(codeVerifier).then((code_challenge) => {
       window.localStorage.setItem('code_verifier', codeVerifier);
 
-      // Redirect to example:
-      // GET https://accounts.spotify.com/authorize?response_type=code&client_id=77e602fc63fa4b96acff255ed33428d3&redirect_uri=http%3A%2F%2Flocalhost&scope=user-follow-modify&state=e21392da45dbf4&code_challenge=KADwyz1X~HIdcAG20lnXitK6k51xBP4pEMEZHmCneHD1JhrcHjE1P3yU_NjhBz4TdhV6acGo16PCd10xLwMJJ4uCutQZHw&code_challenge_method=S256
-
       window.location = generateUrlWithSearchParams(
         'https://accounts.spotify.com/authorize',
         {
           response_type: 'code',
-          client_id: "c294decfda3b412bb97b8c7951d93631",
+          client_id: 'c294decfda3b412bb97b8c7951d93631',
           scope: 'user-read-private user-read-email',
           code_challenge_method: 'S256',
           code_challenge,
@@ -86,8 +88,6 @@
         },
       );
 
-      // If the user accepts spotify will come back to your application with the code in the response query string
-      // Example: http://127.0.0.1:8080/?code=NApCCg..BkWtQ&state=profile%2Factivity
     });
   }
 
@@ -136,10 +136,6 @@
 
   function handleError(error) {
     console.error(error);
-    mainPlaceholder.innerHTML = errorTemplate({
-      status: error.response.status,
-      message: error.error.error_description,
-    });
   }
 
   async function addThrowErrorToFetch(response) {
@@ -168,12 +164,6 @@
     localStorage.setItem('refresh_token', refresh_token);
     localStorage.setItem('expires_at', expires_at);
 
-    oauthPlaceholder.innerHTML = oAuthTemplate({
-      access_token,
-      refresh_token,
-      expires_at,
-    });
-
     // load data of logged in user
     getUserData();
   }
@@ -193,29 +183,31 @@
       })
       .then((data) => {
         console.log(data);
-        document.getElementById('login').style.display = 'none';
-        document.getElementById('loggedin').style.display = 'unset';
-        mainPlaceholder.innerHTML = userProfileTemplate(data);
       })
       .catch((error) => {
         console.error(error);
-        mainPlaceholder.innerHTML = errorTemplate(error.error);
       });
   }
 
-  const client_id = 'CLIENT_ID';
-  const redirect_uri = 'http://localhost:8000'; // Your redirect uri
+  const client_id = 'c294decfda3b412bb97b8c7951d93631';
+  const redirect_uri = 'http://localhost:8000/ELM/index.html'; // Your redirect uri
 
   // Restore tokens from localStorage
   let access_token = localStorage.getItem('access_token') || null;
   let refresh_token = localStorage.getItem('refresh_token') || null;
   let expires_at = localStorage.getItem('expires_at') || null;
 
-  // If the user has accepted the authorize request spotify will come back to your application with the code in the response query string
-  // Example: http://127.0.0.1:8080/?code=NApCCg..BkWtQ&state=profile%2Factivity
   const args = new URLSearchParams(window.location.search);
   const code = args.get('code');
 
+  if (code) {
+    // we have received the code from spotify and will exchange it for a access_token
+    exchangeToken(code);
+  } else if (access_token && refresh_token && expires_at) {
+    // we are already authorized and reload our tokens from localStorage
+
+    getUserData();
+  }
 
 
 

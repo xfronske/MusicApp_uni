@@ -212,10 +212,8 @@
       </table>`;
   }
 
-  // Your client id from your app in the spotify dashboard:
-  // https://developer.spotify.com/dashboard/applications
   const client_id = 'c294decfda3b412bb97b8c7951d93631';
-  const redirect_uri = 'http://localhost:8000/MusicApp_uni_Clone/test/spot.html'; // Your redirect uri
+  const redirect_uri = 'http://localhost:8000/JS/i.html'; // Your redirect uri
 
   // Restore tokens from localStorage
   let access_token = localStorage.getItem('access_token') || null;
@@ -226,8 +224,7 @@
   const mainPlaceholder = document.getElementById('main');
   const oauthPlaceholder = document.getElementById('oauth');
 
-  // If the user has accepted the authorize request spotify will come back to your application with the code in the response query string
-  // Example: http://127.0.0.1:8080/?code=NApCCg..BkWtQ&state=profile%2Factivity
+
   const args = new URLSearchParams(window.location.search);
   const code = args.get('code');
 
