@@ -20,9 +20,9 @@ main =
     }
     
 -- Ports
-port sendMessage: String -> Cmd msg
+port send: String -> Cmd msg
 -- if outgoing msg is 'requestToken' Token is gotten by JS side 
-port messageReciever : (String -> msg) -> Sub msg
+port reciever : (String -> msg) -> Sub msg
 
         
 type alias Model =
@@ -66,7 +66,7 @@ init currentTime =
     
     -- Ports
     , draft = "requestToken" --hardcoded just for testing
-    , message = ""
+    , message = "000000"
 
     }
   , Task.perform AdjustTimeZone Time.here
@@ -150,8 +150,8 @@ update msg model =
         
         -- Port to JS
         Send ->
-            ( { model | draft = "" }  -------- hier muss vllt ohne draft =""
-            , sendMessage model.draft
+            ( { model | draft = "requestToken" }  -------- hier muss vllt ohne draft =""
+            , send model.draft
             )
 
         Recv newMessage ->
@@ -352,6 +352,6 @@ view model =
 -- SUBSCRIPTIONS
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
-  Time.every 1000 Tick
-  
+subscriptions _{-model-} =
+  --Time.every 1000 Tick
+  reciever Recv

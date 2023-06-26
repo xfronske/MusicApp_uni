@@ -1,46 +1,10 @@
-<!DOCTYPE HTML>
-<html>
-
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-
-<head>
-  <meta charset="UTF-8">
-  <title>MusicApp</title>
-  <script type="text/javascript" src="Main.js"></script>
-</head>
-
-<body>
-    <div id="myapp"></div>
-</body>
-
-<script type="text/javascript">
-
-  // Start the Elm application.
-
-  var app = Elm.Main.init({
-      node: document.getElementById('myapp'),
-      flags: Date.now()
-  });
-
-  // When a command goes to the `sendMessage` port in ELM, 
-  // we check what command it is carrying with it
-
-  app.ports.sendMessage.subscribe(
-    function(message) {
-      if (message == 'requestToken') {
-        
-        console.log(message);
-      }
-    }
-  );
-
-// To understand this code please follow https://developer.spotify.com/documentation/web-api/tutorials/code-pkce-flow. There is an explaination on Authorization Code with PKCE Flow
-
+(function () {
   function generateRandomString(length) {
     let text = '';
-    let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const possible =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
-    for (let i=0; i<length; i++) {
+    for (let i = 0; i < length; i++) {
       text += possible.charAt(Math.floor(Math.random() * possible.length));
     }
     return text;
@@ -78,7 +42,7 @@
         'https://accounts.spotify.com/authorize',
         {
           response_type: 'code',
-          client_id: "c294decfda3b412bb97b8c7951d93631",
+          client_id,
           scope: 'user-read-private user-read-email',
           code_challenge_method: 'S256',
           code_challenge,
@@ -203,25 +167,98 @@
       });
   }
 
-  const client_id = 'CLIENT_ID';
-  const redirect_uri = 'http://localhost:8000'; // Your redirect uri
+  function userProfileTemplate(data) {
+    return `<h1>Logged in as ${data.display_name}</h1>
+      <table>
+          <tr><td>Display name</td><td>${data.display_name}</td></tr>
+          <tr><td>Id</td><td>${data.id}</td></tr>
+          <tr><td>Email</td><td>${data.email}</td></tr>
+          <tr><td>Spotify URI</td><td><a href="${data.external_urls.spotify}">${data.external_urls.spotify}</a></td></tr>
+          <tr><td>Link</td><td><a href="{{href}">${data.href}</a></td></tr>
+          <tr><td>Profile Image</td><td><a href="${data.images[0]?.url}">${data.images[0]?.url}</a></td></tr>
+          <tr><td>Country</td><td>${data.country}</td></tr>
+      </table>`;
+  }
+
+  function oAuthTemplate(data) {
+    return `<h2>oAuth info</h2>
+      <table>
+        <tr>
+            <td>Access token</td>
+            <td>${data.access_token}</td>
+        </tr>
+        <tr>
+            <td>Refresh token</td>
+            <td>${data.refresh_token}</td>
+        </tr>
+        <tr>
+            <td>Expires at</td>
+            <td>${new Date(parseInt(data.expires_at, 10)).toLocaleString()}</td>
+        </tr>
+      </table>`;
+  }
+
+  function errorTemplate(data) {
+    return `<h2>Error info</h2>
+      <table>
+        <tr>
+            <td>Status</td>
+            <td>${data.status}</td>
+        </tr>
+        <tr>
+            <td>Message</td>
+            <td>${data.message}</td>
+        </tr>
+      </table>`;
+  }
+
+  // Your client id from your app in the spotify dashboard:
+  // https://developer.spotify.com/dashboard/applications
+  const client_id = 'c294decfda3b412bb97b8c7951d93631';
+  const redirect_uri = 'http://localhost:8000/MusicApp_uni_Clone/test/spot.html'; // Your redirect uri
 
   // Restore tokens from localStorage
   let access_token = localStorage.getItem('access_token') || null;
   let refresh_token = localStorage.getItem('refresh_token') || null;
   let expires_at = localStorage.getItem('expires_at') || null;
 
+  // References for HTML rendering
+  const mainPlaceholder = document.getElementById('main');
+  const oauthPlaceholder = document.getElementById('oauth');
+
   // If the user has accepted the authorize request spotify will come back to your application with the code in the response query string
   // Example: http://127.0.0.1:8080/?code=NApCCg..BkWtQ&state=profile%2Factivity
   const args = new URLSearchParams(window.location.search);
   const code = args.get('code');
 
+  if (code) {
+    // we have received the code from spotify and will exchange it for a access_token
+    exchangeToken(code);
+  } else if (access_token && refresh_token && expires_at) {
+    // we are already authorized and reload our tokens from localStorage
+    document.getElementById('loggedin').style.display = 'unset';
 
+    oauthPlaceholder.innerHTML = oAuthTemplate({
+      access_token,
+      refresh_token,
+      expires_at,
+    });
 
+    getUserData();
+  } else {
+    // we are not logged in so show the login button
+    document.getElementById('login').style.display = 'unset';
+  }
 
-// Port to get access Code to elm 
+  document
+    .getElementById('login-button')
+    .addEventListener('click', redirectToSpotifyAuthorizeEndpoint, false);
 
+  document
+    .getElementById('refresh-button')
+    .addEventListener('click', refreshToken, false);
 
-</script>
-
-</html>
+  document
+    .getElementById('logout-button')
+    .addEventListener('click', logout, false);
+})();
