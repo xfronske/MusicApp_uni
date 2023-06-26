@@ -10,3 +10,14 @@ Use `elm reactor` in your termianl when at the desired location.
 
 NOTE: Redirect URIs are only for localhost yet!
 
+#### working: 
+<ul>
+  <li> Login to Spotify (AccessToken weiil be generated using PKCE)</li>
+  <li> Show the Time via Elm </li>
+</ul>
+
+#### almost working:
+
+<ul>
+  <li> Logout from Spotify (sometimes you get redirected to the root folder of localhost:8000)</li>
+</ul>
