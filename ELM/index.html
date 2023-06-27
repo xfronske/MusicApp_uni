@@ -6,37 +6,61 @@
 <head>
   <meta charset="UTF-8">
   <title>MusicApp</title>
-  <script type="text/javascript" src="main.js"></script>
+  <script type="text/javascript" src="Main1.js"></script>
 </head>
 
 <body>
-    <div id="myapp"></div>
+    <div id="app"></div>
 </body>
 
 <script type="text/javascript">
 
   // Start the Elm application.
 
-  var app = Elm.Main.init({
-      node: document.getElementById('myapp'),
-      flags: Date.now()
-  });
+var app = Elm.Main.init({
+    node: document.getElementById('app'),
+    flags : Date.now()
+});
+
+  app.ports.sendMessage.subscribe(
+    function(message) {
+      console.log(message);
+
+      switch(message) {
+      case 'login':
+        redirectToSpotifyAuthorizeEndpoint();
+        break;
+      
+      case 'logout':
+        logout();
+        break;
+
+      case 'refreshToken':
+        refreshToken();
+        break;
+
+      case 'recieveToken':
+        // accessToken is passed to ELM
+        app.ports.messageReceiver.send(access_token);
+        
+      }
+    }
+  );
+
+
+
+
+  /*
 
   // When a command goes to the `sendMessage` port in ELM, 
   // we check what command it is carrying with it
 
-  app.ports.sendMessage.subscribe(
-    function(message) {
-      if (message == 'login') {
-        redirectToSpotifyAuthorizeEndpoint();
-        console.log(message);
-      }
 
-      if (message == 'logout') {
-        logout();
-      }
-    }
-  );
+
+  */
+
+//app.ports.recieveMsgFromJS.send("hello ELM!");
+  
 
 // To understand this code please follow https://developer.spotify.com/documentation/web-api/tutorials/code-pkce-flow. There is an explaination on Authorization Code with PKCE Flow
 
@@ -201,17 +225,16 @@
   const code = args.get('code');
 
   if (code) {
-    // we have received the code from spotify and will exchange it for a access_token
+    // after recieving the code from spotify it gets exchanged for the accessToken
     exchangeToken(code);
-  } else if (access_token && refresh_token && expires_at) {
-    // we are already authorized and reload our tokens from localStorage
 
+
+  } else if (access_token && refresh_token && expires_at) {
+
+    // if already authorized then reload tokens from localStorage
     getUserData();
   }
 
-
-
-// Port to get access Code to elm 
 
 
 </script>

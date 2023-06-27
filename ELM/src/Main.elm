@@ -4,7 +4,8 @@ import Browser
 import Html exposing (Html, button, div, text, p, nav, a, span, i, blockquote)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
-import Json.Decode exposing (..)
+import Json.Decode as Decode
+import Json.Encode as Encode
 import Time
 import Task
 import Http
@@ -19,10 +20,10 @@ main =
     , subscriptions = subscriptions
     }
     
--- Ports
+--##########.Ports
 port sendMessage: String -> Cmd msg
--- if outgoing msg is 'requestToken' Token is gotten by JS side 
-port reciever : (String -> msg) -> Sub msg
+
+port messageReceiver : (String -> msg) -> Sub msg
 
         
 type alias Model =
@@ -30,8 +31,6 @@ type alias Model =
     , dropdownState : Bool 
     , zone : Time.Zone
     , time : Time.Posix
-    , currentQuote: Quote
-    , httpState : HttpState
     
     -- Spotify API
     , lengthOfRandomString : Int
@@ -40,23 +39,16 @@ type alias Model =
     , currentTime : Int
 
     -- ports
-    , draft : String
     , message : String
     }
 
 
 init : Int -> (Model, Cmd Msg)
 init currentTime =
-  ( { currentPage = 3 -- 0 = Main Page
+  ( { currentPage = 2 -- 0 = Main Page
     , dropdownState = False
     , zone = Time.utc 
     , time = Time.millisToPosix 0
-    , currentQuote = { quote = ""
-                     , source = ""
-                     , author = ""
-                     , year = 0
-                     }
-    , httpState = Http_Loading
 
     -- Spotify
     , lengthOfRandomString = 10
@@ -65,7 +57,6 @@ init currentTime =
     , currentTime = currentTime
     
     -- Ports
-    , draft = "requestToken" --hardcoded just for testing
     , message = ""
 
     }
@@ -80,30 +71,13 @@ type Msg
     | AdjustTimeZone Time.Zone
     | TogglePage Int
     
-    -- Http Stuff
-    | GetMore
-    | GotQuote ( Result Http.Error Quote )
-    
     -- Ports to JS
     | LoginToSpotify
     | LogoutFromSpotify
+    | RefreshToken
+    | RecieveToken
     | Recv String 
      
-    
-type HttpState
-    = Http_Failure
-    | Http_Loading
-    | Http_Response Quote
-
-type alias Quote = 
-    { quote : String
-    , source : String
-    , author : String
-    , year : Int
-    }
-    
-    
-
     
 --##########.Update.##########
 
@@ -130,25 +104,6 @@ update msg model =
             , Cmd.none
             )
             
-         -- QUOTES   
-        GetMore ->
-            ( model 
-            , getQuote
-            )
-            
-        GotQuote result ->
-        
-            case result of 
-                Ok quote -> 
-                    ( { model | currentQuote = quote }
-                    , Cmd.none
-                    )
-                    
-                Err _ -> 
-                    ( model
-                    , Cmd.none
-                    )
-        
         -- Port to JS
         LoginToSpotify ->
             ( model
@@ -158,6 +113,14 @@ update msg model =
         LogoutFromSpotify ->
             ( model
             , sendMessage "logout")
+
+        RefreshToken ->
+            ( model 
+            , sendMessage "refreshToken")
+
+        RecieveToken -> 
+            ( model 
+            , sendMessage "recieveToken")
 
         Recv newMessage ->
             ( { model | message = newMessage }
@@ -203,22 +166,17 @@ navigation model =
                                           , div [ class "dropdown-menu"][
                                                   div [ class "dropdown-content" ][
                                                         a [ class "dropdown-item" 
-                                                          , onClick ( TogglePage 1 )
-                                                          ][ text "ShowTime" ]        
+                                                          , onClick ( TogglePage 0 )
+                                                          ][ text "Main" ]        
                                                       ]
                                                 , div [ class "dropdown-content" ][
                                                         a [ class "dropdown-item"
-                                                          , onClick ( TogglePage 0 )
-                                                          ][ text "MAIN" ]
+                                                          , onClick ( TogglePage 1 )
+                                                          ][ text "Time" ]
                                                       ]
                                                 , div [ class "dropdown-content" ][
                                                         a [ class "dropdown-item" 
                                                           , onClick ( TogglePage 2 )
-                                                          ][ text "Http Page" ]
-                                                      ]
-                                                , div [ class "dropdown-content" ][
-                                                        a [ class "dropdown-item" 
-                                                          , onClick ( TogglePage 3 )
                                                           ][ text "Spotify" ]
                                                       ]
                                                 ]
@@ -230,50 +188,7 @@ navigation model =
         ]
         
         
---##########.Quotes.##########
 
-viewQuote : Model -> Html Msg
-viewQuote model =
-
-  case model.httpState of
-    Http_Failure ->
-      div []
-        [ text "I could not load a random quote for some reason. "
-        , button [ onClick GetMore ] [ text "Try Again!" ]
-        ]
-
-    Http_Loading ->
-      div [][ text "Loading..."
-          , button [ onClick GetMore ][ text "hhhhhh"]
-          ]
-
-    Http_Response quote ->
-      div [][ 
-            blockquote [] [ text quote.quote ] 
-          ]
-         
-        
-  
-        
-        
-getQuote : Cmd Msg
-getQuote = 
-    Http.get 
-        { url = "https://elm-lang.org/api/random-quotes"
-        , expect = Http.expectJson GotQuote quoteDecoder
-        }
-        
-        
-quoteDecoder : Decoder Quote
-quoteDecoder = 
-    map4 Quote
-        ( field "quote" string)
-        ( field "source" string)
-        ( field "author" string)
-        ( field "year" int)
-
-      
-       
 --##########.PAGES.##########
 
 pageMain : Model -> Html Msg
@@ -302,18 +217,15 @@ pageTime model =
 
         ]
         
-pageQuote : Model -> Html Msg
-pageQuote model = 
-    div [ class "container" ][
-          viewQuote model
-        ]
-        
+    
 pageSpotify : Model -> Html Msg
 pageSpotify model = 
     div [ class "container for spotify" ][
           button [ onClick LoginToSpotify ][text "Login to Spotify"]
-        , text model.message
         , button [ onClick LogoutFromSpotify ][text "Logout"]
+        , button [ onClick RefreshToken ][text "Refresh Token"]
+        , button [ onClick RecieveToken ][text "Recieve Token"]
+        , text ("Access Token :" ++ model.message)
         ]
 
 
@@ -327,9 +239,8 @@ pageSpotify model =
 --##########Page Index List#########
 --##  0 -> Main                   ##
 --##  1 -> Time (big)             ##
---##  2 -> Http Stuff             ##
---##  3 -> Spotify                ##
---##  4 -> 
+--##  2 -> Spotify                ##
+--##  3 -> 
 --##################################
 
 view : Model -> Html Msg
@@ -344,10 +255,7 @@ view model =
                 1 -> 
                     div[][ pageTime model ]
                 
-                2 -> 
-                    div[][ pageQuote model ]
-
-                3 ->
+                2 ->
                     div[][ pageSpotify model ]
                 
                 _ ->
@@ -357,5 +265,9 @@ view model =
 -- SUBSCRIPTIONS
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
-  Time.every 1000 Tick
+subscriptions _ =
+  messageReceiver Recv
+
+
+{-model =
+  Time.every 1000 Tick-}
