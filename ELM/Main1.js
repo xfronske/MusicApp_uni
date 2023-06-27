@@ -5228,11 +5228,12 @@ var $elm$time$Time$utc = A2($elm$time$Time$Zone, 0, _List_Nil);
 var $author$project$Main$init = function (currentTime) {
 	return _Utils_Tuple2(
 		{
+			accessToken: '',
 			currentPage: 2,
 			currentTime: currentTime,
 			dropdownState: false,
-			lengthOfRandomString: 10,
 			message: '',
+			spotifydDropdownState: false,
 			time: $elm$time$Time$millisToPosix(0),
 			zone: $elm$time$Time$utc
 		},
@@ -5282,6 +5283,12 @@ var $author$project$Main$update = F2(
 						model,
 						{currentPage: newPage}),
 					$elm$core$Platform$Cmd$none);
+			case 'ToggleSpotifyDropdown':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{spotifydDropdownState: !model.spotifydDropdownState}),
+					$elm$core$Platform$Cmd$none);
 			case 'LoginToSpotify':
 				return _Utils_Tuple2(
 					model,
@@ -5299,11 +5306,11 @@ var $author$project$Main$update = F2(
 					model,
 					$author$project$Main$sendMessage('recieveToken'));
 			default:
-				var newMessage = msg.a;
+				var token = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{message: newMessage}),
+						{accessToken: token}),
 					$elm$core$Platform$Cmd$none);
 		}
 	});
@@ -5587,7 +5594,7 @@ var $author$project$Main$pageMain = function (model) {
 var $author$project$Main$LoginToSpotify = {$: 'LoginToSpotify'};
 var $author$project$Main$LogoutFromSpotify = {$: 'LogoutFromSpotify'};
 var $author$project$Main$RecieveToken = {$: 'RecieveToken'};
-var $author$project$Main$RefreshToken = {$: 'RefreshToken'};
+var $author$project$Main$ToggleSpotifyDropdown = {$: 'ToggleSpotifyDropdown'};
 var $author$project$Main$pageSpotify = function (model) {
 	return A2(
 		$elm$html$Html$div,
@@ -5597,6 +5604,231 @@ var $author$project$Main$pageSpotify = function (model) {
 			]),
 		_List_fromArray(
 			[
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('options for spotify')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('container')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$nav,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('level')
+									]),
+								_List_fromArray(
+									[
+										A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('level-left')
+											]),
+										_List_fromArray(
+											[
+												A2(
+												$elm$html$Html$p,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$class('level-item')
+													]),
+												_List_fromArray(
+													[
+														function () {
+														var _v0 = model.spotifydDropdownState;
+														if (!_v0) {
+															return A2(
+																$elm$html$Html$div,
+																_List_fromArray(
+																	[
+																		$elm$html$Html$Attributes$class('dropdown')
+																	]),
+																_List_fromArray(
+																	[
+																		A2(
+																		$elm$html$Html$div,
+																		_List_fromArray(
+																			[
+																				$elm$html$Html$Attributes$class('dropdown-trigger'),
+																				$elm$html$Html$Events$onClick($author$project$Main$ToggleSpotifyDropdown)
+																			]),
+																		_List_fromArray(
+																			[
+																				A2(
+																				$elm$html$Html$button,
+																				_List_fromArray(
+																					[
+																						$elm$html$Html$Attributes$class('button')
+																					]),
+																				_List_fromArray(
+																					[
+																						A2(
+																						$elm$html$Html$span,
+																						_List_Nil,
+																						_List_fromArray(
+																							[
+																								$elm$html$Html$text('Spotify Options')
+																							])),
+																						A2(
+																						$elm$html$Html$span,
+																						_List_fromArray(
+																							[
+																								$elm$html$Html$Attributes$class('icon is-small')
+																							]),
+																						_List_fromArray(
+																							[
+																								A2(
+																								$elm$html$Html$i,
+																								_List_fromArray(
+																									[
+																										$elm$html$Html$Attributes$class('fas fa-angle-down')
+																									]),
+																								_List_Nil)
+																							]))
+																					]))
+																			]))
+																	]));
+														} else {
+															return A2(
+																$elm$html$Html$div,
+																_List_fromArray(
+																	[
+																		$elm$html$Html$Attributes$class('dropdown is-active')
+																	]),
+																_List_fromArray(
+																	[
+																		A2(
+																		$elm$html$Html$div,
+																		_List_fromArray(
+																			[
+																				$elm$html$Html$Attributes$class('dropdown-trigger'),
+																				$elm$html$Html$Events$onClick($author$project$Main$ToggleSpotifyDropdown)
+																			]),
+																		_List_fromArray(
+																			[
+																				A2(
+																				$elm$html$Html$button,
+																				_List_fromArray(
+																					[
+																						$elm$html$Html$Attributes$class('button')
+																					]),
+																				_List_fromArray(
+																					[
+																						A2(
+																						$elm$html$Html$span,
+																						_List_Nil,
+																						_List_fromArray(
+																							[
+																								$elm$html$Html$text('spotify options')
+																							])),
+																						A2(
+																						$elm$html$Html$span,
+																						_List_fromArray(
+																							[
+																								$elm$html$Html$Attributes$class('icon is-small')
+																							]),
+																						_List_fromArray(
+																							[
+																								A2(
+																								$elm$html$Html$i,
+																								_List_fromArray(
+																									[
+																										$elm$html$Html$Attributes$class(' fas fa-angle-down')
+																									]),
+																								_List_Nil)
+																							]))
+																					]))
+																			])),
+																		A2(
+																		$elm$html$Html$div,
+																		_List_fromArray(
+																			[
+																				$elm$html$Html$Attributes$class('dropdown-menu')
+																			]),
+																		_List_fromArray(
+																			[
+																				A2(
+																				$elm$html$Html$div,
+																				_List_fromArray(
+																					[
+																						$elm$html$Html$Attributes$class('dropdown-content')
+																					]),
+																				_List_fromArray(
+																					[
+																						A2(
+																						$elm$html$Html$a,
+																						_List_fromArray(
+																							[
+																								$elm$html$Html$Attributes$class('dropdown-item'),
+																								$elm$html$Html$Events$onClick(
+																								$author$project$Main$TogglePage(0))
+																							]),
+																						_List_fromArray(
+																							[
+																								$elm$html$Html$text('Search artist')
+																							]))
+																					])),
+																				A2(
+																				$elm$html$Html$div,
+																				_List_fromArray(
+																					[
+																						$elm$html$Html$Attributes$class('dropdown-content')
+																					]),
+																				_List_fromArray(
+																					[
+																						A2(
+																						$elm$html$Html$a,
+																						_List_fromArray(
+																							[
+																								$elm$html$Html$Attributes$class('dropdown-item'),
+																								$elm$html$Html$Events$onClick(
+																								$author$project$Main$TogglePage(1))
+																							]),
+																						_List_fromArray(
+																							[
+																								$elm$html$Html$text('Search song')
+																							]))
+																					])),
+																				A2(
+																				$elm$html$Html$div,
+																				_List_fromArray(
+																					[
+																						$elm$html$Html$Attributes$class('dropdown-content')
+																					]),
+																				_List_fromArray(
+																					[
+																						A2(
+																						$elm$html$Html$a,
+																						_List_fromArray(
+																							[
+																								$elm$html$Html$Attributes$class('dropdown-item'),
+																								$elm$html$Html$Events$onClick(
+																								$author$project$Main$TogglePage(2))
+																							]),
+																						_List_fromArray(
+																							[
+																								$elm$html$Html$text('Search album')
+																							]))
+																					]))
+																			]))
+																	]));
+														}
+													}()
+													]))
+											]))
+									]))
+							]))
+					])),
 				A2(
 				$elm$html$Html$button,
 				_List_fromArray(
@@ -5621,23 +5853,13 @@ var $author$project$Main$pageSpotify = function (model) {
 				$elm$html$Html$button,
 				_List_fromArray(
 					[
-						$elm$html$Html$Events$onClick($author$project$Main$RefreshToken)
-					]),
-				_List_fromArray(
-					[
-						$elm$html$Html$text('Refresh Token')
-					])),
-				A2(
-				$elm$html$Html$button,
-				_List_fromArray(
-					[
 						$elm$html$Html$Events$onClick($author$project$Main$RecieveToken)
 					]),
 				_List_fromArray(
 					[
-						$elm$html$Html$text('Recieve Token')
+						$elm$html$Html$text('get')
 					])),
-				$elm$html$Html$text('Access Token :' + model.message)
+				$elm$html$Html$text('Access Token: ' + model.accessToken)
 			]));
 };
 var $elm$time$Time$flooredDiv = F2(

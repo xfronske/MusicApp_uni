@@ -24,8 +24,6 @@ var app = Elm.Main.init({
 
   app.ports.sendMessage.subscribe(
     function(message) {
-      console.log(message);
-
       switch(message) {
       case 'login':
         redirectToSpotifyAuthorizeEndpoint();
@@ -41,26 +39,10 @@ var app = Elm.Main.init({
 
       case 'recieveToken':
         // accessToken is passed to ELM
-        app.ports.messageReceiver.send(access_token);
-        
+        app.ports.messageReceiver.send(access_token);        
       }
     }
   );
-
-
-
-
-  /*
-
-  // When a command goes to the `sendMessage` port in ELM, 
-  // we check what command it is carrying with it
-
-
-
-  */
-
-//app.ports.recieveMsgFromJS.send("hello ELM!");
-  
 
 // To understand this code please follow https://developer.spotify.com/documentation/web-api/tutorials/code-pkce-flow. There is an explaination on Authorization Code with PKCE Flow
 
@@ -188,30 +170,10 @@ var app = Elm.Main.init({
     localStorage.setItem('refresh_token', refresh_token);
     localStorage.setItem('expires_at', expires_at);
 
-    // load data of logged in user
-    getUserData();
+
   }
 
-  function getUserData() {
-    fetch('https://api.spotify.com/v1/me', {
-      headers: {
-        Authorization: 'Bearer ' + access_token,
-      },
-    })
-      .then(async (response) => {
-        if (response.ok) {
-          return response.json();
-        } else {
-          throw await response.json();
-        }
-      })
-      .then((data) => {
-        console.log(data);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  }
+
 
   const client_id = 'c294decfda3b412bb97b8c7951d93631';
   const redirect_uri = 'http://localhost:8000/ELM/index.html'; // Your redirect uri
@@ -227,13 +189,7 @@ var app = Elm.Main.init({
   if (code) {
     // after recieving the code from spotify it gets exchanged for the accessToken
     exchangeToken(code);
-
-
-  } else if (access_token && refresh_token && expires_at) {
-
-    // if already authorized then reload tokens from localStorage
-    getUserData();
-  }
+  } 
 
 
 

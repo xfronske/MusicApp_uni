@@ -32,14 +32,15 @@ type alias Model =
     , zone : Time.Zone
     , time : Time.Posix
     
-    -- Spotify API
-    , lengthOfRandomString : Int
+    -- Spotify
+    , spotifydDropdownState : Bool
 
     -- flags
     , currentTime : Int
 
     -- ports
     , message : String
+    , accessToken: String
     }
 
 
@@ -51,13 +52,14 @@ init currentTime =
     , time = Time.millisToPosix 0
 
     -- Spotify
-    , lengthOfRandomString = 10
+    , spotifydDropdownState = False
     
     -- Flags
     , currentTime = currentTime
     
     -- Ports
     , message = ""
+    , accessToken = ""
 
     }
   , Task.perform AdjustTimeZone Time.here
@@ -77,6 +79,9 @@ type Msg
     | RefreshToken
     | RecieveToken
     | Recv String 
+
+    -- Spotify
+    | ToggleSpotifyDropdown
      
     
 --##########.Update.##########
@@ -104,11 +109,15 @@ update msg model =
             , Cmd.none
             )
             
-        -- Port to JS
+-- Spotify
+
+        ToggleSpotifyDropdown ->
+            ( { model | spotifydDropdownState = not model.spotifydDropdownState }
+            , Cmd.none )
+
         LoginToSpotify ->
             ( model
-            , sendMessage "login"
-            )
+            , sendMessage "login")
 
         LogoutFromSpotify ->
             ( model
@@ -122,8 +131,8 @@ update msg model =
             ( model 
             , sendMessage "recieveToken")
 
-        Recv newMessage ->
-            ( { model | message = newMessage }
+        Recv token ->
+            ( { model | accessToken = token }
             , Cmd.none 
             )
 
@@ -221,12 +230,94 @@ pageTime model =
 pageSpotify : Model -> Html Msg
 pageSpotify model = 
     div [ class "container for spotify" ][
-          button [ onClick LoginToSpotify ][text "Login to Spotify"]
+        div [ class "options for spotify" ][
+              div [ class "container" ][
+                nav [ class "level" ][
+                      div [ class "level-left" ][
+                            p [ class "level-item"][
+           
+                                case model.spotifydDropdownState of 
+                                  False -> --Dropdown zu
+                                      div [ class "dropdown" ][
+                                            div [ class "dropdown-trigger", onClick ToggleSpotifyDropdown][
+                                                  button [ class "button" ][
+                                                           span [][ text "Spotify Options" ]
+                                                         , span [ class "icon is-small" ][
+                                                                  i [ class "fas fa-angle-down" ][]
+                                                                ]
+                                                         ]
+                                                ]
+                                          ]
+                                
+                                  True -> -- Dropdown offen
+                                      div [ class "dropdown is-active" ][
+                                            div [ class "dropdown-trigger", onClick ToggleSpotifyDropdown][
+                                                  button [ class "button" ][
+                                                           span [][
+                                                                  text "spotify options"
+                                                                ] 
+                                                         , span [ class "icon is-small" ][ 
+                                                                  i [ class " fas fa-angle-down"][]
+                                                                ]    
+                                                         ]
+                                                ]
+                                          , div [ class "dropdown-menu"][
+                                                  div [ class "dropdown-content" ][
+                                                        a [ class "dropdown-item" 
+                                                          , onClick ( TogglePage 0 )
+                                                          ][ text "Search artist" ]        
+                                                      ]
+                                                , div [ class "dropdown-content" ][
+                                                        a [ class "dropdown-item"
+                                                          , onClick ( TogglePage 1 )
+                                                          ][ text "Search song" ]
+                                                      ]
+                                                , div [ class "dropdown-content" ][
+                                                        a [ class "dropdown-item" 
+                                                          , onClick ( TogglePage 2 )
+                                                          ][ text "Search album" ]
+                                                      ]
+                                                ]
+                                          ]             
+                              ]
+                          ]
+                    ]
+              ]
+            ]
+
+        , button [ onClick LoginToSpotify ][text "Login to Spotify"]
         , button [ onClick LogoutFromSpotify ][text "Logout"]
-        , button [ onClick RefreshToken ][text "Refresh Token"]
-        , button [ onClick RecieveToken ][text "Recieve Token"]
-        , text ("Access Token :" ++ model.message)
+        , button [ onClick RecieveToken ][text "get"]
+        , text ("Access Token: " ++ model.accessToken)
         ]
+
+--##########.Spotify.stuff.##########
+  {-function getUserData() {
+    fetch('https://api.spotify.com/v1/me', {
+      headers: {
+        Authorization: 'Bearer ' + access_token,
+      },
+    })
+      .then(async (response) => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw await response.json();
+        }
+      })
+      .then((data) => {
+        console.log(data);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
+else if (access_token && refresh_token && expires_at) {
+
+    // if already authorized then reload tokens from localStorage
+    getUserData();
+  }
+  -}
 
 
 --##########.VIEW.##########
