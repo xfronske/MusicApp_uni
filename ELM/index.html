@@ -39,10 +39,11 @@ var app = Elm.Main.init({
 
       case 'recieveToken':
         // accessToken is passed to ELM
-        app.ports.messageReceiver.send(access_token);        
+        app.ports.messageReceiver.send(access_token);  
       }
     }
   );
+
 
 // To understand this code please follow https://developer.spotify.com/documentation/web-api/tutorials/code-pkce-flow. There is an explaination on Authorization Code with PKCE Flow
 

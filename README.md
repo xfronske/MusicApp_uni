@@ -21,5 +21,5 @@ NOTE: Redirect URIs are only for localhost yet!
 <ul>
   <li> Logout from Spotify (sometimes you get redirected to the root folder of localhost:8000)</li>
   <li> Recieving the Token on ELM side is only working manually</li>
-  <li> </li>
+  <li> GetUserData 401 Unauthorized</li>
 </ul>
