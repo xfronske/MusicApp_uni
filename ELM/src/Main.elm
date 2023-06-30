@@ -1,14 +1,14 @@
 port module Main exposing (main)
 
 import Browser
-import Html exposing (Html, button, div, text, p, nav, a, span, i, blockquote)
+import Html exposing (Html, button, div, text, p, nav, a, span, i, blockquote, th, tr)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Json.Decode exposing (..)
 import Json.Encode as Encode
 import Time
 import Task
-import Http
+import Http exposing (..)
 
 --##########.MAIN.###########
 
@@ -38,6 +38,8 @@ type alias Model =
     , spotifydDropdownState : Bool
     , accountDropdownState : Bool
     , loginState : Bool
+    , token : String
+    , currentUser : UserData
 
     -- flags
     , currentTime : Int
@@ -59,6 +61,11 @@ init currentTime =
     , spotifydDropdownState = False
     , accountDropdownState = False
     , loginState = False
+    , token = ""
+    , currentUser = { country = ""
+                    , display_name = ""
+                    , email = ""
+                    , id = "" }
     
     -- Flags
     , currentTime = currentTime
@@ -88,12 +95,12 @@ type Msg
     | LogoutFromSpotify
     | RefreshToken
     | RecieveToken
-    | Recv String 
+    | RecFromJS String 
 
     -- Spotify
     | ToggleLoginState Bool
     | LoadUserData
-    | GotUserData (Result Http.Error UserData)
+    | GotUserData (Result Http.Error UserData) 
     | ToggleUserPage
      
     
@@ -144,8 +151,9 @@ update msg model =
             ( model 
             , sendMessage "recieveToken" )
 
-        Recv token ->
+        RecFromJS token ->
             ( { model | accessToken = token
+                      , token = "Bearer " ++ token
                       , loginState = True }
             , Cmd.none )
 
@@ -153,13 +161,21 @@ update msg model =
             ( { model | loginState = state }
             , Cmd.none )
 
+
+-- Requests
+
         LoadUserData ->
             ( { model | currentPage = 3 } 
             , ( getUserData model) )
 
         GotUserData userData ->
-            ( model 
-            , Cmd.none )
+            case userData of 
+                Ok data -> 
+                    ( { model | currentUser = UserData data.country data.display_name data.email data.id} 
+                    , Cmd.none )
+
+                Err _ ->
+                    ( model, Cmd.none )
 
         ToggleUserPage ->
             ( { model | currentPage = 0 }
@@ -221,7 +237,7 @@ navigation model =
                                           ]             
                               ]
                           ]
-                    -- LEVEL RIGHT ----------------------
+                    -- LEVEL RIGHT ----------------------Account Dropdown
                     , div [ class "level-right"][
                             if model.loginState then
                                 p [ class "level-item"][  
@@ -241,7 +257,7 @@ navigation model =
                                           , div [ class "dropdown-menu" ][
                                                   div [ class "dropdown-content" ][
                                                         a [ class "dropdown-item", onClick LoadUserData ]
-                                                          [ text "My Account" ]        
+                                                          [ text "My Accountdata" ]        
                                                       ]
                                                 
                                                 , div [ class "dropdown-content" ][
@@ -267,7 +283,69 @@ navigation model =
                             else 
                                 button [ class "button", onClick LoginToSpotify ][ text "Login to Spotify" ]
                           ]
+
+                   , if model.currentPage == 2 || model.currentPage == 3 then --Spotify page
+                        div [ class "options for spotify" ][
+                          div [ class "container" ][
+                            nav [ class "level" ][
+                                  div [ class "level-left" ][
+                                        p [ class "level-item"][
+                       
+                                            case model.spotifydDropdownState of 
+                                              False -> --Dropdown zu
+                                                  div [ class "dropdown" ][
+                                                        div [ class "dropdown-trigger", onClick ToggleSpotifyDropdown][
+                                                              button [ class "button" ][
+                                                                       span [][ text "Spotify Options" ]
+                                                                     , span [ class "icon is-small" ][
+                                                                              i [ class "fas fa-angle-down" ][]
+                                                                            ]
+                                                                     ]
+                                                            ]
+                                                      ]
+                                            
+                                              True -> -- Dropdown offen
+                                                  div [ class "dropdown is-active" ][
+                                                        div [ class "dropdown-trigger", onClick ToggleSpotifyDropdown][
+                                                              button [ class "button" ][
+                                                                       span [][
+                                                                              text "spotify options"
+                                                                            ] 
+                                                                     , span [ class "icon is-small" ][ 
+                                                                              i [ class " fas fa-angle-down"][]
+                                                                            ]    
+                                                                     ]
+                                                            ]
+                                                      , div [ class "dropdown-menu"][
+                                                              div [ class "dropdown-content" ][
+                                                                    a [ class "dropdown-item" 
+                                                                      , onClick ( TogglePage 0 )
+                                                                      ][ text "Search artist" ]        
+                                                                  ]
+                                                            , div [ class "dropdown-content" ][
+                                                                    a [ class "dropdown-item"
+                                                                      , onClick ( TogglePage 1 )
+                                                                      ][ text "Search song" ]
+                                                                  ]
+                                                            , div [ class "dropdown-content" ][
+                                                                    a [ class "dropdown-item" 
+                                                                      , onClick ( TogglePage 2 )
+                                                                      ][ text "Search album" ]
+                                                                  ]
+                                                            ]
+                                                      ]             
+                                         ]
+        
+                                ]
                     ]
+              ]
+            ]      
+                     else
+                        div [][]
+
+
+
+                    ] 
               ]
         ]
         
@@ -305,78 +383,26 @@ pageTime model =
 pageSpotify : Model -> Html Msg
 pageSpotify model = 
     div [ class "container for spotify" ][
-        div [ class "options for spotify" ][
-              div [ class "container" ][
-                nav [ class "level" ][
-                      div [ class "level-left" ][
-                            p [ class "level-item"][
-           
-                                case model.spotifydDropdownState of 
-                                  False -> --Dropdown zu
-                                      div [ class "dropdown" ][
-                                            div [ class "dropdown-trigger", onClick ToggleSpotifyDropdown][
-                                                  button [ class "button" ][
-                                                           span [][ text "Spotify Options" ]
-                                                         , span [ class "icon is-small" ][
-                                                                  i [ class "fas fa-angle-down" ][]
-                                                                ]
-                                                         ]
-                                                ]
-                                          ]
-                                
-                                  True -> -- Dropdown offen
-                                      div [ class "dropdown is-active" ][
-                                            div [ class "dropdown-trigger", onClick ToggleSpotifyDropdown][
-                                                  button [ class "button" ][
-                                                           span [][
-                                                                  text "spotify options"
-                                                                ] 
-                                                         , span [ class "icon is-small" ][ 
-                                                                  i [ class " fas fa-angle-down"][]
-                                                                ]    
-                                                         ]
-                                                ]
-                                          , div [ class "dropdown-menu"][
-                                                  div [ class "dropdown-content" ][
-                                                        a [ class "dropdown-item" 
-                                                          , onClick ( TogglePage 0 )
-                                                          ][ text "Search artist" ]        
-                                                      ]
-                                                , div [ class "dropdown-content" ][
-                                                        a [ class "dropdown-item"
-                                                          , onClick ( TogglePage 1 )
-                                                          ][ text "Search song" ]
-                                                      ]
-                                                , div [ class "dropdown-content" ][
-                                                        a [ class "dropdown-item" 
-                                                          , onClick ( TogglePage 2 )
-                                                          ][ text "Search album" ]
-                                                      ]
-                                                ]
-                                          ]             
-                              ]
-                          ]
-                    ]
-              ]
-            ]
-
+          text ( "Token: " ++ model.accessToken)
         , button [ onClick RecieveToken ][text "get"]
         ]
 
 pageUserAccount : Model -> Html Msg 
 pageUserAccount model = 
-    div [][ text "user information"]
+    div [][ tr [] [ text ("email: " ++ model.currentUser.email)]
+          , tr [] [ text ("display name: " ++ model.currentUser.display_name)]
+          , tr [] [ text ("country:  " ++ model.currentUser.country)]
+          , tr [] [ text ("Spotify Id: " ++ model.currentUser.id)]
+        ]
 
 --##########.Spotify.stuff.##########
 
 getUserData : Model -> Cmd Msg  
-getUserData model = 
-    let 
-        header = Http.header("Authorization: Bearer " ++ model.accessToken)
-    in
+getUserData model =
+
   Http.request
     { method = "GET"
-    , headers = [  ]
+    , headers = [Http.header "Authorization" model.token]
     , url = "https://api.spotify.com/v1/me"
     , body = Http.emptyBody
     , expect = Http.expectJson GotUserData decodeUserData
@@ -388,7 +414,7 @@ type alias UserData =
     { country : String
     , display_name : String
     , email : String
-    , id : String}
+    , id : String }
 
 decodeUserData : Decoder UserData
 decodeUserData = 
@@ -440,7 +466,7 @@ view model =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-  messageReceiver Recv
+  messageReceiver RecFromJS
 
 
 

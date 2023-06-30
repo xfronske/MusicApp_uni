@@ -5407,31 +5407,33 @@ var $author$project$Main$init = function (currentTime) {
 			accountDropdownState: false,
 			currentPage: 2,
 			currentTime: currentTime,
+			currentUser: {country: '', display_name: '', email: '', id: ''},
 			dropdownState: false,
 			loginState: false,
 			message: '',
 			spotifydDropdownState: false,
 			time: $elm$time$Time$millisToPosix(0),
+			token: '',
 			zone: $elm$time$Time$utc
 		},
 		A2($elm$core$Task$perform, $author$project$Main$AdjustTimeZone, $elm$time$Time$here));
 };
 var $elm$json$Json$Decode$int = _Json_decodeInt;
-var $author$project$Main$Recv = function (a) {
-	return {$: 'Recv', a: a};
+var $author$project$Main$RecFromJS = function (a) {
+	return {$: 'RecFromJS', a: a};
 };
 var $elm$json$Json$Decode$string = _Json_decodeString;
 var $author$project$Main$messageReceiver = _Platform_incomingPort('messageReceiver', $elm$json$Json$Decode$string);
 var $author$project$Main$subscriptions = function (_v0) {
-	return $author$project$Main$messageReceiver($author$project$Main$Recv);
-};
-var $author$project$Main$GotUserData = function (a) {
-	return {$: 'GotUserData', a: a};
+	return $author$project$Main$messageReceiver($author$project$Main$RecFromJS);
 };
 var $author$project$Main$UserData = F4(
 	function (country, display_name, email, id) {
 		return {country: country, display_name: display_name, email: email, id: id};
 	});
+var $author$project$Main$GotUserData = function (a) {
+	return {$: 'GotUserData', a: a};
+};
 var $elm$json$Json$Decode$field = _Json_decodeField;
 var $elm$json$Json$Decode$map4 = _Json_map4;
 var $author$project$Main$decodeUserData = A5(
@@ -6230,12 +6232,14 @@ var $elm$http$Http$request = function (r) {
 			{allowCookiesFromOtherDomains: false, body: r.body, expect: r.expect, headers: r.headers, method: r.method, timeout: r.timeout, tracker: r.tracker, url: r.url}));
 };
 var $author$project$Main$getUserData = function (model) {
-	var header = $elm$http$Http$header('Authorization: Bearer ' + model.accessToken);
 	return $elm$http$Http$request(
 		{
 			body: $elm$http$Http$emptyBody,
 			expect: A2($elm$http$Http$expectJson, $author$project$Main$GotUserData, $author$project$Main$decodeUserData),
-			headers: _List_Nil,
+			headers: _List_fromArray(
+				[
+					A2($elm$http$Http$header, 'Authorization', model.token)
+				]),
 			method: 'GET',
 			timeout: $elm$core$Maybe$Nothing,
 			tracker: $elm$core$Maybe$Nothing,
@@ -6307,12 +6311,12 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					model,
 					$author$project$Main$sendMessage('recieveToken'));
-			case 'Recv':
+			case 'RecFromJS':
 				var token = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{accessToken: token, loginState: true}),
+						{accessToken: token, loginState: true, token: 'Bearer ' + token}),
 					$elm$core$Platform$Cmd$none);
 			case 'ToggleLoginState':
 				var state = msg.a;
@@ -6329,7 +6333,18 @@ var $author$project$Main$update = F2(
 					$author$project$Main$getUserData(model));
 			case 'GotUserData':
 				var userData = msg.a;
-				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				if (userData.$ === 'Ok') {
+					var data = userData.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								currentUser: A4($author$project$Main$UserData, data.country, data.display_name, data.email, data.id)
+							}),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
 			default:
 				return _Utils_Tuple2(
 					_Utils_update(
@@ -6347,6 +6362,7 @@ var $author$project$Main$ToggleNavigationDropdown = {$: 'ToggleNavigationDropdow
 var $author$project$Main$TogglePage = function (a) {
 	return {$: 'TogglePage', a: a};
 };
+var $author$project$Main$ToggleSpotifyDropdown = {$: 'ToggleSpotifyDropdown'};
 var $elm$html$Html$a = _VirtualDom_node('a');
 var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$html$Html$Attributes$stringProperty = F2(
@@ -6787,7 +6803,232 @@ var $author$project$Main$navigation = function (model) {
 											[
 												$elm$html$Html$text('Login to Spotify')
 											]))
-									]))
+									])),
+								((model.currentPage === 2) || (model.currentPage === 3)) ? A2(
+								$elm$html$Html$div,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('options for spotify')
+									]),
+								_List_fromArray(
+									[
+										A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('container')
+											]),
+										_List_fromArray(
+											[
+												A2(
+												$elm$html$Html$nav,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$class('level')
+													]),
+												_List_fromArray(
+													[
+														A2(
+														$elm$html$Html$div,
+														_List_fromArray(
+															[
+																$elm$html$Html$Attributes$class('level-left')
+															]),
+														_List_fromArray(
+															[
+																A2(
+																$elm$html$Html$p,
+																_List_fromArray(
+																	[
+																		$elm$html$Html$Attributes$class('level-item')
+																	]),
+																_List_fromArray(
+																	[
+																		function () {
+																		var _v2 = model.spotifydDropdownState;
+																		if (!_v2) {
+																			return A2(
+																				$elm$html$Html$div,
+																				_List_fromArray(
+																					[
+																						$elm$html$Html$Attributes$class('dropdown')
+																					]),
+																				_List_fromArray(
+																					[
+																						A2(
+																						$elm$html$Html$div,
+																						_List_fromArray(
+																							[
+																								$elm$html$Html$Attributes$class('dropdown-trigger'),
+																								$elm$html$Html$Events$onClick($author$project$Main$ToggleSpotifyDropdown)
+																							]),
+																						_List_fromArray(
+																							[
+																								A2(
+																								$elm$html$Html$button,
+																								_List_fromArray(
+																									[
+																										$elm$html$Html$Attributes$class('button')
+																									]),
+																								_List_fromArray(
+																									[
+																										A2(
+																										$elm$html$Html$span,
+																										_List_Nil,
+																										_List_fromArray(
+																											[
+																												$elm$html$Html$text('Spotify Options')
+																											])),
+																										A2(
+																										$elm$html$Html$span,
+																										_List_fromArray(
+																											[
+																												$elm$html$Html$Attributes$class('icon is-small')
+																											]),
+																										_List_fromArray(
+																											[
+																												A2(
+																												$elm$html$Html$i,
+																												_List_fromArray(
+																													[
+																														$elm$html$Html$Attributes$class('fas fa-angle-down')
+																													]),
+																												_List_Nil)
+																											]))
+																									]))
+																							]))
+																					]));
+																		} else {
+																			return A2(
+																				$elm$html$Html$div,
+																				_List_fromArray(
+																					[
+																						$elm$html$Html$Attributes$class('dropdown is-active')
+																					]),
+																				_List_fromArray(
+																					[
+																						A2(
+																						$elm$html$Html$div,
+																						_List_fromArray(
+																							[
+																								$elm$html$Html$Attributes$class('dropdown-trigger'),
+																								$elm$html$Html$Events$onClick($author$project$Main$ToggleSpotifyDropdown)
+																							]),
+																						_List_fromArray(
+																							[
+																								A2(
+																								$elm$html$Html$button,
+																								_List_fromArray(
+																									[
+																										$elm$html$Html$Attributes$class('button')
+																									]),
+																								_List_fromArray(
+																									[
+																										A2(
+																										$elm$html$Html$span,
+																										_List_Nil,
+																										_List_fromArray(
+																											[
+																												$elm$html$Html$text('spotify options')
+																											])),
+																										A2(
+																										$elm$html$Html$span,
+																										_List_fromArray(
+																											[
+																												$elm$html$Html$Attributes$class('icon is-small')
+																											]),
+																										_List_fromArray(
+																											[
+																												A2(
+																												$elm$html$Html$i,
+																												_List_fromArray(
+																													[
+																														$elm$html$Html$Attributes$class(' fas fa-angle-down')
+																													]),
+																												_List_Nil)
+																											]))
+																									]))
+																							])),
+																						A2(
+																						$elm$html$Html$div,
+																						_List_fromArray(
+																							[
+																								$elm$html$Html$Attributes$class('dropdown-menu')
+																							]),
+																						_List_fromArray(
+																							[
+																								A2(
+																								$elm$html$Html$div,
+																								_List_fromArray(
+																									[
+																										$elm$html$Html$Attributes$class('dropdown-content')
+																									]),
+																								_List_fromArray(
+																									[
+																										A2(
+																										$elm$html$Html$a,
+																										_List_fromArray(
+																											[
+																												$elm$html$Html$Attributes$class('dropdown-item'),
+																												$elm$html$Html$Events$onClick(
+																												$author$project$Main$TogglePage(0))
+																											]),
+																										_List_fromArray(
+																											[
+																												$elm$html$Html$text('Search artist')
+																											]))
+																									])),
+																								A2(
+																								$elm$html$Html$div,
+																								_List_fromArray(
+																									[
+																										$elm$html$Html$Attributes$class('dropdown-content')
+																									]),
+																								_List_fromArray(
+																									[
+																										A2(
+																										$elm$html$Html$a,
+																										_List_fromArray(
+																											[
+																												$elm$html$Html$Attributes$class('dropdown-item'),
+																												$elm$html$Html$Events$onClick(
+																												$author$project$Main$TogglePage(1))
+																											]),
+																										_List_fromArray(
+																											[
+																												$elm$html$Html$text('Search song')
+																											]))
+																									])),
+																								A2(
+																								$elm$html$Html$div,
+																								_List_fromArray(
+																									[
+																										$elm$html$Html$Attributes$class('dropdown-content')
+																									]),
+																								_List_fromArray(
+																									[
+																										A2(
+																										$elm$html$Html$a,
+																										_List_fromArray(
+																											[
+																												$elm$html$Html$Attributes$class('dropdown-item'),
+																												$elm$html$Html$Events$onClick(
+																												$author$project$Main$TogglePage(2))
+																											]),
+																										_List_fromArray(
+																											[
+																												$elm$html$Html$text('Search album')
+																											]))
+																									]))
+																							]))
+																					]));
+																		}
+																	}()
+																	]))
+															]))
+													]))
+											]))
+									])) : A2($elm$html$Html$div, _List_Nil, _List_Nil)
 							]))
 					]))
 			]));
@@ -6805,7 +7046,6 @@ var $author$project$Main$pageMain = function (model) {
 			]));
 };
 var $author$project$Main$RecieveToken = {$: 'RecieveToken'};
-var $author$project$Main$ToggleSpotifyDropdown = {$: 'ToggleSpotifyDropdown'};
 var $author$project$Main$pageSpotify = function (model) {
 	return A2(
 		$elm$html$Html$div,
@@ -6815,231 +7055,7 @@ var $author$project$Main$pageSpotify = function (model) {
 			]),
 		_List_fromArray(
 			[
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						$elm$html$Html$Attributes$class('options for spotify')
-					]),
-				_List_fromArray(
-					[
-						A2(
-						$elm$html$Html$div,
-						_List_fromArray(
-							[
-								$elm$html$Html$Attributes$class('container')
-							]),
-						_List_fromArray(
-							[
-								A2(
-								$elm$html$Html$nav,
-								_List_fromArray(
-									[
-										$elm$html$Html$Attributes$class('level')
-									]),
-								_List_fromArray(
-									[
-										A2(
-										$elm$html$Html$div,
-										_List_fromArray(
-											[
-												$elm$html$Html$Attributes$class('level-left')
-											]),
-										_List_fromArray(
-											[
-												A2(
-												$elm$html$Html$p,
-												_List_fromArray(
-													[
-														$elm$html$Html$Attributes$class('level-item')
-													]),
-												_List_fromArray(
-													[
-														function () {
-														var _v0 = model.spotifydDropdownState;
-														if (!_v0) {
-															return A2(
-																$elm$html$Html$div,
-																_List_fromArray(
-																	[
-																		$elm$html$Html$Attributes$class('dropdown')
-																	]),
-																_List_fromArray(
-																	[
-																		A2(
-																		$elm$html$Html$div,
-																		_List_fromArray(
-																			[
-																				$elm$html$Html$Attributes$class('dropdown-trigger'),
-																				$elm$html$Html$Events$onClick($author$project$Main$ToggleSpotifyDropdown)
-																			]),
-																		_List_fromArray(
-																			[
-																				A2(
-																				$elm$html$Html$button,
-																				_List_fromArray(
-																					[
-																						$elm$html$Html$Attributes$class('button')
-																					]),
-																				_List_fromArray(
-																					[
-																						A2(
-																						$elm$html$Html$span,
-																						_List_Nil,
-																						_List_fromArray(
-																							[
-																								$elm$html$Html$text('Spotify Options')
-																							])),
-																						A2(
-																						$elm$html$Html$span,
-																						_List_fromArray(
-																							[
-																								$elm$html$Html$Attributes$class('icon is-small')
-																							]),
-																						_List_fromArray(
-																							[
-																								A2(
-																								$elm$html$Html$i,
-																								_List_fromArray(
-																									[
-																										$elm$html$Html$Attributes$class('fas fa-angle-down')
-																									]),
-																								_List_Nil)
-																							]))
-																					]))
-																			]))
-																	]));
-														} else {
-															return A2(
-																$elm$html$Html$div,
-																_List_fromArray(
-																	[
-																		$elm$html$Html$Attributes$class('dropdown is-active')
-																	]),
-																_List_fromArray(
-																	[
-																		A2(
-																		$elm$html$Html$div,
-																		_List_fromArray(
-																			[
-																				$elm$html$Html$Attributes$class('dropdown-trigger'),
-																				$elm$html$Html$Events$onClick($author$project$Main$ToggleSpotifyDropdown)
-																			]),
-																		_List_fromArray(
-																			[
-																				A2(
-																				$elm$html$Html$button,
-																				_List_fromArray(
-																					[
-																						$elm$html$Html$Attributes$class('button')
-																					]),
-																				_List_fromArray(
-																					[
-																						A2(
-																						$elm$html$Html$span,
-																						_List_Nil,
-																						_List_fromArray(
-																							[
-																								$elm$html$Html$text('spotify options')
-																							])),
-																						A2(
-																						$elm$html$Html$span,
-																						_List_fromArray(
-																							[
-																								$elm$html$Html$Attributes$class('icon is-small')
-																							]),
-																						_List_fromArray(
-																							[
-																								A2(
-																								$elm$html$Html$i,
-																								_List_fromArray(
-																									[
-																										$elm$html$Html$Attributes$class(' fas fa-angle-down')
-																									]),
-																								_List_Nil)
-																							]))
-																					]))
-																			])),
-																		A2(
-																		$elm$html$Html$div,
-																		_List_fromArray(
-																			[
-																				$elm$html$Html$Attributes$class('dropdown-menu')
-																			]),
-																		_List_fromArray(
-																			[
-																				A2(
-																				$elm$html$Html$div,
-																				_List_fromArray(
-																					[
-																						$elm$html$Html$Attributes$class('dropdown-content')
-																					]),
-																				_List_fromArray(
-																					[
-																						A2(
-																						$elm$html$Html$a,
-																						_List_fromArray(
-																							[
-																								$elm$html$Html$Attributes$class('dropdown-item'),
-																								$elm$html$Html$Events$onClick(
-																								$author$project$Main$TogglePage(0))
-																							]),
-																						_List_fromArray(
-																							[
-																								$elm$html$Html$text('Search artist')
-																							]))
-																					])),
-																				A2(
-																				$elm$html$Html$div,
-																				_List_fromArray(
-																					[
-																						$elm$html$Html$Attributes$class('dropdown-content')
-																					]),
-																				_List_fromArray(
-																					[
-																						A2(
-																						$elm$html$Html$a,
-																						_List_fromArray(
-																							[
-																								$elm$html$Html$Attributes$class('dropdown-item'),
-																								$elm$html$Html$Events$onClick(
-																								$author$project$Main$TogglePage(1))
-																							]),
-																						_List_fromArray(
-																							[
-																								$elm$html$Html$text('Search song')
-																							]))
-																					])),
-																				A2(
-																				$elm$html$Html$div,
-																				_List_fromArray(
-																					[
-																						$elm$html$Html$Attributes$class('dropdown-content')
-																					]),
-																				_List_fromArray(
-																					[
-																						A2(
-																						$elm$html$Html$a,
-																						_List_fromArray(
-																							[
-																								$elm$html$Html$Attributes$class('dropdown-item'),
-																								$elm$html$Html$Events$onClick(
-																								$author$project$Main$TogglePage(2))
-																							]),
-																						_List_fromArray(
-																							[
-																								$elm$html$Html$text('Search album')
-																							]))
-																					]))
-																			]))
-																	]));
-														}
-													}()
-													]))
-											]))
-									]))
-							]))
-					])),
+				$elm$html$Html$text('Token: ' + model.accessToken),
 				A2(
 				$elm$html$Html$button,
 				_List_fromArray(
@@ -7152,13 +7168,41 @@ var $author$project$Main$pageTime = function (model) {
 					]))
 			]));
 };
+var $elm$html$Html$tr = _VirtualDom_node('tr');
 var $author$project$Main$pageUserAccount = function (model) {
 	return A2(
 		$elm$html$Html$div,
 		_List_Nil,
 		_List_fromArray(
 			[
-				$elm$html$Html$text('user information')
+				A2(
+				$elm$html$Html$tr,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('email: ' + model.currentUser.email)
+					])),
+				A2(
+				$elm$html$Html$tr,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('display name: ' + model.currentUser.display_name)
+					])),
+				A2(
+				$elm$html$Html$tr,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('country:  ' + model.currentUser.country)
+					])),
+				A2(
+				$elm$html$Html$tr,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Spotify Id: ' + model.currentUser.id)
+					]))
 			]));
 };
 var $author$project$Main$view = function (model) {
