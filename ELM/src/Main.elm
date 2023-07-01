@@ -397,6 +397,14 @@ pageUserAccount model =
 
 --##########.Spotify.stuff.##########
 
+-- User Data
+
+type alias UserData = 
+    { country : String
+    , display_name : String
+    , email : String
+    , id : String }
+
 getUserData : Model -> Cmd Msg  
 getUserData model =
 
@@ -410,12 +418,6 @@ getUserData model =
     , tracker = Nothing
     }
 
-type alias UserData = 
-    { country : String
-    , display_name : String
-    , email : String
-    , id : String }
-
 decodeUserData : Decoder UserData
 decodeUserData = 
     Json.Decode.map4 UserData
@@ -423,6 +425,32 @@ decodeUserData =
         (field "display_name" string)
         (field "email" string)
         (field "id" string)
+
+-- User top 10 Artists
+
+type alias UserTopArtists =
+    { href = String
+
+    }
+
+getUserTopArtists : Model -> Cmd Msg 
+getUserTopArtists model = 
+    Http.request 
+      { method = "GET"
+      , headers = []
+      , url = "https://api.spotify.com/v1/me/top/artists?limit=1"
+      , body = Http.emptyBody
+      , expect = Http.expectJson GotUserTopArtists decodeUserTopArtists
+      , timeout = Nothing
+      , tracker = Nothing
+      }
+
+decodeUserTopArtists : Decoder UserTopArtists
+decodeUserTopArtists = 
+    Json.Decode.map4 UserTopArtists
+        (field "name" string)
+        (field "genres" [string])
+        (field)-------------------------------------------
 
 
 --##########.VIEW.##########

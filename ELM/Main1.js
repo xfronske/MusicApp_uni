@@ -6713,7 +6713,7 @@ var $author$project$Main$navigation = function (model) {
 																					]),
 																				_List_fromArray(
 																					[
-																						$elm$html$Html$text('My Account')
+																						$elm$html$Html$text('My Accountdata')
 																					]))
 																			])),
 																		A2(
