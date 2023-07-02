@@ -1,7 +1,7 @@
 port module Main exposing (main)
 
 import Browser
-import Html exposing (Html, button, div, text, p, nav, a, span, i, blockquote, th, tr)
+import Html exposing (Html, button, div, text, p, nav, a, span, i, blockquote, th, tr, img)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Json.Decode exposing (..)
@@ -40,6 +40,7 @@ type alias Model =
     , loginState : Bool
     , token : String
     , currentUser : UserData
+    , topArtist : UserTopArtist 
 
     -- flags
     , currentTime : Int
@@ -66,6 +67,12 @@ init currentTime =
                     , display_name = ""
                     , email = ""
                     , id = "" }
+    , topArtist = { href = ""
+                  , name = ""
+                  , image =  { url = ""
+                             , height = 0 
+                             , width = 0 }
+                  }
     
     -- Flags
     , currentTime = currentTime
@@ -101,6 +108,8 @@ type Msg
     | ToggleLoginState Bool
     | LoadUserData
     | GotUserData (Result Http.Error UserData) 
+    | LoadUserTopArtist
+    | GotUserTopArtist (Result Http.Error UserTopArtist)
     | ToggleUserPage
      
     
@@ -177,6 +186,19 @@ update msg model =
                 Err _ ->
                     ( model, Cmd.none )
 
+        LoadUserTopArtist -> 
+            ( { model | currentPage = 2 }
+            , ( getUserTopArtist model) )
+
+        GotUserTopArtist artistData ->
+            case artistData of 
+                Ok data -> 
+                    ( { model | topArtist = UserTopArtist data.name data.href data.image}
+                    , Cmd.none )
+
+                Err _ -> 
+                    ( model, Cmd.none)
+
         ToggleUserPage ->
             ( { model | currentPage = 0 }
             , Cmd.none )
@@ -223,11 +245,7 @@ navigation model =
                                                           , onClick ( TogglePage 0 )
                                                           ][ text "Main" ]        
                                                       ]
-                                                , div [ class "dropdown-content" ][
-                                                        a [ class "dropdown-item"
-                                                          , onClick ( TogglePage 1 )
-                                                          ][ text "Time" ]
-                                                      ]
+
                                                 , div [ class "dropdown-content" ][
                                                         a [ class "dropdown-item" 
                                                           , onClick ( TogglePage 2 )
@@ -358,33 +376,16 @@ pageMain model =
     div [ class "container" ][
           text "This is the main Page"
         ]
-        
-pageTime : Model -> Html Msg
-pageTime model = 
-    let
-      hour   = String.fromInt (Time.toHour   model.zone model.time)
-      minute = String.fromInt (Time.toMinute model.zone model.time)
-      second = String.fromInt (Time.toSecond model.zone model.time)
-    in
-    div [ class "container" ][
-          text "TIME" 
-
-           
-        , div [][
-                  text (hour ++ ":" ++ minute ++ ":" ++ second)
-                , text "Time from Flag"
-                , text (String.fromInt model.currentTime)
-                ]
-
-
-        ]
-        
     
 pageSpotify : Model -> Html Msg
 pageSpotify model = 
     div [ class "container for spotify" ][
           text ( "Token: " ++ model.accessToken)
         , button [ onClick RecieveToken ][text "get"]
+        , button [ onClick LoadUserTopArtist ][text "top artist"]
+        , tr [] [ text ("name: " ++ model.topArtist.name)]
+        , tr [] [ text ("display name: " ++ model.topArtist.href)]
+        , img [ src  model.topArtist.image.url][]
         ]
 
 pageUserAccount : Model -> Html Msg 
@@ -394,6 +395,13 @@ pageUserAccount model =
           , tr [] [ text ("country:  " ++ model.currentUser.country)]
           , tr [] [ text ("Spotify Id: " ++ model.currentUser.id)]
         ]
+
+pageUserTopArtist : Model -> Html Msg 
+pageUserTopArtist model = 
+    div [][ tr [] [ text ("name: " ++ model.topArtist.name)]
+          , tr [] [ text ("display name: " ++ model.topArtist.href)]
+          , img [ src  model.topArtist.image.url][]
+          ]
 
 --##########.Spotify.stuff.##########
 
@@ -426,31 +434,44 @@ decodeUserData =
         (field "email" string)
         (field "id" string)
 
--- User top 10 Artists
+-- User top Artist
 
-type alias UserTopArtists =
-    { href = String
+type alias UserTopArtist =
+    { href : String
+    , name : String
+    , image : ArtistImage }
 
-    }
+type alias ArtistImage = 
+    { url : String
+    , height : Int 
+    , width : Int }
 
-getUserTopArtists : Model -> Cmd Msg 
-getUserTopArtists model = 
+getUserTopArtist : Model -> Cmd Msg 
+getUserTopArtist model = 
     Http.request 
       { method = "GET"
-      , headers = []
+      , headers = [Http.header "Authorization" model.token]
       , url = "https://api.spotify.com/v1/me/top/artists?limit=1"
       , body = Http.emptyBody
-      , expect = Http.expectJson GotUserTopArtists decodeUserTopArtists
+      , expect = Http.expectJson GotUserTopArtist decodeUserTopArtist
       , timeout = Nothing
       , tracker = Nothing
       }
 
-decodeUserTopArtists : Decoder UserTopArtists
-decodeUserTopArtists = 
-    Json.Decode.map4 UserTopArtists
+decodeUserTopArtist : Decoder UserTopArtist
+decodeUserTopArtist = 
+    Json.Decode.map3 UserTopArtist
         (field "name" string)
-        (field "genres" [string])
-        (field)-------------------------------------------
+        --(field "genres" ( string))
+        (field "href" string)
+        (field "images" decodeTopArtistImage)
+
+decodeTopArtistImage : Decoder ArtistImage
+decodeTopArtistImage = 
+    Json.Decode.map3 ArtistImage 
+        (field "url" string)
+        (field "height" int)
+        (field "width" int)
 
 
 --##########.VIEW.##########
@@ -462,7 +483,6 @@ decodeUserTopArtists =
 
 --##########Page Index List#########
 --##  0 -> Main                   ##
---##  1 -> Time (big)             ##
 --##  2 -> Spotify                ##
 --##  3 -> User Account           ##
 --##  4 -> 
@@ -476,10 +496,7 @@ view model =
           , case model.currentPage of 
                 0 -> 
                     div[][ pageMain model ]
-            
-                1 -> 
-                    div[][ pageTime model ]
-                
+                        
                 2 ->
                     div[][ pageSpotify model ]
 

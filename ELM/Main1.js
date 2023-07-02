@@ -5414,6 +5414,11 @@ var $author$project$Main$init = function (currentTime) {
 			spotifydDropdownState: false,
 			time: $elm$time$Time$millisToPosix(0),
 			token: '',
+			topArtist: {
+				href: '',
+				image: {height: 0, url: '', width: 0},
+				name: ''
+			},
 			zone: $elm$time$Time$utc
 		},
 		A2($elm$core$Task$perform, $author$project$Main$AdjustTimeZone, $elm$time$Time$here));
@@ -5430,6 +5435,10 @@ var $author$project$Main$subscriptions = function (_v0) {
 var $author$project$Main$UserData = F4(
 	function (country, display_name, email, id) {
 		return {country: country, display_name: display_name, email: email, id: id};
+	});
+var $author$project$Main$UserTopArtist = F3(
+	function (href, name, image) {
+		return {href: href, image: image, name: name};
 	});
 var $author$project$Main$GotUserData = function (a) {
 	return {$: 'GotUserData', a: a};
@@ -6246,6 +6255,41 @@ var $author$project$Main$getUserData = function (model) {
 			url: 'https://api.spotify.com/v1/me'
 		});
 };
+var $author$project$Main$GotUserTopArtist = function (a) {
+	return {$: 'GotUserTopArtist', a: a};
+};
+var $author$project$Main$ArtistImage = F3(
+	function (url, height, width) {
+		return {height: height, url: url, width: width};
+	});
+var $elm$json$Json$Decode$map3 = _Json_map3;
+var $author$project$Main$decodeTopArtistImage = A4(
+	$elm$json$Json$Decode$map3,
+	$author$project$Main$ArtistImage,
+	A2($elm$json$Json$Decode$field, 'url', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'height', $elm$json$Json$Decode$int),
+	A2($elm$json$Json$Decode$field, 'width', $elm$json$Json$Decode$int));
+var $author$project$Main$decodeUserTopArtist = A4(
+	$elm$json$Json$Decode$map3,
+	$author$project$Main$UserTopArtist,
+	A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'href', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'images', $author$project$Main$decodeTopArtistImage));
+var $author$project$Main$getUserTopArtist = function (model) {
+	return $elm$http$Http$request(
+		{
+			body: $elm$http$Http$emptyBody,
+			expect: A2($elm$http$Http$expectJson, $author$project$Main$GotUserTopArtist, $author$project$Main$decodeUserTopArtist),
+			headers: _List_fromArray(
+				[
+					A2($elm$http$Http$header, 'Authorization', model.token)
+				]),
+			method: 'GET',
+			timeout: $elm$core$Maybe$Nothing,
+			tracker: $elm$core$Maybe$Nothing,
+			url: 'https://api.spotify.com/v1/me/top/artists?limit=1'
+		});
+};
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $elm$core$Basics$not = _Basics_not;
@@ -6340,6 +6384,26 @@ var $author$project$Main$update = F2(
 							model,
 							{
 								currentUser: A4($author$project$Main$UserData, data.country, data.display_name, data.email, data.id)
+							}),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
+			case 'LoadUserTopArtist':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{currentPage: 2}),
+					$author$project$Main$getUserTopArtist(model));
+			case 'GotUserTopArtist':
+				var artistData = msg.a;
+				if (artistData.$ === 'Ok') {
+					var data = artistData.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								topArtist: A3($author$project$Main$UserTopArtist, data.name, data.href, data.image)
 							}),
 						$elm$core$Platform$Cmd$none);
 				} else {
@@ -6569,27 +6633,6 @@ var $author$project$Main$navigation = function (model) {
 																				_List_fromArray(
 																					[
 																						$elm$html$Html$text('Main')
-																					]))
-																			])),
-																		A2(
-																		$elm$html$Html$div,
-																		_List_fromArray(
-																			[
-																				$elm$html$Html$Attributes$class('dropdown-content')
-																			]),
-																		_List_fromArray(
-																			[
-																				A2(
-																				$elm$html$Html$a,
-																				_List_fromArray(
-																					[
-																						$elm$html$Html$Attributes$class('dropdown-item'),
-																						$elm$html$Html$Events$onClick(
-																						$author$project$Main$TogglePage(1))
-																					]),
-																				_List_fromArray(
-																					[
-																						$elm$html$Html$text('Time')
 																					]))
 																			])),
 																		A2(
@@ -7045,7 +7088,16 @@ var $author$project$Main$pageMain = function (model) {
 				$elm$html$Html$text('This is the main Page')
 			]));
 };
+var $author$project$Main$LoadUserTopArtist = {$: 'LoadUserTopArtist'};
 var $author$project$Main$RecieveToken = {$: 'RecieveToken'};
+var $elm$html$Html$img = _VirtualDom_node('img');
+var $elm$html$Html$Attributes$src = function (url) {
+	return A2(
+		$elm$html$Html$Attributes$stringProperty,
+		'src',
+		_VirtualDom_noJavaScriptOrHtmlUri(url));
+};
+var $elm$html$Html$tr = _VirtualDom_node('tr');
 var $author$project$Main$pageSpotify = function (model) {
 	return A2(
 		$elm$html$Html$div,
@@ -7065,110 +7117,40 @@ var $author$project$Main$pageSpotify = function (model) {
 				_List_fromArray(
 					[
 						$elm$html$Html$text('get')
-					]))
-			]));
-};
-var $elm$time$Time$flooredDiv = F2(
-	function (numerator, denominator) {
-		return $elm$core$Basics$floor(numerator / denominator);
-	});
-var $elm$core$Basics$modBy = _Basics_modBy;
-var $elm$time$Time$posixToMillis = function (_v0) {
-	var millis = _v0.a;
-	return millis;
-};
-var $elm$time$Time$toAdjustedMinutesHelp = F3(
-	function (defaultOffset, posixMinutes, eras) {
-		toAdjustedMinutesHelp:
-		while (true) {
-			if (!eras.b) {
-				return posixMinutes + defaultOffset;
-			} else {
-				var era = eras.a;
-				var olderEras = eras.b;
-				if (_Utils_cmp(era.start, posixMinutes) < 0) {
-					return posixMinutes + era.offset;
-				} else {
-					var $temp$defaultOffset = defaultOffset,
-						$temp$posixMinutes = posixMinutes,
-						$temp$eras = olderEras;
-					defaultOffset = $temp$defaultOffset;
-					posixMinutes = $temp$posixMinutes;
-					eras = $temp$eras;
-					continue toAdjustedMinutesHelp;
-				}
-			}
-		}
-	});
-var $elm$time$Time$toAdjustedMinutes = F2(
-	function (_v0, time) {
-		var defaultOffset = _v0.a;
-		var eras = _v0.b;
-		return A3(
-			$elm$time$Time$toAdjustedMinutesHelp,
-			defaultOffset,
-			A2(
-				$elm$time$Time$flooredDiv,
-				$elm$time$Time$posixToMillis(time),
-				60000),
-			eras);
-	});
-var $elm$time$Time$toHour = F2(
-	function (zone, time) {
-		return A2(
-			$elm$core$Basics$modBy,
-			24,
-			A2(
-				$elm$time$Time$flooredDiv,
-				A2($elm$time$Time$toAdjustedMinutes, zone, time),
-				60));
-	});
-var $elm$time$Time$toMinute = F2(
-	function (zone, time) {
-		return A2(
-			$elm$core$Basics$modBy,
-			60,
-			A2($elm$time$Time$toAdjustedMinutes, zone, time));
-	});
-var $elm$time$Time$toSecond = F2(
-	function (_v0, time) {
-		return A2(
-			$elm$core$Basics$modBy,
-			60,
-			A2(
-				$elm$time$Time$flooredDiv,
-				$elm$time$Time$posixToMillis(time),
-				1000));
-	});
-var $author$project$Main$pageTime = function (model) {
-	var second = $elm$core$String$fromInt(
-		A2($elm$time$Time$toSecond, model.zone, model.time));
-	var minute = $elm$core$String$fromInt(
-		A2($elm$time$Time$toMinute, model.zone, model.time));
-	var hour = $elm$core$String$fromInt(
-		A2($elm$time$Time$toHour, model.zone, model.time));
-	return A2(
-		$elm$html$Html$div,
-		_List_fromArray(
-			[
-				$elm$html$Html$Attributes$class('container')
-			]),
-		_List_fromArray(
-			[
-				$elm$html$Html$text('TIME'),
+					])),
 				A2(
-				$elm$html$Html$div,
+				$elm$html$Html$button,
+				_List_fromArray(
+					[
+						$elm$html$Html$Events$onClick($author$project$Main$LoadUserTopArtist)
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('top artist')
+					])),
+				A2(
+				$elm$html$Html$tr,
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text(hour + (':' + (minute + (':' + second)))),
-						$elm$html$Html$text('Time from Flag'),
-						$elm$html$Html$text(
-						$elm$core$String$fromInt(model.currentTime))
-					]))
+						$elm$html$Html$text('name: ' + model.topArtist.name)
+					])),
+				A2(
+				$elm$html$Html$tr,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('display name: ' + model.topArtist.href)
+					])),
+				A2(
+				$elm$html$Html$img,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$src(model.topArtist.image.url)
+					]),
+				_List_Nil)
 			]));
 };
-var $elm$html$Html$tr = _VirtualDom_node('tr');
 var $author$project$Main$pageUserAccount = function (model) {
 	return A2(
 		$elm$html$Html$div,
@@ -7222,14 +7204,6 @@ var $author$project$Main$view = function (model) {
 							_List_fromArray(
 								[
 									$author$project$Main$pageMain(model)
-								]));
-					case 1:
-						return A2(
-							$elm$html$Html$div,
-							_List_Nil,
-							_List_fromArray(
-								[
-									$author$project$Main$pageTime(model)
 								]));
 					case 2:
 						return A2(
