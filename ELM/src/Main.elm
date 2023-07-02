@@ -451,7 +451,7 @@ getUserTopArtist model =
     Http.request 
       { method = "GET"
       , headers = [Http.header "Authorization" model.token]
-      , url = "https://api.spotify.com/v1/me/top/artists?limit=1"
+      , url = "hhttps://api.spotify.com/v1/me/top/artists?limit=1&offset=0"
       , body = Http.emptyBody
       , expect = Http.expectJson GotUserTopArtist decodeUserTopArtist
       , timeout = Nothing

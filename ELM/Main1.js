@@ -6287,7 +6287,7 @@ var $author$project$Main$getUserTopArtist = function (model) {
 			method: 'GET',
 			timeout: $elm$core$Maybe$Nothing,
 			tracker: $elm$core$Maybe$Nothing,
-			url: 'https://api.spotify.com/v1/me/top/artists?limit=1'
+			url: 'hhttps://api.spotify.com/v1/me/top/artists?limit=1&offset=0'
 		});
 };
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
