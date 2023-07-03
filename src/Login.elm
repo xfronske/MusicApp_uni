@@ -1,4 +1,4 @@
-module Login exposing (..)
+port module Login exposing (..)
 
 import Browser
 import Html exposing (..)
@@ -12,15 +12,24 @@ type alias Model =
     { loggedIn : Bool
     }
 
+
+
 init : () -> (Model, Cmd Msg)
 init _ =
-    ( { loggedIn = False }
-    , Cmd.none)
+    ( { loggedIn = False }, Cmd.none)
 
 
 
 type Msg
     = GoToMain 
+
+port sendMessage: String -> Cmd msg
+
+update : Msg -> Model -> (Model, Cmd Msg)
+update msg model = 
+    case msg of 
+        GoToMain ->
+            (model, sendMessage "login")
 
 
 

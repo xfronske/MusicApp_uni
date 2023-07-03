@@ -5171,13 +5171,16 @@ var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
 var $author$project$Login$subscriptions = function (model) {
 	return $elm$core$Platform$Sub$none;
 };
+var $elm$json$Json$Encode$string = _Json_wrap;
+var $author$project$Login$sendMessage = _Platform_outgoingPort('sendMessage', $elm$json$Json$Encode$string);
 var $author$project$Login$update = F2(
 	function (msg, model) {
-		return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+		return _Utils_Tuple2(
+			model,
+			$author$project$Login$sendMessage('login'));
 	});
 var $author$project$Login$GoToMain = {$: 'GoToMain'};
 var $elm$html$Html$a = _VirtualDom_node('a');
-var $elm$json$Json$Encode$string = _Json_wrap;
 var $elm$html$Html$Attributes$stringProperty = F2(
 	function (key, string) {
 		return A2(
@@ -5577,16 +5580,7 @@ var $author$project$Login$view = function (_v0) {
 											[
 												$elm$html$Html$text('Eremiya Rifat')
 											])),
-										A2(
-										$elm$html$Html$a,
-										_List_fromArray(
-											[
-												$elm$html$Html$Attributes$href('https://github.com/xfronske')
-											]),
-										_List_fromArray(
-											[
-												$elm$html$Html$text(' and Xaver Fronske')
-											])),
+										$elm$html$Html$text(' and Xaver Fronske'),
 										$elm$html$Html$text('. The source code is on '),
 										A2(
 										$elm$html$Html$a,
