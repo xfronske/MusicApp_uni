@@ -94,9 +94,7 @@ init currentTime =
 --##########.Messages.and.Types.##########
 
 type Msg
-    = Tick Time.Posix
-    | AdjustTimeZone Time.Zone
-    | TogglePage Int
+    = TogglePage Int
 
     -- Dropdown
     | ToggleNavigationDropdown
@@ -232,10 +230,9 @@ navigation model =
                                                           ][ text "Main" ]        
                                                       ]
 
-                                                      ]
                                                 , div [ class "dropdown-content" ][
                                                         a [ class "dropdown-item" 
-                                                          , onClick ( TogglePage 2 )
+                                                          , onClick ( TogglePage 1 )
                                                           ][ text "Spotify" ]
                                                       ]
                                                 ]
@@ -289,7 +286,7 @@ navigation model =
                                 p [] [text "ho"]
                           ]
 
-                   , if model.currentPage == 2 || model.currentPage == 3 then --Spotify page
+                   , if model.currentPage == 1 || model.currentPage == 2 then --Spotify page
                         div [ class "options for spotify" ][
                           div [ class "container" ][
                             nav [ class "level" ][
@@ -363,27 +360,6 @@ pageMain model =
     div [ class "container" ][
           text ("Main Page"++model.accessToken)
         ]
-        
-pageTime : Model -> Html Msg
-pageTime model = 
-    let
-      hour   = String.fromInt (Time.toHour   model.zone model.time)
-      minute = String.fromInt (Time.toMinute model.zone model.time)
-      second = String.fromInt (Time.toSecond model.zone model.time)
-    in
-    div [ class "container" ][
-          text "TIME" 
-
-           
-        , div [][
-                  text (hour ++ ":" ++ minute ++ ":" ++ second)
-                , text "Time from Flag"
-                , text (String.fromInt model.currentTime)
-                ]
-
-
-        ]
-        
     
 pageSpotify : Model -> Html Msg
 pageSpotify model = 
@@ -480,14 +456,11 @@ view model =
           , case model.currentPage of 
                 0 -> 
                     div[][ pageMain model ]
-            
-                1 -> 
-                    div[][ pageTime model ]
                 
-                2 ->
+                1 ->
                     div[][ pageSpotify model ]
 
-                3 ->
+                2 ->
                     div[][ pageUserAccount model ]
                 
                 _ ->

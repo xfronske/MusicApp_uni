@@ -41,12 +41,11 @@ var app = Elm.Main.init({
   const args = new URLSearchParams(window.location.search);
   const code = args.get('code');
 
-  const client_id = '95b88d3b5a5745748fb58777ed7a1318';
-  const redirect_uri = 'http://localhost:8000/ELM/index.html'; // Your redirect uri
+  const client_id = 'c294decfda3b412bb97b8c7951d93631';
+  const redirect_uri = 'http://localhost:8000/index.html'; // Your redirect uri
 
   // after recieving the code from spotify it gets exchanged for the accessToken
   if (code) {
-    console.log(code);
    exchangeToken(code);
   } 
 

@@ -4545,53 +4545,7 @@ function _Http_track(router, xhr, tracker)
 			size: event.lengthComputable ? $elm$core$Maybe$Just(event.total) : $elm$core$Maybe$Nothing
 		}))));
 	});
-}
-
-
-function _Time_now(millisToPosix)
-{
-	return _Scheduler_binding(function(callback)
-	{
-		callback(_Scheduler_succeed(millisToPosix(Date.now())));
-	});
-}
-
-var _Time_setInterval = F2(function(interval, task)
-{
-	return _Scheduler_binding(function(callback)
-	{
-		var id = setInterval(function() { _Scheduler_rawSpawn(task); }, interval);
-		return function() { clearInterval(id); };
-	});
-});
-
-function _Time_here()
-{
-	return _Scheduler_binding(function(callback)
-	{
-		callback(_Scheduler_succeed(
-			A2($elm$time$Time$customZone, -(new Date().getTimezoneOffset()), _List_Nil)
-		));
-	});
-}
-
-
-function _Time_getZoneName()
-{
-	return _Scheduler_binding(function(callback)
-	{
-		try
-		{
-			var name = $elm$time$Time$Name(Intl.DateTimeFormat().resolvedOptions().timeZone);
-		}
-		catch (e)
-		{
-			var name = $elm$time$Time$Offset(new Date().getTimezoneOffset());
-		}
-		callback(_Scheduler_succeed(name));
-	});
-}
-var $elm$core$Basics$EQ = {$: 'EQ'};
+}var $elm$core$Basics$EQ = {$: 'EQ'};
 var $elm$core$Basics$GT = {$: 'GT'};
 var $elm$core$Basics$LT = {$: 'LT'};
 var $elm$core$List$cons = _List_cons;
@@ -5380,13 +5334,50 @@ var $elm$core$Task$perform = F2(
 				A2($elm$core$Task$map, toMessage, task)));
 	});
 var $elm$browser$Browser$element = _Browser_element;
-var $author$project$Main$AdjustTimeZone = function (a) {
-	return {$: 'AdjustTimeZone', a: a};
-};
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
-var $author$project$Main$GotPlaylists = function (a) {
-	return {$: 'GotPlaylists', a: a};
+var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
+var $author$project$Main$init = function (currentTime) {
+	return _Utils_Tuple2(
+		{
+			accessToken: '',
+			accountDropdownState: false,
+			currentPage: 2,
+			currentTime: currentTime,
+			currentUser: {country: '', display_name: '', email: '', id: ''},
+			dropdownState: false,
+			loginState: false,
+			message: '',
+			playlists: _List_Nil,
+			spotifydDropdownState: false,
+			token: ''
+		},
+		$elm$core$Platform$Cmd$none);
 };
+var $elm$json$Json$Decode$int = _Json_decodeInt;
+var $author$project$Main$RecFromJS = function (a) {
+	return {$: 'RecFromJS', a: a};
+};
+var $elm$json$Json$Decode$string = _Json_decodeString;
+var $author$project$Main$messageReceiver = _Platform_incomingPort('messageReceiver', $elm$json$Json$Decode$string);
+var $author$project$Main$subscriptions = function (_v0) {
+	return $author$project$Main$messageReceiver($author$project$Main$RecFromJS);
+};
+var $author$project$Main$UserData = F4(
+	function (country, display_name, email, id) {
+		return {country: country, display_name: display_name, email: email, id: id};
+	});
+var $author$project$Main$GotUserData = function (a) {
+	return {$: 'GotUserData', a: a};
+};
+var $elm$json$Json$Decode$field = _Json_decodeField;
+var $elm$json$Json$Decode$map4 = _Json_map4;
+var $author$project$Main$decodeUserData = A5(
+	$elm$json$Json$Decode$map4,
+	$author$project$Main$UserData,
+	A2($elm$json$Json$Decode$field, 'country', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'display_name', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'email', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$string));
 var $elm$http$Http$BadStatus_ = F2(
 	function (a, b) {
 		return {$: 'BadStatus_', a: a, b: b};
@@ -6007,30 +5998,6 @@ var $elm$http$Http$Header = F2(
 		return {$: 'Header', a: a, b: b};
 	});
 var $elm$http$Http$header = $elm$http$Http$Header;
-var $author$project$Main$PlaylistResponse = function (items) {
-	return {items: items};
-};
-var $elm$json$Json$Decode$field = _Json_decodeField;
-var $elm$json$Json$Decode$list = _Json_decodeList;
-var $author$project$Main$Playlist = F3(
-	function (id, name, href) {
-		return {href: href, id: id, name: name};
-	});
-var $elm$json$Json$Decode$map3 = _Json_map3;
-var $elm$json$Json$Decode$string = _Json_decodeString;
-var $author$project$Main$playlistDecoder = A4(
-	$elm$json$Json$Decode$map3,
-	$author$project$Main$Playlist,
-	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'href', $elm$json$Json$Decode$string));
-var $author$project$Main$playlistResponseDecoder = A2(
-	$elm$json$Json$Decode$map,
-	$author$project$Main$PlaylistResponse,
-	A2(
-		$elm$json$Json$Decode$field,
-		'items',
-		$elm$json$Json$Decode$list($author$project$Main$playlistDecoder)));
 var $elm$http$Http$Request = function (a) {
 	return {$: 'Request', a: a};
 };
@@ -6199,86 +6166,6 @@ var $elm$http$Http$request = function (r) {
 		$elm$http$Http$Request(
 			{allowCookiesFromOtherDomains: false, body: r.body, expect: r.expect, headers: r.headers, method: r.method, timeout: r.timeout, tracker: r.tracker, url: r.url}));
 };
-var $author$project$Main$getUserPlaylists = function (model) {
-	return $elm$http$Http$request(
-		{
-			body: $elm$http$Http$emptyBody,
-			expect: A2($elm$http$Http$expectJson, $author$project$Main$GotPlaylists, $author$project$Main$playlistResponseDecoder),
-			headers: _List_fromArray(
-				[
-					A2($elm$http$Http$header, 'Authorization', model.token)
-				]),
-			method: 'GET',
-			timeout: $elm$core$Maybe$Nothing,
-			tracker: $elm$core$Maybe$Nothing,
-			url: 'https://api.spotify.com/v1/users/' + (model.currentUser.id + '/playlists')
-		});
-};
-var $elm$time$Time$Name = function (a) {
-	return {$: 'Name', a: a};
-};
-var $elm$time$Time$Offset = function (a) {
-	return {$: 'Offset', a: a};
-};
-var $elm$time$Time$Zone = F2(
-	function (a, b) {
-		return {$: 'Zone', a: a, b: b};
-	});
-var $elm$time$Time$customZone = $elm$time$Time$Zone;
-var $elm$time$Time$here = _Time_here(_Utils_Tuple0);
-var $elm$time$Time$Posix = function (a) {
-	return {$: 'Posix', a: a};
-};
-var $elm$time$Time$millisToPosix = $elm$time$Time$Posix;
-var $elm$time$Time$utc = A2($elm$time$Time$Zone, 0, _List_Nil);
-var $author$project$Main$init = function (currentTime) {
-	var initialModel = {
-		accessToken: '',
-		accountDropdownState: false,
-		currentPage: 2,
-		currentTime: currentTime,
-		currentUser: {country: '', display_name: '', email: '', id: ''},
-		dropdownState: false,
-		loginState: false,
-		message: '',
-		playlists: _List_Nil,
-		spotifydDropdownState: false,
-		time: $elm$time$Time$millisToPosix(0),
-		token: '',
-		zone: $elm$time$Time$utc
-	};
-	return _Utils_Tuple2(
-		initialModel,
-		$elm$core$Platform$Cmd$batch(
-			_List_fromArray(
-				[
-					A2($elm$core$Task$perform, $author$project$Main$AdjustTimeZone, $elm$time$Time$here),
-					$author$project$Main$getUserPlaylists(initialModel)
-				])));
-};
-var $elm$json$Json$Decode$int = _Json_decodeInt;
-var $author$project$Main$RecFromJS = function (a) {
-	return {$: 'RecFromJS', a: a};
-};
-var $author$project$Main$messageReceiver = _Platform_incomingPort('messageReceiver', $elm$json$Json$Decode$string);
-var $author$project$Main$subscriptions = function (_v0) {
-	return $author$project$Main$messageReceiver($author$project$Main$RecFromJS);
-};
-var $author$project$Main$UserData = F4(
-	function (country, display_name, email, id) {
-		return {country: country, display_name: display_name, email: email, id: id};
-	});
-var $author$project$Main$GotUserData = function (a) {
-	return {$: 'GotUserData', a: a};
-};
-var $elm$json$Json$Decode$map4 = _Json_map4;
-var $author$project$Main$decodeUserData = A5(
-	$elm$json$Json$Decode$map4,
-	$author$project$Main$UserData,
-	A2($elm$json$Json$Decode$field, 'country', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'display_name', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'email', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$string));
 var $author$project$Main$getUserData = function (model) {
 	return $elm$http$Http$request(
 		{
@@ -6294,7 +6181,46 @@ var $author$project$Main$getUserData = function (model) {
 			url: 'https://api.spotify.com/v1/me'
 		});
 };
-var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
+var $author$project$Main$GotPlaylists = function (a) {
+	return {$: 'GotPlaylists', a: a};
+};
+var $author$project$Main$PlaylistResponse = function (items) {
+	return {items: items};
+};
+var $elm$json$Json$Decode$list = _Json_decodeList;
+var $author$project$Main$Playlist = F3(
+	function (id, name, href) {
+		return {href: href, id: id, name: name};
+	});
+var $elm$json$Json$Decode$map3 = _Json_map3;
+var $author$project$Main$playlistDecoder = A4(
+	$elm$json$Json$Decode$map3,
+	$author$project$Main$Playlist,
+	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'href', $elm$json$Json$Decode$string));
+var $author$project$Main$playlistResponseDecoder = A2(
+	$elm$json$Json$Decode$map,
+	$author$project$Main$PlaylistResponse,
+	A2(
+		$elm$json$Json$Decode$field,
+		'items',
+		$elm$json$Json$Decode$list($author$project$Main$playlistDecoder)));
+var $author$project$Main$getUserPlaylists = function (model) {
+	return $elm$http$Http$request(
+		{
+			body: $elm$http$Http$emptyBody,
+			expect: A2($elm$http$Http$expectJson, $author$project$Main$GotPlaylists, $author$project$Main$playlistResponseDecoder),
+			headers: _List_fromArray(
+				[
+					A2($elm$http$Http$header, 'Authorization', model.token)
+				]),
+			method: 'GET',
+			timeout: $elm$core$Maybe$Nothing,
+			tracker: $elm$core$Maybe$Nothing,
+			url: 'https://api.spotify.com/v1/users/' + (model.currentUser.id + '/playlists')
+		});
+};
 var $elm$core$Basics$not = _Basics_not;
 var $elm$json$Json$Encode$string = _Json_wrap;
 var $author$project$Main$sendMessage = _Platform_outgoingPort('sendMessage', $elm$json$Json$Encode$string);
@@ -6306,20 +6232,6 @@ var $author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{dropdownState: !model.dropdownState}),
-					$elm$core$Platform$Cmd$none);
-			case 'Tick':
-				var newTime = msg.a;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{time: newTime}),
-					$elm$core$Platform$Cmd$none);
-			case 'AdjustTimeZone':
-				var newZone = msg.a;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{zone: newZone}),
 					$elm$core$Platform$Cmd$none);
 			case 'TogglePage':
 				var newPage = msg.a;
@@ -6642,27 +6554,6 @@ var $author$project$Main$navigation = function (model) {
 																					]),
 																				_List_fromArray(
 																					[
-																						$elm$html$Html$text('Time')
-																					]))
-																			])),
-																		A2(
-																		$elm$html$Html$div,
-																		_List_fromArray(
-																			[
-																				$elm$html$Html$Attributes$class('dropdown-content')
-																			]),
-																		_List_fromArray(
-																			[
-																				A2(
-																				$elm$html$Html$a,
-																				_List_fromArray(
-																					[
-																						$elm$html$Html$Attributes$class('dropdown-item'),
-																						$elm$html$Html$Events$onClick(
-																						$author$project$Main$TogglePage(2))
-																					]),
-																				_List_fromArray(
-																					[
 																						$elm$html$Html$text('Spotify')
 																					]))
 																			]))
@@ -6853,7 +6744,7 @@ var $author$project$Main$navigation = function (model) {
 												$elm$html$Html$text('ho')
 											]))
 									])),
-								((model.currentPage === 2) || (model.currentPage === 3)) ? A2(
+								((model.currentPage === 1) || (model.currentPage === 2)) ? A2(
 								$elm$html$Html$div,
 								_List_fromArray(
 									[
@@ -7106,106 +6997,6 @@ var $author$project$Main$pageSpotify = function (model) {
 				$elm$html$Html$text('Token: ' + model.accessToken)
 			]));
 };
-var $elm$time$Time$flooredDiv = F2(
-	function (numerator, denominator) {
-		return $elm$core$Basics$floor(numerator / denominator);
-	});
-var $elm$core$Basics$modBy = _Basics_modBy;
-var $elm$time$Time$posixToMillis = function (_v0) {
-	var millis = _v0.a;
-	return millis;
-};
-var $elm$time$Time$toAdjustedMinutesHelp = F3(
-	function (defaultOffset, posixMinutes, eras) {
-		toAdjustedMinutesHelp:
-		while (true) {
-			if (!eras.b) {
-				return posixMinutes + defaultOffset;
-			} else {
-				var era = eras.a;
-				var olderEras = eras.b;
-				if (_Utils_cmp(era.start, posixMinutes) < 0) {
-					return posixMinutes + era.offset;
-				} else {
-					var $temp$defaultOffset = defaultOffset,
-						$temp$posixMinutes = posixMinutes,
-						$temp$eras = olderEras;
-					defaultOffset = $temp$defaultOffset;
-					posixMinutes = $temp$posixMinutes;
-					eras = $temp$eras;
-					continue toAdjustedMinutesHelp;
-				}
-			}
-		}
-	});
-var $elm$time$Time$toAdjustedMinutes = F2(
-	function (_v0, time) {
-		var defaultOffset = _v0.a;
-		var eras = _v0.b;
-		return A3(
-			$elm$time$Time$toAdjustedMinutesHelp,
-			defaultOffset,
-			A2(
-				$elm$time$Time$flooredDiv,
-				$elm$time$Time$posixToMillis(time),
-				60000),
-			eras);
-	});
-var $elm$time$Time$toHour = F2(
-	function (zone, time) {
-		return A2(
-			$elm$core$Basics$modBy,
-			24,
-			A2(
-				$elm$time$Time$flooredDiv,
-				A2($elm$time$Time$toAdjustedMinutes, zone, time),
-				60));
-	});
-var $elm$time$Time$toMinute = F2(
-	function (zone, time) {
-		return A2(
-			$elm$core$Basics$modBy,
-			60,
-			A2($elm$time$Time$toAdjustedMinutes, zone, time));
-	});
-var $elm$time$Time$toSecond = F2(
-	function (_v0, time) {
-		return A2(
-			$elm$core$Basics$modBy,
-			60,
-			A2(
-				$elm$time$Time$flooredDiv,
-				$elm$time$Time$posixToMillis(time),
-				1000));
-	});
-var $author$project$Main$pageTime = function (model) {
-	var second = $elm$core$String$fromInt(
-		A2($elm$time$Time$toSecond, model.zone, model.time));
-	var minute = $elm$core$String$fromInt(
-		A2($elm$time$Time$toMinute, model.zone, model.time));
-	var hour = $elm$core$String$fromInt(
-		A2($elm$time$Time$toHour, model.zone, model.time));
-	return A2(
-		$elm$html$Html$div,
-		_List_fromArray(
-			[
-				$elm$html$Html$Attributes$class('container')
-			]),
-		_List_fromArray(
-			[
-				$elm$html$Html$text('TIME'),
-				A2(
-				$elm$html$Html$div,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$elm$html$Html$text(hour + (':' + (minute + (':' + second)))),
-						$elm$html$Html$text('Time from Flag'),
-						$elm$html$Html$text(
-						$elm$core$String$fromInt(model.currentTime))
-					]))
-			]));
-};
 var $elm$html$Html$tr = _VirtualDom_node('tr');
 var $author$project$Main$pageUserAccount = function (model) {
 	return A2(
@@ -7267,17 +7058,9 @@ var $author$project$Main$view = function (model) {
 							_List_Nil,
 							_List_fromArray(
 								[
-									$author$project$Main$pageTime(model)
-								]));
-					case 2:
-						return A2(
-							$elm$html$Html$div,
-							_List_Nil,
-							_List_fromArray(
-								[
 									$author$project$Main$pageSpotify(model)
 								]));
-					case 3:
+					case 2:
 						return A2(
 							$elm$html$Html$div,
 							_List_Nil,
