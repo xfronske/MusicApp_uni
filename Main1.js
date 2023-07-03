@@ -5341,7 +5341,7 @@ var $author$project$Main$init = function (currentTime) {
 		{
 			accessToken: '',
 			accountDropdownState: false,
-			currentPage: 2,
+			currentPage: 0,
 			currentTime: currentTime,
 			currentUser: {country: '', display_name: '', email: '', id: ''},
 			dropdownState: false,
@@ -6295,7 +6295,7 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{currentPage: 3}),
+						{currentPage: 2}),
 					$author$project$Main$getUserData(model));
 			case 'GotUserData':
 				var userData = msg.a;
@@ -6533,7 +6533,7 @@ var $author$project$Main$navigation = function (model) {
 																					]),
 																				_List_fromArray(
 																					[
-																						$elm$html$Html$text('Main')
+																						$elm$html$Html$text('Spotify')
 																					]))
 																			])),
 																		A2(
@@ -6554,7 +6554,7 @@ var $author$project$Main$navigation = function (model) {
 																					]),
 																				_List_fromArray(
 																					[
-																						$elm$html$Html$text('Spotify')
+																						$elm$html$Html$text('Spotify----')
 																					]))
 																			]))
 																	]))
@@ -6744,7 +6744,7 @@ var $author$project$Main$navigation = function (model) {
 												$elm$html$Html$text('ho')
 											]))
 									])),
-								((model.currentPage === 1) || (model.currentPage === 2)) ? A2(
+								A2(
 								$elm$html$Html$div,
 								_List_fromArray(
 									[
@@ -6968,21 +6968,9 @@ var $author$project$Main$navigation = function (model) {
 															]))
 													]))
 											]))
-									])) : A2($elm$html$Html$div, _List_Nil, _List_Nil)
+									]))
 							]))
 					]))
-			]));
-};
-var $author$project$Main$pageMain = function (model) {
-	return A2(
-		$elm$html$Html$div,
-		_List_fromArray(
-			[
-				$elm$html$Html$Attributes$class('container')
-			]),
-		_List_fromArray(
-			[
-				$elm$html$Html$text('Main Page' + model.accessToken)
 			]));
 };
 var $author$project$Main$pageSpotify = function (model) {
@@ -7050,17 +7038,9 @@ var $author$project$Main$view = function (model) {
 							_List_Nil,
 							_List_fromArray(
 								[
-									$author$project$Main$pageMain(model)
-								]));
-					case 1:
-						return A2(
-							$elm$html$Html$div,
-							_List_Nil,
-							_List_fromArray(
-								[
 									$author$project$Main$pageSpotify(model)
 								]));
-					case 2:
+					case 1:
 						return A2(
 							$elm$html$Html$div,
 							_List_Nil,

@@ -66,7 +66,7 @@ type alias PlaylistResponse =
 
 init : Int -> (Model, Cmd Msg)
 init currentTime =
-  ( { currentPage = 2 -- 0 = Main Page
+  ( { currentPage = 0 
     , dropdownState = False
 
     -- Spotify
@@ -171,7 +171,7 @@ update msg model =
 -- Requests
 
         LoadUserData ->
-            ( { model | currentPage = 3 } 
+            ( { model | currentPage = 2 } 
             , ( getUserData model) )
 
         GotUserData userData ->
@@ -227,13 +227,13 @@ navigation model =
                                                   div [ class "dropdown-content" ][
                                                         a [ class "dropdown-item" 
                                                           , onClick ( TogglePage 0 )
-                                                          ][ text "Main" ]        
+                                                          ][ text "Spotify" ]        
                                                       ]
 
                                                 , div [ class "dropdown-content" ][
                                                         a [ class "dropdown-item" 
                                                           , onClick ( TogglePage 1 )
-                                                          ][ text "Spotify" ]
+                                                          ][ text "Spotify----" ]
                                                       ]
                                                 ]
                                           ]             
@@ -286,8 +286,7 @@ navigation model =
                                 p [] [text "ho"]
                           ]
 
-                   , if model.currentPage == 1 || model.currentPage == 2 then --Spotify page
-                        div [ class "options for spotify" ][
+                   ,  div [ class "options for spotify" ][
                           div [ class "container" ][
                             nav [ class "level" ][
                                   div [ class "level-left" ][
@@ -342,11 +341,6 @@ navigation model =
                     ]
               ]
             ]      
-                     else
-                        div [][]
-
-
-
                     ] 
               ]
         ]
@@ -354,12 +348,6 @@ navigation model =
         
 
 --##########.PAGES.##########
-
-pageMain : Model -> Html Msg
-pageMain model = 
-    div [ class "container" ][
-          text ("Main Page"++model.accessToken)
-        ]
     
 pageSpotify : Model -> Html Msg
 pageSpotify model = 
@@ -453,14 +441,11 @@ view model =
 
     
     div [][ navigation model 
-          , case model.currentPage of 
-                0 -> 
-                    div[][ pageMain model ]
-                
-                1 ->
+          , case model.currentPage of                 
+                0 ->
                     div[][ pageSpotify model ]
 
-                2 ->
+                1 ->
                     div[][ pageUserAccount model ]
                 
                 _ ->
