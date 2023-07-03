@@ -6,7 +6,6 @@ Then you want to clone this repository by navigating to your desired destination
 
 
 
-NOTE: Redirect URIs are only for localhost yet!
 
 #### working: 
 <ul>
