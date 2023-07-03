@@ -25,10 +25,6 @@ var app = Elm.Main.init({
   app.ports.sendMessage.subscribe(
     function(message) {
       switch(message) {
-      case 'login':
-        redirectToSpotifyAuthorizeEndpoint();
-        break;
-      
       case 'logout':
         logout();
         break;
@@ -36,68 +32,25 @@ var app = Elm.Main.init({
       case 'refreshToken':
         refreshToken();
         break;
-
-      case 'recieveToken':
-        // accessToken is passed to ELM
-        app.ports.messageReceiver.send(access_token);  
       }
     }
   );
 
 
-// To understand this code please follow https://developer.spotify.com/documentation/web-api/tutorials/code-pkce-flow. There is an explaination on Authorization Code with PKCE Flow
 
-  function generateRandomString(length) {
-    let text = '';
-    const possible =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const args = new URLSearchParams(window.location.search);
+  const code = args.get('code');
 
-    for (let i = 0; i < length; i++) {
-      text += possible.charAt(Math.floor(Math.random() * possible.length));
-    }
-    return text;
-  }
+  const client_id = '95b88d3b5a5745748fb58777ed7a1318';
+  const redirect_uri = 'http://localhost:8000/ELM/index.html'; // Your redirect uri
 
-  async function generateCodeChallenge(codeVerifier) {
-    const digest = await crypto.subtle.digest(
-      'SHA-256',
-      new TextEncoder().encode(codeVerifier),
-    );
+  // after recieving the code from spotify it gets exchanged for the accessToken
+  if (code) {
+    console.log(code);
+   exchangeToken(code);
+  } 
 
-    return btoa(String.fromCharCode(...new Uint8Array(digest)))
-      .replace(/=/g, '')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_');
-  }
-
-  function generateUrlWithSearchParams(url, params) {
-    const urlObject = new URL(url);
-    urlObject.search = new URLSearchParams(params).toString();
-
-    return urlObject.toString();
-  }
-
-  function redirectToSpotifyAuthorizeEndpoint() {
-    const codeVerifier = generateRandomString(64);
-
-    generateCodeChallenge(codeVerifier).then((code_challenge) => {
-      window.localStorage.setItem('code_verifier', codeVerifier);
-
-      window.location = generateUrlWithSearchParams(
-        'https://accounts.spotify.com/authorize',
-        {
-          response_type: 'code',
-          client_id: 'c294decfda3b412bb97b8c7951d93631',
-          scope: 'user-read-private user-read-email',
-          code_challenge_method: 'S256',
-          code_challenge,
-          redirect_uri,
-        },
-      );
-
-    });
-  }
-
+  // Nimmt den Authentication Code und wandelt ihn in richtigen Token um
   function exchangeToken(code) {
     const code_verifier = localStorage.getItem('code_verifier');
 
@@ -116,14 +69,16 @@ var app = Elm.Main.init({
     })
       .then(addThrowErrorToFetch)
       .then((data) => {
-        processTokenResponse(data);
-
+        console.log(data);
+        processTokenResponse(data)
         // clear search query params in the url
         window.history.replaceState({}, document.title, '/');
+        app.ports.messageReceiver.send(access_token);  
       })
       .catch(handleError);
   }
 
+  // Wenn der Token abgelaufen ist, wird ein neuer generiert
   function refreshToken() {
     fetch('https://accounts.spotify.com/api/token', {
       method: 'POST',
@@ -158,8 +113,8 @@ var app = Elm.Main.init({
     window.location.reload();
   }
 
+  // Der übertragene Token wird im localStorage gespeichert
   function processTokenResponse(data) {
-    console.log(data);
 
     access_token = data.access_token;
     refresh_token = data.refresh_token;
@@ -174,23 +129,12 @@ var app = Elm.Main.init({
 
   }
 
-
-
-  const client_id = 'c294decfda3b412bb97b8c7951d93631';
-  const redirect_uri = 'http://localhost:8000/ELM/index.html'; // Your redirect uri
-
   // Restore tokens from localStorage
   let access_token = localStorage.getItem('access_token') || null;
   let refresh_token = localStorage.getItem('refresh_token') || null;
   let expires_at = localStorage.getItem('expires_at') || null;
 
-  const args = new URLSearchParams(window.location.search);
-  const code = args.get('code');
 
-  if (code) {
-    // after recieving the code from spotify it gets exchanged for the accessToken
-    exchangeToken(code);
-  } 
 
 
 

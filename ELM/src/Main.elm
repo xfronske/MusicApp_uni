@@ -6,11 +6,13 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Json.Decode exposing (..)
 import Json.Encode as Encode
-import Time
 import Task
 import Http exposing (..)
 
 --##########.MAIN.###########
+-- TODO : FrontEnd für Main Page 
+-- kümmert sich Xaaver um getPlaylists ?
+    -- ja tut er
 
 main =
   Browser.element
@@ -24,15 +26,10 @@ main =
 port sendMessage: String -> Cmd msg
 
 port messageReceiver : (String -> msg) -> Sub msg
-
-port loginStatePort : (String -> msg) -> Sub msg
-
-        
+    
 type alias Model =
     { currentPage : Int
     , dropdownState : Bool 
-    , zone : Time.Zone
-    , time : Time.Posix
     
     -- Spotify
     , spotifydDropdownState : Bool
@@ -47,15 +44,30 @@ type alias Model =
     -- ports
     , message : String
     , accessToken: String
+    , playlists : List Playlist
     }
+
+type alias UserData = 
+    { country : String
+    , display_name : String
+    , email : String
+    , id : String }
+
+type alias Playlist =
+    { id : String
+    , name : String
+    , href : String
+    }
+
+type alias PlaylistResponse =
+    { items : List Playlist }
+  
 
 
 init : Int -> (Model, Cmd Msg)
 init currentTime =
   ( { currentPage = 2 -- 0 = Main Page
     , dropdownState = False
-    , zone = Time.utc 
-    , time = Time.millisToPosix 0
 
     -- Spotify
     , spotifydDropdownState = False
@@ -66,6 +78,7 @@ init currentTime =
                     , display_name = ""
                     , email = ""
                     , id = "" }
+    , playlists = []
     
     -- Flags
     , currentTime = currentTime
@@ -75,7 +88,7 @@ init currentTime =
     , accessToken = ""
 
     }
-  , Task.perform AdjustTimeZone Time.here
+  , Cmd.none
   )
 
 --##########.Messages.and.Types.##########
@@ -91,10 +104,8 @@ type Msg
     | ToggleAccountDropdown
     
     -- Ports to JS
-    | LoginToSpotify
     | LogoutFromSpotify
     | RefreshToken
-    | RecieveToken
     | RecFromJS String 
 
     -- Spotify
@@ -102,6 +113,8 @@ type Msg
     | LoadUserData
     | GotUserData (Result Http.Error UserData) 
     | ToggleUserPage
+    | GotPlaylists (Result Http.Error PlaylistResponse)
+    | InitiatePlaylistFetch
      
     
 --##########.Update.##########
@@ -113,17 +126,16 @@ update msg model =
             ( { model | dropdownState = not model.dropdownState}
             , Cmd.none )
             
-        Tick newTime ->
-            ( { model | time = newTime }
-            , Cmd.none )
-
-        AdjustTimeZone newZone ->
-            ( { model | zone = newZone }
-            , Cmd.none )
-            
         TogglePage newPage->
             ( { model | currentPage = newPage }
             , Cmd.none )
+
+        GotPlaylists (Ok response) ->
+            ( { model | playlists = response.items }, Cmd.none )
+
+        GotPlaylists (Err _) ->
+            -- hier sollten Sie die Fehlerbehandlung durchführen
+            ( model, Cmd.none )
             
 -- Spotify
 
@@ -135,9 +147,7 @@ update msg model =
             ( { model | accountDropdownState = not model.accountDropdownState }
             , Cmd.none )
 
-        LoginToSpotify ->
-            ( model
-            , sendMessage "login" )
+
 
         LogoutFromSpotify ->
             ( { model | accessToken = "" }
@@ -146,10 +156,6 @@ update msg model =
         RefreshToken ->
             ( model 
             , sendMessage "refreshToken" )
-
-        RecieveToken -> 
-            ( model 
-            , sendMessage "recieveToken" )
 
         RecFromJS token ->
             ( { model | accessToken = token
@@ -160,6 +166,8 @@ update msg model =
         ToggleLoginState state ->
             ( { model | loginState = state }
             , Cmd.none )
+        InitiatePlaylistFetch ->
+            ( model, getUserPlaylists model )
 
 
 -- Requests
@@ -223,10 +231,7 @@ navigation model =
                                                           , onClick ( TogglePage 0 )
                                                           ][ text "Main" ]        
                                                       ]
-                                                , div [ class "dropdown-content" ][
-                                                        a [ class "dropdown-item"
-                                                          , onClick ( TogglePage 1 )
-                                                          ][ text "Time" ]
+
                                                       ]
                                                 , div [ class "dropdown-content" ][
                                                         a [ class "dropdown-item" 
@@ -281,7 +286,7 @@ navigation model =
                               ]
 
                             else 
-                                button [ class "button", onClick LoginToSpotify ][ text "Login to Spotify" ]
+                                p [] [text "ho"]
                           ]
 
                    , if model.currentPage == 2 || model.currentPage == 3 then --Spotify page
@@ -356,7 +361,7 @@ navigation model =
 pageMain : Model -> Html Msg
 pageMain model = 
     div [ class "container" ][
-          text "This is the main Page"
+          text ("Main Page"++model.accessToken)
         ]
         
 pageTime : Model -> Html Msg
@@ -384,7 +389,6 @@ pageSpotify : Model -> Html Msg
 pageSpotify model = 
     div [ class "container for spotify" ][
           text ( "Token: " ++ model.accessToken)
-        , button [ onClick RecieveToken ][text "get"]
         ]
 
 pageUserAccount : Model -> Html Msg 
@@ -397,9 +401,10 @@ pageUserAccount model =
 
 --##########.Spotify.stuff.##########
 
+
+-- Gets User Data 
 getUserData : Model -> Cmd Msg  
 getUserData model =
-
   Http.request
     { method = "GET"
     , headers = [Http.header "Authorization" model.token]
@@ -410,11 +415,38 @@ getUserData model =
     , tracker = Nothing
     }
 
-type alias UserData = 
-    { country : String
-    , display_name : String
-    , email : String
-    , id : String }
+getUserPlaylists : Model -> Cmd Msg  
+getUserPlaylists model =
+
+  Http.request
+    { method = "GET"
+    , headers = [Http.header "Authorization" model.token]
+    , url = "https://api.spotify.com/v1/users/"++ model.currentUser.id ++"/playlists"
+    , body = Http.emptyBody
+    , expect = Http.expectJson GotPlaylists playlistResponseDecoder
+    , timeout = Nothing
+    , tracker = Nothing
+    }
+
+playlistDecoder : Decoder Playlist
+playlistDecoder =
+    Json.Decode.map3 Playlist
+        (field "id" string)
+        (field "name" string)
+        (field "href" string)
+playlistResponseDecoder : Decoder PlaylistResponse
+playlistResponseDecoder =
+    Json.Decode.map PlaylistResponse
+        (field "items" (Json.Decode.list playlistDecoder))
+
+decodeUserPlaylists : Decoder UserData
+decodeUserPlaylists = 
+    Json.Decode.map4 UserData
+        (field "country" string)
+        (field "display_name" string)
+        (field "email" string)
+        (field "id" string)
+
 
 decodeUserData : Decoder UserData
 decodeUserData = 
