@@ -1,4 +1,4 @@
-port module Login exposing (..)
+module Login exposing (..)
 
 import Browser
 import Html exposing (..)
@@ -14,21 +14,14 @@ type alias Model =
 
 init : () -> (Model, Cmd Msg)
 init _ =
-    ({ loggedIn = False }, Cmd.none)
+    ( { loggedIn = False }
+    , Cmd.none)
 
 
 
 type Msg
     = GoToMain 
-port sendMessage: String -> Cmd msg
 
-
-update : Msg -> Model -> (Model, Cmd Msg)
-update msg model =
-    case msg of
-        GoToMain ->
-            ( model
-            , sendMessage "login" )
 
 
 view : Model -> Html Msg
@@ -88,7 +81,7 @@ view _ =
                 [ strong [] [text "Klangkapsel"]
                 , text " by "
                 , a [href "https://eremiyarifat.de"] [text "Eremiya Rifat"]
-                , text " and Xaver " 
+                , text " and Xaver Fronske" 
                 , text ". The source code is on "
                 , a [href "https://github.com/xfronske/MusicApp_uni/"] [text "GitHub"]
                 , text ". The website content is made with Elm "

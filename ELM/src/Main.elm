@@ -6,13 +6,14 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Json.Decode exposing (..)
 import Json.Encode as Encode
-import Time
 import Task
 import Http exposing (..)
 
 --##########.MAIN.###########
 -- TODO : FrontEnd für Main Page 
 -- kümmert sich Xaaver um getPlaylists ?
+    -- ja tut er
+
 main =
   Browser.element
     { init = init
@@ -25,15 +26,10 @@ main =
 port sendMessage: String -> Cmd msg
 
 port messageReceiver : (String -> msg) -> Sub msg
-
-port loginStatePort : (String -> msg) -> Sub msg
-
-        
+    
 type alias Model =
     { currentPage : Int
     , dropdownState : Bool 
-    , zone : Time.Zone
-    , time : Time.Posix
     
     -- Spotify
     , spotifydDropdownState : Bool
@@ -50,11 +46,13 @@ type alias Model =
     , accessToken: String
     , playlists : List Playlist
     }
+
 type alias UserData = 
     { country : String
     , display_name : String
     , email : String
     , id : String }
+
 type alias Playlist =
     { id : String
     , name : String
@@ -70,8 +68,6 @@ init : Int -> (Model, Cmd Msg)
 init currentTime =
   ( { currentPage = 2 -- 0 = Main Page
     , dropdownState = False
-    , zone = Time.utc 
-    , time = Time.millisToPosix 0
 
     -- Spotify
     , spotifydDropdownState = False
@@ -92,7 +88,7 @@ init currentTime =
     , accessToken = ""
 
     }
-  , Cmd.batch [Task.perform AdjustTimeZone Time.here  ]
+  , Cmd.none
   )
 
 --##########.Messages.and.Types.##########
@@ -128,14 +124,6 @@ update msg model =
     case msg of
         ToggleNavigationDropdown ->
             ( { model | dropdownState = not model.dropdownState}
-            , Cmd.none )
-            
-        Tick newTime ->
-            ( { model | time = newTime }
-            , Cmd.none )
-
-        AdjustTimeZone newZone ->
-            ( { model | zone = newZone }
             , Cmd.none )
             
         TogglePage newPage->
@@ -243,10 +231,7 @@ navigation model =
                                                           , onClick ( TogglePage 0 )
                                                           ][ text "Main" ]        
                                                       ]
-                                                , div [ class "dropdown-content" ][
-                                                        a [ class "dropdown-item"
-                                                          , onClick ( TogglePage 1 )
-                                                          ][ text "Time" ]
+
                                                       ]
                                                 , div [ class "dropdown-content" ][
                                                         a [ class "dropdown-item" 
