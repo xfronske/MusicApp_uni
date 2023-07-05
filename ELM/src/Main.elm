@@ -1,4 +1,4 @@
-port module Main exposing (main)
+port module Main exposing (main, subscriptions)
 
 import Browser
 import Html exposing (Html, button, div, text, p, nav, a, span, i, blockquote, th, tr)
@@ -26,7 +26,7 @@ main =
 port sendMessage: String -> Cmd msg
 
 port messageReceiver : (String -> msg) -> Sub msg
-    
+port loginStatePort : (String -> msg) -> Sub msg
 type alias Model =
     { currentPage : Int
     , dropdownState : Bool 
@@ -94,9 +94,8 @@ init currentTime =
 --##########.Messages.and.Types.##########
 
 type Msg
-    = Tick Time.Posix
-    | AdjustTimeZone Time.Zone
-    | TogglePage Int
+    = 
+     TogglePage Int
 
     -- Dropdown
     | ToggleNavigationDropdown
@@ -115,6 +114,7 @@ type Msg
     | ToggleUserPage
     | GotPlaylists (Result Http.Error PlaylistResponse)
     | InitiatePlaylistFetch
+    | LoadUserPlaylist
      
     
 --##########.Update.##########
@@ -172,6 +172,10 @@ update msg model =
 
 -- Requests
 
+  -- Neue Cases für die Playlist-Funktionalität
+        LoadUserPlaylist ->
+            (model, getUserPlaylists model)
+        
         LoadUserData ->
             ( { model | currentPage = 3 } 
             , ( getUserData model) )
@@ -194,166 +198,7 @@ update msg model =
     
 navigation : Model -> Html Msg
 navigation model = 
-    div [class ""][ 
-        div [ class "container" ][
-                nav [ class "level" ][
-                      div [ class "level-left" ][
-                            p [ class "level-item"][
-           
-                                case model.dropdownState of 
-                                  False -> --Dropdown zu
-                                      div [ class "dropdown" ][
-                                            div [ class "dropdown-trigger", onClick ToggleNavigationDropdown][
-                                                  button [ class "button is-success" ][
-                                                           span [][ text "navigation options" ]
-                                                         , span [ class "icon is-small" ][
-                                                                  i [ class "fas fa-angle-down" ][]
-                                                                ]
-                                                         ]
-                                                ]
-                                          ]
-                                
-                                  True -> -- Dropdown offen
-                                      div [ class "dropdown is-active" ][
-                                            div [ class "dropdown-trigger", onClick ToggleNavigationDropdown][
-                                                  button [ class "button is-success" ][
-                                                           span [][
-                                                                  text "navigation options"
-                                                                ] 
-                                                         , span [ class "icon is-small" ][ 
-                                                                  i [ class " fas fa-angle-down"][]
-                                                                ]    
-                                                         ]
-                                                ]
-                                          , div [ class "dropdown-menu"][
-                                                  div [ class "dropdown-content" ][
-                                                        a [ class "dropdown-item" 
-                                                          , onClick ( TogglePage 0 )
-                                                          ][ text "Main" ]        
-                                                      ]
-
-                                                      ]
-                                                , div [ class "dropdown-content" ][
-                                                        a [ class "dropdown-item" 
-                                                          , onClick ( TogglePage 2 )
-                                                          ][ text "Spotify" ]
-                                                      ]
-                                                ]
-                                          ]             
-                              ]
-                          ]
-                    -- LEVEL RIGHT ----------------------Account Dropdown
-                    , div [ class "level-right"][
-                            if model.loginState then
-                                p [ class "level-item"][  
-                                  case model.accountDropdownState of 
-                                    True ->                            
-                                      div [ class "dropdown is-active" ][
-                                            div [ class "dropdown-trigger", onClick ToggleAccountDropdown ][
-                                                  button [ class "button" ][
-                                                           span [][
-                                                                  text "Account"
-                                                                ] 
-                                                         , span [ class "icon is-small" ][ 
-                                                                  i [ class " fas fa-angle-down"][]
-                                                                ]    
-                                                         ]
-                                                ]
-                                          , div [ class "dropdown-menu" ][
-                                                  div [ class "dropdown-content" ][
-                                                        a [ class "dropdown-item", onClick LoadUserData ]
-                                                          [ text "My Accountdata" ]        
-                                                      ]
-                                                
-                                                , div [ class "dropdown-content" ][
-                                                        a [ class "dropdown-item", onClick LogoutFromSpotify ][
-                                                            text "Logout"
-                                                          ]
-                                                      ]
-                                                ]
-                                          ]
-                                    False -> --Dropdown zu
-                                      div [ class "dropdown" ][
-                                            div [ class "dropdown-trigger", onClick ToggleAccountDropdown ][
-                                                  button [ class "button" ][
-                                                           span [][ text "Account" ]
-                                                         , span [ class "icon is-small" ][
-                                                                  i [ class "fas fa-angle-down" ][]
-                                                                ]
-                                                         ]
-                                                ]
-                                          ]             
-                              ]
-
-                            else 
-                                p [] [text "ho"]
-                          ]
-
-                   , if model.currentPage == 2 || model.currentPage == 3 then --Spotify page
-                        div [ class "options for spotify" ][
-                          div [ class "container" ][
-                            nav [ class "level" ][
-                                  div [ class "level-left" ][
-                                        p [ class "level-item"][
-                       
-                                            case model.spotifydDropdownState of 
-                                              False -> --Dropdown zu
-                                                  div [ class "dropdown" ][
-                                                        div [ class "dropdown-trigger", onClick ToggleSpotifyDropdown][
-                                                              button [ class "button" ][
-                                                                       span [][ text "Spotify Options" ]
-                                                                     , span [ class "icon is-small" ][
-                                                                              i [ class "fas fa-angle-down" ][]
-                                                                            ]
-                                                                     ]
-                                                            ]
-                                                      ]
-                                            
-                                              True -> -- Dropdown offen
-                                                  div [ class "dropdown is-active" ][
-                                                        div [ class "dropdown-trigger", onClick ToggleSpotifyDropdown][
-                                                              button [ class "button" ][
-                                                                       span [][
-                                                                              text "spotify options"
-                                                                            ] 
-                                                                     , span [ class "icon is-small" ][ 
-                                                                              i [ class " fas fa-angle-down"][]
-                                                                            ]    
-                                                                     ]
-                                                            ]
-                                                      , div [ class "dropdown-menu"][
-                                                              div [ class "dropdown-content" ][
-                                                                    a [ class "dropdown-item" 
-                                                                      , onClick ( TogglePage 0 )
-                                                                      ][ text "Search artist" ]        
-                                                                  ]
-                                                            , div [ class "dropdown-content" ][
-                                                                    a [ class "dropdown-item"
-                                                                      , onClick ( TogglePage 1 )
-                                                                      ][ text "Search song" ]
-                                                                  ]
-                                                            , div [ class "dropdown-content" ][
-                                                                    a [ class "dropdown-item" 
-                                                                      , onClick ( TogglePage 2 )
-                                                                      ][ text "Search album" ]
-                                                                  ]
-                                                            ]
-                                                      ]             
-                                         ]
-        
-                                ]
-                    ]
-              ]
-            ]      
-                     else
-                        div [][]
-
-
-
-                    ] 
-              ]
-        ]
-        
+    div [][text "asd"]
         
 
 --##########.PAGES.##########
@@ -361,29 +206,18 @@ navigation model =
 pageMain : Model -> Html Msg
 pageMain model = 
     div [ class "container" ][
-          text ("Main Page"++model.accessToken)
+          text ("Main Page"++model.accessToken),
+          p [][text ("User Data : " ++ model.currentUser.display_name)],
+          button [onClick LoadUserData][text "getuserData"],
+          button [onClick LoadUserPlaylist][text "getuserPlaylist"],
+          p [][text ("Playlist: ")],
+          div [] (List.map playlistNameView model.playlists)
         ]
-        
-pageTime : Model -> Html Msg
-pageTime model = 
-    let
-      hour   = String.fromInt (Time.toHour   model.zone model.time)
-      minute = String.fromInt (Time.toMinute model.zone model.time)
-      second = String.fromInt (Time.toSecond model.zone model.time)
-    in
-    div [ class "container" ][
-          text "TIME" 
-
-           
-        , div [][
-                  text (hour ++ ":" ++ minute ++ ":" ++ second)
-                , text "Time from Flag"
-                , text (String.fromInt model.currentTime)
-                ]
-
-
-        ]
-        
+-- Funktion zum Erzeugen der Anzeige eines Playlist-Namens
+playlistNameView : Playlist -> Html Msg
+playlistNameView playlist =
+    div [] [text playlist.name]      
+  
     
 pageSpotify : Model -> Html Msg
 pageSpotify model = 
@@ -476,22 +310,9 @@ view : Model -> Html Msg
 view model =
 
     
-    div [][ navigation model 
-          , case model.currentPage of 
-                0 -> 
+    div [][ 
                     div[][ pageMain model ]
-            
-                1 -> 
-                    div[][ pageTime model ]
-                
-                2 ->
-                    div[][ pageSpotify model ]
 
-                3 ->
-                    div[][ pageUserAccount model ]
-                
-                _ ->
-                    div [][text "page nothing"]
           ]
 
 -- SUBSCRIPTIONS

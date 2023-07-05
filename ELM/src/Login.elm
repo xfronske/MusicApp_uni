@@ -23,6 +23,12 @@ type Msg
     = GoToMain 
 
 
+update : Msg -> Model -> Model
+update msg model =
+    case msg of
+        GoToMain ->
+            { model | loggedIn = True }
+
 
 view : Model -> Html Msg
 view _ =
