@@ -32,9 +32,20 @@ var app = Elm.Main.init({
       case 'refreshToken':
         refreshToken();
         break;
+
+      case 'userArtist':
+        getUserArtist();
+        break;
       }
     }
   );
+
+  app.ports.sendArtist.subscribe(
+    function(message){
+      getArtistId(message);
+    }
+  );
+  
 
 
 
@@ -48,6 +59,36 @@ var app = Elm.Main.init({
   if (code) {
    exchangeToken(code);
   } 
+
+  function getArtistId(artistName) {
+    let artist = artistName.replace(" ", "+");
+    console.log(artist);
+    fetch('https://api.spotify.com/v1/search?q='+ artist +'&type=artist', {
+      method : 'GET',
+      headers : {'authorization': 'Bearer ' + localStorage.getItem('access_token')}
+    })
+    .then(addThrowErrorToFetch)
+      .then((data) => {
+        processIdResponse(data);
+        window.history.replaceState({}, document.title, '/');
+  
+      })
+      .catch(handleError);
+  }
+
+  function getUserArtist() {
+    fetch('https://api.spotify.com/v1/artists/2X5DLfWm532qxKFh7fGpXP', {
+      method: 'GET',
+      headers: {'Authorization': 'Bearer ' + localStorage.getItem('access_token')}
+    })
+    .then(addThrowErrorToFetch)
+      .then((data) => {
+        processArtistResponse(data);
+        window.history.replaceState({}, document.title, '/');
+  
+      })
+      .catch(handleError);
+  }
 
   // Nimmt den Authentication Code und wandelt ihn in richtigen Token um
   function exchangeToken(code) {
@@ -68,7 +109,7 @@ var app = Elm.Main.init({
     })
       .then(addThrowErrorToFetch)
       .then((data) => {
-        console.log(data);
+        //console.log(data);
         processTokenResponse(data)
         // clear search query params in the url
         window.history.replaceState({}, document.title, '/');
@@ -124,8 +165,18 @@ var app = Elm.Main.init({
     localStorage.setItem('access_token', access_token);
     localStorage.setItem('refresh_token', refresh_token);
     localStorage.setItem('expires_at', expires_at);
+  }
 
+  function processArtistResponse(data) {
+    name = data.name;
 
+    console.log(name);
+  }
+
+  function processIdResponse(data) {
+    //id = data.items;
+    console.log(JSON.stringify("item->"+data.items)); /// wenn ich das decode geht es vllt 
+    console.log(data);
   }
 
   // Restore tokens from localStorage

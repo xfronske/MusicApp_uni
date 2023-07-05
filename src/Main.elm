@@ -24,6 +24,7 @@ main =
     
 --##########.Ports
 port sendMessage: String -> Cmd msg
+port sendArtist: String -> Cmd msg
 
 port messageReceiver : (String -> msg) -> Sub msg
     
@@ -37,6 +38,8 @@ type alias Model =
     , loginState : Bool
     , token : String
     , currentUser : UserData
+    , currentUserArtist : Artist
+    , tester : Tester
 
     -- flags
     , currentTime : Int
@@ -47,11 +50,7 @@ type alias Model =
     , playlists : List Playlist
     }
 
-type alias UserData = 
-    { country : String
-    , display_name : String
-    , email : String
-    , id : String }
+
 
 type alias Playlist =
     { id : String
@@ -78,6 +77,16 @@ init currentTime =
                     , display_name = ""
                     , email = ""
                     , id = "" }
+    , currentUserArtist = { name = ""
+                          , followers = { href = ""
+                                        , total = 0 
+                                        }
+                          , id = ""
+                          , href = ""
+                          --, genres : List String    
+                          --, images : List Image  
+                          } 
+    , tester = { total = 0, offset = 0}
     , playlists = []
     
     -- Flags
@@ -110,7 +119,12 @@ type Msg
     | ToggleLoginState Bool
     | LoadUserData
     | GotUserData (Result Http.Error UserData) 
+    | GetUserArtist
+    | GotUserArtist (Result Http.Error Tester)
+    | GetArtistId
     | ToggleUserPage
+
+
     | GotPlaylists (Result Http.Error PlaylistResponse)
     | InitiatePlaylistFetch
      
@@ -164,6 +178,7 @@ update msg model =
         ToggleLoginState state ->
             ( { model | loginState = state }
             , Cmd.none )
+
         InitiatePlaylistFetch ->
             ( model, getUserPlaylists model )
 
@@ -171,7 +186,7 @@ update msg model =
 -- Requests
 
         LoadUserData ->
-            ( { model | currentPage = 2 } 
+            ( { model | currentPage = 1 } 
             , ( getUserData model) )
 
         GotUserData userData ->
@@ -182,6 +197,25 @@ update msg model =
 
                 Err _ ->
                     ( model, Cmd.none )
+
+        GetUserArtist ->
+            ( model
+            , ( sendMessage "userArtist" ) )
+
+        GotUserArtist userArtist ->
+            case userArtist of 
+                Ok data ->
+                    ( { model | tester = Tester data.total data.offset } 
+
+                    , Cmd.none )
+                    {-( {model | currentUserArtist = Artist data.name data.followers data.id data.href}
+                    , Cmd.none ) -}
+
+                Err _ ->
+                    (model , Cmd.none )
+
+        GetArtistId ->
+            (model, sendArtist "Dimitris Loizos")
 
         ToggleUserPage ->
             ( { model | currentPage = 0 }
@@ -259,7 +293,7 @@ navigation model =
                                           , div [ class "dropdown-menu" ][
                                                   div [ class "dropdown-content" ][
                                                         a [ class "dropdown-item", onClick LoadUserData ]
-                                                          [ text "My Accountdata" ]        
+                                                          [ text "My Account" ]        
                                                       ]
                                                 
                                                 , div [ class "dropdown-content" ][
@@ -352,7 +386,9 @@ navigation model =
 pageSpotify : Model -> Html Msg
 pageSpotify model = 
     div [ class "container for spotify" ][
-          text ( "Token: " ++ model.accessToken)
+          button [ onClick GetUserArtist ][ text "Artist"]
+        , button [ onClick GetArtistId ][ text "get Dimitris-ID"]
+        , text model.currentUserArtist.name
         ]
 
 pageUserAccount : Model -> Html Msg 
@@ -367,6 +403,13 @@ pageUserAccount model =
 
 
 -- Gets User Data 
+    
+type alias UserData = 
+    { country : String
+    , display_name : String
+    , email : String
+    , id : String }
+
 getUserData : Model -> Cmd Msg  
 getUserData model =
   Http.request
@@ -379,9 +422,90 @@ getUserData model =
     , tracker = Nothing
     }
 
+decodeUserData : Decoder UserData
+decodeUserData = 
+    Json.Decode.map4 UserData
+        (field "country" string)
+        (field "display_name" string)
+        (field "email" string)
+        (field "id" string)
+
+-- Artists top
+
+type alias Item = 
+    { item : Artist 
+    , total : Int }
+
+type alias Artist = 
+    { name : String 
+    , followers : Followers
+    , id : String
+    , href : String
+    --, genres : List String    
+    --, images : List Image  
+    } 
+
+type alias Followers =
+    { href : String
+    , total : Int }
+
+type alias Image = 
+    { url : String
+    , height : Int 
+    , width : Int }
+
+type alias Tester = { total : Int, offset : Int}
+
+{-getUserArtist : Model -> Cmd Msg 
+getUserArtist model =
+    Http.request
+        { method = "GET"
+        , headers = [ Http.header "Authorization"  model.token 
+                    , Http.header "scope" "user-top-read"]
+        , url = "https://api.spotify.com/v1/me/top/artists"
+        , body = Http.emptyBody
+        , expect = Http.expectJson GotUserArtist decodeItemArtist
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+decodeItemArtist : Decoder Tester
+decodeItemArtist = 
+    Json.Decode.map2 Tester
+        (field "total" int)
+        (field "offset" int)
+
+decodeArtist : Decoder Artist
+decodeArtist = 
+    Json.Decode.map4 Artist
+        (field "name" string)
+        (field "followers" decodeArtistFollowers)
+        (field "id" string)
+        (field "href" string)
+        --(field "genres" decodeGenres (Html.Attributes.list string) "[]")
+        --(field "images" decodeImage  (Html.Attributes.list string) "[url,height,width]") 
+
+decodeImage : Decoder Image 
+decodeImage = 
+    Json.Decode.map3 Image 
+        (field "url" string)
+        (field "width" int)
+        (field "height" int)
+
+--decodeGenres : Decoder Genres 
+--decodeGenres = 
+
+
+decodeArtistFollowers : Decoder Followers
+decodeArtistFollowers = 
+    Json.Decode.map2 Followers 
+        (field "href" string)
+        (field "total" int ) -}
+
+-- Playlists
+
 getUserPlaylists : Model -> Cmd Msg  
 getUserPlaylists model =
-
   Http.request
     { method = "GET"
     , headers = [Http.header "Authorization" model.token]
@@ -398,6 +522,7 @@ playlistDecoder =
         (field "id" string)
         (field "name" string)
         (field "href" string)
+
 playlistResponseDecoder : Decoder PlaylistResponse
 playlistResponseDecoder =
     Json.Decode.map PlaylistResponse
@@ -412,13 +537,6 @@ decodeUserPlaylists =
         (field "id" string)
 
 
-decodeUserData : Decoder UserData
-decodeUserData = 
-    Json.Decode.map4 UserData
-        (field "country" string)
-        (field "display_name" string)
-        (field "email" string)
-        (field "id" string)
 
 
 --##########.VIEW.##########
@@ -430,7 +548,6 @@ decodeUserData =
 
 --##########Page Index List#########
 --##  0 -> Main                   ##
---##  1 -> Time (big)             ##
 --##  2 -> Spotify                ##
 --##  3 -> User Account           ##
 --##  4 -> 
@@ -457,8 +574,3 @@ view model =
 subscriptions : Model -> Sub Msg
 subscriptions _ =
   messageReceiver RecFromJS
-
-
-
-{-model =
-  Time.every 1000 Tick-}

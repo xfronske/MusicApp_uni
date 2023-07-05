@@ -5344,11 +5344,18 @@ var $author$project$Main$init = function (currentTime) {
 			currentPage: 0,
 			currentTime: currentTime,
 			currentUser: {country: '', display_name: '', email: '', id: ''},
+			currentUserArtist: {
+				followers: {href: '', total: 0},
+				href: '',
+				id: '',
+				name: ''
+			},
 			dropdownState: false,
 			loginState: false,
 			message: '',
 			playlists: _List_Nil,
 			spotifydDropdownState: false,
+			tester: {offset: 0, total: 0},
 			token: ''
 		},
 		$elm$core$Platform$Cmd$none);
@@ -5362,6 +5369,10 @@ var $author$project$Main$messageReceiver = _Platform_incomingPort('messageReceiv
 var $author$project$Main$subscriptions = function (_v0) {
 	return $author$project$Main$messageReceiver($author$project$Main$RecFromJS);
 };
+var $author$project$Main$Tester = F2(
+	function (total, offset) {
+		return {offset: offset, total: total};
+	});
 var $author$project$Main$UserData = F4(
 	function (country, display_name, email, id) {
 		return {country: country, display_name: display_name, email: email, id: id};
@@ -6223,6 +6234,7 @@ var $author$project$Main$getUserPlaylists = function (model) {
 };
 var $elm$core$Basics$not = _Basics_not;
 var $elm$json$Json$Encode$string = _Json_wrap;
+var $author$project$Main$sendArtist = _Platform_outgoingPort('sendArtist', $elm$json$Json$Encode$string);
 var $author$project$Main$sendMessage = _Platform_outgoingPort('sendMessage', $elm$json$Json$Encode$string);
 var $author$project$Main$update = F2(
 	function (msg, model) {
@@ -6295,7 +6307,7 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{currentPage: 2}),
+						{currentPage: 1}),
 					$author$project$Main$getUserData(model));
 			case 'GotUserData':
 				var userData = msg.a;
@@ -6311,6 +6323,28 @@ var $author$project$Main$update = F2(
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
+			case 'GetUserArtist':
+				return _Utils_Tuple2(
+					model,
+					$author$project$Main$sendMessage('userArtist'));
+			case 'GotUserArtist':
+				var userArtist = msg.a;
+				if (userArtist.$ === 'Ok') {
+					var data = userArtist.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								tester: A2($author$project$Main$Tester, data.total, data.offset)
+							}),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
+			case 'GetArtistId':
+				return _Utils_Tuple2(
+					model,
+					$author$project$Main$sendArtist('Dimitris Loizos'));
 			default:
 				return _Utils_Tuple2(
 					_Utils_update(
@@ -6657,7 +6691,7 @@ var $author$project$Main$navigation = function (model) {
 																					]),
 																				_List_fromArray(
 																					[
-																						$elm$html$Html$text('My Accountdata')
+																						$elm$html$Html$text('My Account')
 																					]))
 																			])),
 																		A2(
@@ -6973,6 +7007,8 @@ var $author$project$Main$navigation = function (model) {
 					]))
 			]));
 };
+var $author$project$Main$GetArtistId = {$: 'GetArtistId'};
+var $author$project$Main$GetUserArtist = {$: 'GetUserArtist'};
 var $author$project$Main$pageSpotify = function (model) {
 	return A2(
 		$elm$html$Html$div,
@@ -6982,7 +7018,27 @@ var $author$project$Main$pageSpotify = function (model) {
 			]),
 		_List_fromArray(
 			[
-				$elm$html$Html$text('Token: ' + model.accessToken)
+				A2(
+				$elm$html$Html$button,
+				_List_fromArray(
+					[
+						$elm$html$Html$Events$onClick($author$project$Main$GetUserArtist)
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Artist')
+					])),
+				A2(
+				$elm$html$Html$button,
+				_List_fromArray(
+					[
+						$elm$html$Html$Events$onClick($author$project$Main$GetArtistId)
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('get Dimitris-ID')
+					])),
+				$elm$html$Html$text(model.currentUserArtist.name)
 			]));
 };
 var $elm$html$Html$tr = _VirtualDom_node('tr');
