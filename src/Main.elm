@@ -75,6 +75,8 @@ type alias Model =
     , currentUser : UserData
     , currentUserArtist : Maybe Artist -- die ganze mybe kacke habe ich gemacht weil head nen meybe wert zurück gibt
     --ansonsten weiß ich nicht wie ich das darstellen kann
+
+    --und die js ports funktionieren aber machen nichts weil ich das raus genommen habe das mache ich alles sauber wenn es funktioniert
     , searchArtistName : String
     , artists : List (Artist)
 
