@@ -5349,7 +5349,8 @@ var $author$project$Main$init = function (currentTime) {
 			message: '',
 			playlists: _List_Nil,
 			spotifydDropdownState: false,
-			token: ''
+			token: '',
+			topTracks: _List_Nil
 		},
 		$elm$core$Platform$Cmd$none);
 };
@@ -5366,18 +5367,9 @@ var $author$project$Main$UserData = F4(
 	function (country, display_name, email, id) {
 		return {country: country, display_name: display_name, email: email, id: id};
 	});
-var $author$project$Main$GotUserData = function (a) {
-	return {$: 'GotUserData', a: a};
+var $author$project$Main$GotTopTracks = function (a) {
+	return {$: 'GotTopTracks', a: a};
 };
-var $elm$json$Json$Decode$field = _Json_decodeField;
-var $elm$json$Json$Decode$map4 = _Json_map4;
-var $author$project$Main$decodeUserData = A5(
-	$elm$json$Json$Decode$map4,
-	$author$project$Main$UserData,
-	A2($elm$json$Json$Decode$field, 'country', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'display_name', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'email', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$string));
 var $elm$http$Http$BadStatus_ = F2(
 	function (a, b) {
 		return {$: 'BadStatus_', a: a, b: b};
@@ -6166,6 +6158,65 @@ var $elm$http$Http$request = function (r) {
 		$elm$http$Http$Request(
 			{allowCookiesFromOtherDomains: false, body: r.body, expect: r.expect, headers: r.headers, method: r.method, timeout: r.timeout, tracker: r.tracker, url: r.url}));
 };
+var $author$project$Main$TopTracksResponse = function (items) {
+	return {items: items};
+};
+var $elm$json$Json$Decode$field = _Json_decodeField;
+var $elm$json$Json$Decode$list = _Json_decodeList;
+var $author$project$Main$Track = F3(
+	function (id, name, artists) {
+		return {artists: artists, id: id, name: name};
+	});
+var $author$project$Main$Artist = function (name) {
+	return {name: name};
+};
+var $author$project$Main$artistDecoder = A2(
+	$elm$json$Json$Decode$map,
+	$author$project$Main$Artist,
+	A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string));
+var $elm$json$Json$Decode$map3 = _Json_map3;
+var $author$project$Main$trackDecoder = A4(
+	$elm$json$Json$Decode$map3,
+	$author$project$Main$Track,
+	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string),
+	A2(
+		$elm$json$Json$Decode$field,
+		'artists',
+		$elm$json$Json$Decode$list($author$project$Main$artistDecoder)));
+var $author$project$Main$topTracksResponseDecoder = A2(
+	$elm$json$Json$Decode$map,
+	$author$project$Main$TopTracksResponse,
+	A2(
+		$elm$json$Json$Decode$field,
+		'items',
+		$elm$json$Json$Decode$list($author$project$Main$trackDecoder)));
+var $author$project$Main$getTopTracks = function (model) {
+	return $elm$http$Http$request(
+		{
+			body: $elm$http$Http$emptyBody,
+			expect: A2($elm$http$Http$expectJson, $author$project$Main$GotTopTracks, $author$project$Main$topTracksResponseDecoder),
+			headers: _List_fromArray(
+				[
+					A2($elm$http$Http$header, 'Authorization', model.token)
+				]),
+			method: 'GET',
+			timeout: $elm$core$Maybe$Nothing,
+			tracker: $elm$core$Maybe$Nothing,
+			url: 'https://api.spotify.com/v1/me/top/tracks'
+		});
+};
+var $author$project$Main$GotUserData = function (a) {
+	return {$: 'GotUserData', a: a};
+};
+var $elm$json$Json$Decode$map4 = _Json_map4;
+var $author$project$Main$decodeUserData = A5(
+	$elm$json$Json$Decode$map4,
+	$author$project$Main$UserData,
+	A2($elm$json$Json$Decode$field, 'country', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'display_name', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'email', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$string));
 var $author$project$Main$getUserData = function (model) {
 	return $elm$http$Http$request(
 		{
@@ -6187,12 +6238,10 @@ var $author$project$Main$GotPlaylists = function (a) {
 var $author$project$Main$PlaylistResponse = function (items) {
 	return {items: items};
 };
-var $elm$json$Json$Decode$list = _Json_decodeList;
 var $author$project$Main$Playlist = F3(
 	function (id, name, href) {
 		return {href: href, id: id, name: name};
 	});
-var $elm$json$Json$Decode$map3 = _Json_map3;
 var $author$project$Main$playlistDecoder = A4(
 	$elm$json$Json$Decode$map3,
 	$author$project$Main$Playlist,
@@ -6247,6 +6296,21 @@ var $author$project$Main$update = F2(
 						_Utils_update(
 							model,
 							{playlists: response.items}),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
+			case 'LoadTopTracks':
+				return _Utils_Tuple2(
+					model,
+					$author$project$Main$getTopTracks(model));
+			case 'GotTopTracks':
+				if (msg.a.$ === 'Ok') {
+					var response = msg.a.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{topTracks: response.items}),
 						$elm$core$Platform$Cmd$none);
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
@@ -6324,6 +6388,7 @@ var $author$project$Main$update = F2(
 		}
 	});
 var $elm$html$Html$div = _VirtualDom_node('div');
+var $author$project$Main$LoadTopTracks = {$: 'LoadTopTracks'};
 var $author$project$Main$LoadUserData = {$: 'LoadUserData'};
 var $author$project$Main$LoadUserPlaylist = {$: 'LoadUserPlaylist'};
 var $elm$html$Html$button = _VirtualDom_node('button');
@@ -6362,6 +6427,35 @@ var $author$project$Main$playlistNameView = function (playlist) {
 		_List_fromArray(
 			[
 				$elm$html$Html$text(playlist.name)
+			]));
+};
+var $elm$html$Html$span = _VirtualDom_node('span');
+var $author$project$Main$artistNames = function (artists) {
+	return A2(
+		$elm$html$Html$span,
+		_List_Nil,
+		_List_fromArray(
+			[
+				$elm$html$Html$text(artists.name)
+			]));
+};
+var $author$project$Main$trackView = function (track) {
+	return A2(
+		$elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$p,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text(track.name + ' - ')
+					])),
+				A2(
+				$elm$html$Html$p,
+				_List_Nil,
+				A2($elm$core$List$map, $author$project$Main$artistNames, track.artists))
 			]));
 };
 var $author$project$Main$pageMain = function (model) {
@@ -6411,7 +6505,21 @@ var $author$project$Main$pageMain = function (model) {
 				A2(
 				$elm$html$Html$div,
 				_List_Nil,
-				A2($elm$core$List$map, $author$project$Main$playlistNameView, model.playlists))
+				A2($elm$core$List$map, $author$project$Main$playlistNameView, model.playlists)),
+				A2(
+				$elm$html$Html$button,
+				_List_fromArray(
+					[
+						$elm$html$Html$Events$onClick($author$project$Main$LoadTopTracks)
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Top-Tracks laden')
+					])),
+				A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				A2($elm$core$List$map, $author$project$Main$trackView, model.topTracks))
 			]));
 };
 var $author$project$Main$view = function (model) {

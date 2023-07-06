@@ -36,7 +36,8 @@ type alias Model =
     , accountDropdownState : Bool
     , loginState : Bool
     , token : String
-    , currentUser : UserData
+    , currentUser : UserData,
+      topTracks : List Track
 
     -- flags
     , currentTime : Int
@@ -46,6 +47,8 @@ type alias Model =
     , accessToken: String
     , playlists : List Playlist
     }
+type alias TopTracksResponse =
+    { items : List Track }
 
 type alias UserData = 
     { country : String
@@ -62,7 +65,26 @@ type alias Playlist =
 type alias PlaylistResponse =
     { items : List Playlist }
   
+type alias Track =
+    {
+     id : String
+    , name : String,
+    artists  : List Artist
 
+    }
+type alias Album =
+    { name : String
+    , id : String
+    , images : List Image
+    }
+type alias Image =
+    { url : String
+    , height : Int
+    , width : Int
+    }
+type alias Artist =
+    { name : String
+    }
 
 init : Int -> (Model, Cmd Msg)
 init currentTime =
@@ -78,7 +100,8 @@ init currentTime =
                     , display_name = ""
                     , email = ""
                     , id = "" }
-    , playlists = []
+    , playlists = [],
+     topTracks = []
     
     -- Flags
     , currentTime = currentTime
@@ -115,6 +138,8 @@ type Msg
     | GotPlaylists (Result Http.Error PlaylistResponse)
     | InitiatePlaylistFetch
     | LoadUserPlaylist
+    | LoadTopTracks
+    | GotTopTracks (Result Http.Error TopTracksResponse)
      
     
 --##########.Update.##########
@@ -136,6 +161,15 @@ update msg model =
         GotPlaylists (Err _) ->
             -- hier sollten Sie die Fehlerbehandlung durchführen
             ( model, Cmd.none )
+
+        LoadTopTracks ->
+            (model, getTopTracks model)
+
+        GotTopTracks (Ok response) ->
+            ({ model | topTracks = response.items }, Cmd.none)
+
+        GotTopTracks (Err _) ->
+            (model, Cmd.none)
             
 -- Spotify
 
@@ -211,8 +245,21 @@ pageMain model =
           button [onClick LoadUserData][text "getuserData"],
           button [onClick LoadUserPlaylist][text "getuserPlaylist"],
           p [][text ("Playlist: ")],
-          div [] (List.map playlistNameView model.playlists)
+          div [] (List.map playlistNameView model.playlists),
+          button [ onClick LoadTopTracks ] [ text "Top-Tracks laden" ],
+            div []  (List.map trackView model.topTracks)
+               
         ]
+trackView : Track -> Html Msg
+trackView track =
+    div []
+        [
+            p [] [ text (track.name ++ " - "  ) ]
+            , p[] (List.map artistNames track.artists) 
+        ]
+artistNames : Artist -> Html Msg
+artistNames artists =
+    span[][text artists.name]
 -- Funktion zum Erzeugen der Anzeige eines Playlist-Namens
 playlistNameView : Playlist -> Html Msg
 playlistNameView playlist =
@@ -261,7 +308,50 @@ getUserPlaylists model =
     , timeout = Nothing
     , tracker = Nothing
     }
+getTopTracks : Model -> Cmd Msg
+getTopTracks model =
+    Http.request
+        { 
+            method = "GET",
+            headers = [ Http.header "Authorization" model.token ],
+            url = "https://api.spotify.com/v1/me/top/tracks",
+            body = Http.emptyBody,
+            expect = Http.expectJson GotTopTracks topTracksResponseDecoder,
+            timeout = Nothing,
+            tracker = Nothing
+        }
+-- DECODER 
 
+topTracksResponseDecoder : Decoder TopTracksResponse
+topTracksResponseDecoder =
+    Json.Decode.map TopTracksResponse
+        (field "items" (Json.Decode.list trackDecoder))
+
+trackDecoder : Decoder Track
+trackDecoder =
+    Json.Decode.map3 Track
+        (field "id" string)
+        (field "name" string)
+        (field "artists" (Json.Decode.list artistDecoder))
+     
+artistDecoder : Decoder Artist
+artistDecoder =
+    Json.Decode.map Artist (field "name" string)
+imageDecoder : Decoder Image
+imageDecoder =
+    Json.Decode.map3 Image
+        (field "url" string)
+        (field "height" int)
+        (field "width" int)
+albumDecoder : Decoder Album
+albumDecoder =
+    Json.Decode.map3 Album
+        (field "name" string)
+        (field "id" string)
+        (field "images" (Json.Decode.list imageDecoder))
+
+
+-- GetPlaylists Decoders
 playlistDecoder : Decoder Playlist
 playlistDecoder =
     Json.Decode.map3 Playlist
