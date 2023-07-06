@@ -6163,10 +6163,34 @@ var $author$project$Main$TopTracksResponse = function (items) {
 };
 var $elm$json$Json$Decode$field = _Json_decodeField;
 var $elm$json$Json$Decode$list = _Json_decodeList;
-var $author$project$Main$Track = F3(
-	function (id, name, artists) {
-		return {artists: artists, id: id, name: name};
+var $author$project$Main$Track = F4(
+	function (id, name, artists, album) {
+		return {album: album, artists: artists, id: id, name: name};
 	});
+var $author$project$Main$Album = F3(
+	function (name, id, images) {
+		return {id: id, images: images, name: name};
+	});
+var $author$project$Main$Image = F3(
+	function (url, height, width) {
+		return {height: height, url: url, width: width};
+	});
+var $elm$json$Json$Decode$map3 = _Json_map3;
+var $author$project$Main$imageDecoder = A4(
+	$elm$json$Json$Decode$map3,
+	$author$project$Main$Image,
+	A2($elm$json$Json$Decode$field, 'url', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'height', $elm$json$Json$Decode$int),
+	A2($elm$json$Json$Decode$field, 'width', $elm$json$Json$Decode$int));
+var $author$project$Main$albumDecoder = A4(
+	$elm$json$Json$Decode$map3,
+	$author$project$Main$Album,
+	A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$string),
+	A2(
+		$elm$json$Json$Decode$field,
+		'images',
+		$elm$json$Json$Decode$list($author$project$Main$imageDecoder)));
 var $author$project$Main$Artist = function (name) {
 	return {name: name};
 };
@@ -6174,16 +6198,17 @@ var $author$project$Main$artistDecoder = A2(
 	$elm$json$Json$Decode$map,
 	$author$project$Main$Artist,
 	A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string));
-var $elm$json$Json$Decode$map3 = _Json_map3;
-var $author$project$Main$trackDecoder = A4(
-	$elm$json$Json$Decode$map3,
+var $elm$json$Json$Decode$map4 = _Json_map4;
+var $author$project$Main$trackDecoder = A5(
+	$elm$json$Json$Decode$map4,
 	$author$project$Main$Track,
 	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$string),
 	A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string),
 	A2(
 		$elm$json$Json$Decode$field,
 		'artists',
-		$elm$json$Json$Decode$list($author$project$Main$artistDecoder)));
+		$elm$json$Json$Decode$list($author$project$Main$artistDecoder)),
+	A2($elm$json$Json$Decode$field, 'album', $author$project$Main$albumDecoder));
 var $author$project$Main$topTracksResponseDecoder = A2(
 	$elm$json$Json$Decode$map,
 	$author$project$Main$TopTracksResponse,
@@ -6209,7 +6234,6 @@ var $author$project$Main$getTopTracks = function (model) {
 var $author$project$Main$GotUserData = function (a) {
 	return {$: 'GotUserData', a: a};
 };
-var $elm$json$Json$Decode$map4 = _Json_map4;
 var $author$project$Main$decodeUserData = A5(
 	$elm$json$Json$Decode$map4,
 	$author$project$Main$UserData,
@@ -6439,12 +6463,74 @@ var $author$project$Main$artistNames = function (artists) {
 				$elm$html$Html$text(artists.name)
 			]));
 };
+var $elm$core$List$drop = F2(
+	function (n, list) {
+		drop:
+		while (true) {
+			if (n <= 0) {
+				return list;
+			} else {
+				if (!list.b) {
+					return list;
+				} else {
+					var x = list.a;
+					var xs = list.b;
+					var $temp$n = n - 1,
+						$temp$list = xs;
+					n = $temp$n;
+					list = $temp$list;
+					continue drop;
+				}
+			}
+		}
+	});
+var $elm$core$List$head = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(x);
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $elm$html$Html$img = _VirtualDom_node('img');
+var $elm$html$Html$Attributes$src = function (url) {
+	return A2(
+		$elm$html$Html$Attributes$stringProperty,
+		'src',
+		_VirtualDom_noJavaScriptOrHtmlUri(url));
+};
+var $author$project$Main$viewImage = function (image) {
+	return A2(
+		$elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$img,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$src(image.url)
+					]),
+				_List_Nil)
+			]));
+};
 var $author$project$Main$trackView = function (track) {
 	return A2(
 		$elm$html$Html$div,
 		_List_Nil,
 		_List_fromArray(
 			[
+				function () {
+				var _v0 = $elm$core$List$head(
+					A2($elm$core$List$drop, 1, track.album.images));
+				if (_v0.$ === 'Just') {
+					var firstImage = _v0.a;
+					return $author$project$Main$viewImage(firstImage);
+				} else {
+					return $elm$html$Html$text('');
+				}
+			}(),
 				A2(
 				$elm$html$Html$p,
 				_List_Nil,

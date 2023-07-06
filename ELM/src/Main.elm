@@ -8,6 +8,7 @@ import Json.Decode exposing (..)
 import Json.Encode as Encode
 import Task
 import Http exposing (..)
+import Html exposing (img)
 
 --##########.MAIN.###########
 -- TODO : FrontEnd für Main Page 
@@ -69,7 +70,8 @@ type alias Track =
     {
      id : String
     , name : String,
-    artists  : List Artist
+    artists  : List Artist,
+    album : Album
 
     }
 type alias Album =
@@ -254,9 +256,17 @@ trackView : Track -> Html Msg
 trackView track =
     div []
         [
+            
+            case List.drop 1 track.album.images |> List.head  of
+            Just firstImage -> viewImage firstImage
+            Nothing -> text "",
             p [] [ text (track.name ++ " - "  ) ]
             , p[] (List.map artistNames track.artists) 
         ]
+viewImage : Image -> Html Msg
+viewImage image =
+    div []
+        [ img [src image.url] [] ]
 artistNames : Artist -> Html Msg
 artistNames artists =
     span[][text artists.name]
@@ -329,10 +339,11 @@ topTracksResponseDecoder =
 
 trackDecoder : Decoder Track
 trackDecoder =
-    Json.Decode.map3 Track
+    Json.Decode.map4 Track
         (field "id" string)
         (field "name" string)
         (field "artists" (Json.Decode.list artistDecoder))
+        (field "album" albumDecoder)
      
 artistDecoder : Decoder Artist
 artistDecoder =
