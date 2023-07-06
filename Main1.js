@@ -5341,21 +5341,17 @@ var $author$project$Main$init = function (currentTime) {
 		{
 			accessToken: '',
 			accountDropdownState: false,
+			artists: _List_Nil,
 			currentPage: 0,
 			currentTime: currentTime,
 			currentUser: {country: '', display_name: '', email: '', id: ''},
-			currentUserArtist: {
-				followers: {href: '', total: 0},
-				href: '',
-				id: '',
-				name: ''
-			},
+			currentUserArtist: $elm$core$Maybe$Nothing,
 			dropdownState: false,
 			loginState: false,
 			message: '',
 			playlists: _List_Nil,
+			searchArtistName: '',
 			spotifydDropdownState: false,
-			tester: {offset: 0, total: 0},
 			token: ''
 		},
 		$elm$core$Platform$Cmd$none);
@@ -5364,31 +5360,58 @@ var $elm$json$Json$Decode$int = _Json_decodeInt;
 var $author$project$Main$RecFromJS = function (a) {
 	return {$: 'RecFromJS', a: a};
 };
+var $elm$core$Platform$Sub$batch = _Platform_batch;
 var $elm$json$Json$Decode$string = _Json_decodeString;
 var $author$project$Main$messageReceiver = _Platform_incomingPort('messageReceiver', $elm$json$Json$Decode$string);
+var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
 var $author$project$Main$subscriptions = function (_v0) {
-	return $author$project$Main$messageReceiver($author$project$Main$RecFromJS);
+	return $elm$core$Platform$Sub$batch(
+		_List_fromArray(
+			[
+				$author$project$Main$messageReceiver($author$project$Main$RecFromJS),
+				$elm$core$Platform$Sub$none
+			]));
 };
-var $author$project$Main$Tester = F2(
-	function (total, offset) {
-		return {offset: offset, total: total};
-	});
 var $author$project$Main$UserData = F4(
 	function (country, display_name, email, id) {
 		return {country: country, display_name: display_name, email: email, id: id};
 	});
-var $author$project$Main$GotUserData = function (a) {
-	return {$: 'GotUserData', a: a};
+var $author$project$Main$GotArtist = function (a) {
+	return {$: 'GotArtist', a: a};
 };
+var $author$project$Main$ArtistResponse = function (items) {
+	return {items: items};
+};
+var $author$project$Main$Artist = F4(
+	function (name, followers, id, href) {
+		return {followers: followers, href: href, id: id, name: name};
+	});
+var $author$project$Main$Followers = F2(
+	function (href, total) {
+		return {href: href, total: total};
+	});
 var $elm$json$Json$Decode$field = _Json_decodeField;
+var $author$project$Main$decodeFollowers = A3(
+	$elm$json$Json$Decode$map2,
+	$author$project$Main$Followers,
+	A2($elm$json$Json$Decode$field, 'href', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'total', $elm$json$Json$Decode$int));
 var $elm$json$Json$Decode$map4 = _Json_map4;
-var $author$project$Main$decodeUserData = A5(
+var $author$project$Main$decodeArtist = A5(
 	$elm$json$Json$Decode$map4,
-	$author$project$Main$UserData,
-	A2($elm$json$Json$Decode$field, 'country', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'display_name', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'email', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$string));
+	$author$project$Main$Artist,
+	A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'followers', $author$project$Main$decodeFollowers),
+	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'href', $elm$json$Json$Decode$string));
+var $elm$json$Json$Decode$list = _Json_decodeList;
+var $author$project$Main$decodeArtistResponse = A2(
+	$elm$json$Json$Decode$map,
+	$author$project$Main$ArtistResponse,
+	A2(
+		$elm$json$Json$Decode$field,
+		'items',
+		$elm$json$Json$Decode$list($author$project$Main$decodeArtist)));
 var $elm$http$Http$BadStatus_ = F2(
 	function (a, b) {
 		return {$: 'BadStatus_', a: a, b: b};
@@ -6177,6 +6200,31 @@ var $elm$http$Http$request = function (r) {
 		$elm$http$Http$Request(
 			{allowCookiesFromOtherDomains: false, body: r.body, expect: r.expect, headers: r.headers, method: r.method, timeout: r.timeout, tracker: r.tracker, url: r.url}));
 };
+var $author$project$Main$getArtist = function (model) {
+	return $elm$http$Http$request(
+		{
+			body: $elm$http$Http$emptyBody,
+			expect: A2($elm$http$Http$expectJson, $author$project$Main$GotArtist, $author$project$Main$decodeArtistResponse),
+			headers: _List_fromArray(
+				[
+					A2($elm$http$Http$header, 'Authorization', model.token)
+				]),
+			method: 'GET',
+			timeout: $elm$core$Maybe$Nothing,
+			tracker: $elm$core$Maybe$Nothing,
+			url: 'https://api.spotify.com/v1/search?q=' + (model.searchArtistName + '&type=artist')
+		});
+};
+var $author$project$Main$GotUserData = function (a) {
+	return {$: 'GotUserData', a: a};
+};
+var $author$project$Main$decodeUserData = A5(
+	$elm$json$Json$Decode$map4,
+	$author$project$Main$UserData,
+	A2($elm$json$Json$Decode$field, 'country', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'display_name', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'email', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$string));
 var $author$project$Main$getUserData = function (model) {
 	return $elm$http$Http$request(
 		{
@@ -6198,7 +6246,6 @@ var $author$project$Main$GotPlaylists = function (a) {
 var $author$project$Main$PlaylistResponse = function (items) {
 	return {items: items};
 };
-var $elm$json$Json$Decode$list = _Json_decodeList;
 var $author$project$Main$Playlist = F3(
 	function (id, name, href) {
 		return {href: href, id: id, name: name};
@@ -6231,6 +6278,15 @@ var $author$project$Main$getUserPlaylists = function (model) {
 			tracker: $elm$core$Maybe$Nothing,
 			url: 'https://api.spotify.com/v1/users/' + (model.currentUser.id + '/playlists')
 		});
+};
+var $elm$core$List$head = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(x);
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
 };
 var $elm$core$Basics$not = _Basics_not;
 var $elm$json$Json$Encode$string = _Json_wrap;
@@ -6303,6 +6359,12 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					model,
 					$author$project$Main$getUserPlaylists(model));
+			case 'ToggleUserPage':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{currentPage: 0}),
+					$elm$core$Platform$Cmd$none);
 			case 'LoadUserData':
 				return _Utils_Tuple2(
 					_Utils_update(
@@ -6323,11 +6385,11 @@ var $author$project$Main$update = F2(
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
-			case 'GetUserArtist':
+			case 'GetArtist':
 				return _Utils_Tuple2(
 					model,
-					$author$project$Main$sendMessage('userArtist'));
-			case 'GotUserArtist':
+					$author$project$Main$getArtist(model));
+			case 'GotArtist':
 				var userArtist = msg.a;
 				if (userArtist.$ === 'Ok') {
 					var data = userArtist.a;
@@ -6335,21 +6397,29 @@ var $author$project$Main$update = F2(
 						_Utils_update(
 							model,
 							{
-								tester: A2($author$project$Main$Tester, data.total, data.offset)
+								currentUserArtist: $elm$core$List$head(data.items)
 							}),
 						$elm$core$Platform$Cmd$none);
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
-			case 'GetArtistId':
-				return _Utils_Tuple2(
-					model,
-					$author$project$Main$sendArtist('Dimitris Loizos'));
-			default:
+			case 'ChangeArtist':
+				var artistName = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{currentPage: 0}),
+						{searchArtistName: artistName}),
+					$elm$core$Platform$Cmd$none);
+			case 'SendArtistToJS':
+				return _Utils_Tuple2(
+					model,
+					$author$project$Main$sendArtist(model.searchArtistName));
+			default:
+				var artist = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{currentUserArtist: $elm$core$Maybe$Nothing}),
 					$elm$core$Platform$Cmd$none);
 		}
 	});
@@ -7007,8 +7077,55 @@ var $author$project$Main$navigation = function (model) {
 					]))
 			]));
 };
-var $author$project$Main$GetArtistId = {$: 'GetArtistId'};
-var $author$project$Main$GetUserArtist = {$: 'GetUserArtist'};
+var $author$project$Main$ChangeArtist = function (a) {
+	return {$: 'ChangeArtist', a: a};
+};
+var $author$project$Main$GetArtist = {$: 'GetArtist'};
+var $elm$json$Json$Decode$andThen = _Json_andThen;
+var $elm$json$Json$Decode$fail = _Json_fail;
+var $author$project$Main$ifIsEnter = function (msg) {
+	return A2(
+		$elm$json$Json$Decode$andThen,
+		function (key) {
+			return (key === 'Enter') ? $elm$json$Json$Decode$succeed(msg) : $elm$json$Json$Decode$fail('some othern key');
+		},
+		A2($elm$json$Json$Decode$field, 'key', $elm$json$Json$Decode$string));
+};
+var $elm$html$Html$input = _VirtualDom_node('input');
+var $elm$html$Html$Events$alwaysStop = function (x) {
+	return _Utils_Tuple2(x, true);
+};
+var $elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
+	return {$: 'MayStopPropagation', a: a};
+};
+var $elm$html$Html$Events$stopPropagationOn = F2(
+	function (event, decoder) {
+		return A2(
+			$elm$virtual_dom$VirtualDom$on,
+			event,
+			$elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
+	});
+var $elm$json$Json$Decode$at = F2(
+	function (fields, decoder) {
+		return A3($elm$core$List$foldr, $elm$json$Json$Decode$field, decoder, fields);
+	});
+var $elm$html$Html$Events$targetValue = A2(
+	$elm$json$Json$Decode$at,
+	_List_fromArray(
+		['target', 'value']),
+	$elm$json$Json$Decode$string);
+var $elm$html$Html$Events$onInput = function (tagger) {
+	return A2(
+		$elm$html$Html$Events$stopPropagationOn,
+		'input',
+		A2(
+			$elm$json$Json$Decode$map,
+			$elm$html$Html$Events$alwaysStop,
+			A2($elm$json$Json$Decode$map, tagger, $elm$html$Html$Events$targetValue)));
+};
+var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
+var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
+var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
 var $author$project$Main$pageSpotify = function (model) {
 	return A2(
 		$elm$html$Html$div,
@@ -7022,23 +7139,36 @@ var $author$project$Main$pageSpotify = function (model) {
 				$elm$html$Html$button,
 				_List_fromArray(
 					[
-						$elm$html$Html$Events$onClick($author$project$Main$GetUserArtist)
+						$elm$html$Html$Events$onClick($author$project$Main$GetArtist)
 					]),
 				_List_fromArray(
 					[
 						$elm$html$Html$text('Artist')
 					])),
 				A2(
+				$elm$html$Html$input,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$type_('text'),
+						$elm$html$Html$Attributes$placeholder('Artist Name'),
+						$elm$html$Html$Events$onInput($author$project$Main$ChangeArtist),
+						A2(
+						$elm$html$Html$Events$on,
+						'keydown',
+						$author$project$Main$ifIsEnter($author$project$Main$GetArtist)),
+						$elm$html$Html$Attributes$value(model.searchArtistName)
+					]),
+				_List_Nil),
+				A2(
 				$elm$html$Html$button,
 				_List_fromArray(
 					[
-						$elm$html$Html$Events$onClick($author$project$Main$GetArtistId)
+						$elm$html$Html$Events$onClick($author$project$Main$GetArtist)
 					]),
 				_List_fromArray(
 					[
-						$elm$html$Html$text('get Dimitris-ID')
-					])),
-				$elm$html$Html$text(model.currentUserArtist.name)
+						$elm$html$Html$text('search')
+					]))
 			]));
 };
 var $elm$html$Html$tr = _VirtualDom_node('tr');

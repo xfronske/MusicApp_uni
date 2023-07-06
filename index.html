@@ -42,7 +42,7 @@ var app = Elm.Main.init({
 
   app.ports.sendArtist.subscribe(
     function(message){
-      getArtistId(message);
+      getArtist(message);
     }
   );
   
@@ -60,7 +60,7 @@ var app = Elm.Main.init({
    exchangeToken(code);
   } 
 
-  function getArtistId(artistName) {
+  function getArtist(artistName) {
     let artist = artistName.replace(" ", "+");
     console.log(artist);
     fetch('https://api.spotify.com/v1/search?q='+ artist +'&type=artist', {
@@ -69,7 +69,7 @@ var app = Elm.Main.init({
     })
     .then(addThrowErrorToFetch)
       .then((data) => {
-        processIdResponse(data);
+        processArtistResponse(data);
         window.history.replaceState({}, document.title, '/');
   
       })
@@ -167,16 +167,23 @@ var app = Elm.Main.init({
     localStorage.setItem('expires_at', expires_at);
   }
 
-  function processArtistResponse(data) {
+  function processIdResponse(data) {
     name = data.name;
 
-    console.log(name);
+    console.log("name " + name);
   }
 
-  function processIdResponse(data) {
-    //id = data.items;
-    console.log(JSON.stringify("item->"+data.items)); /// wenn ich das decode geht es vllt 
-    console.log(data);
+  function processArtistResponse(data) {
+    let artist = { name: data.artists.items[0].name,
+                 followers: { href: data.artists.items[0].followers.href,
+                              total: data.artists.items[0].followers.total },
+                 id: data.artists.items[0].id,
+                 href: data.artists.items[0].href };
+
+    console.log(artist);
+
+
+    //app.ports.recieveArtist.send(artist);
   }
 
   // Restore tokens from localStorage

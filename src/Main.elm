@@ -1,12 +1,13 @@
 port module Main exposing (main)
 
 import Browser
-import Html exposing (Html, button, div, text, p, nav, a, span, i, blockquote, th, tr)
+import Html exposing (..) --Html, button, div, text, p, nav, a, span, i, blockquote, th, tr, input, ifIsEnter)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick)
+import Html.Events exposing (..) --onClick, onInput)
 import Json.Decode exposing (..)
 import Json.Encode as Encode
 import Task
+import List exposing (..)
 import Http exposing (..)
 
 --##########.MAIN.###########
@@ -22,83 +23,15 @@ main =
     , subscriptions = subscriptions
     }
     
---##########.Ports
+--##########.Ports.##########
+-- out
 port sendMessage: String -> Cmd msg
 port sendArtist: String -> Cmd msg
 
+-- in
 port messageReceiver : (String -> msg) -> Sub msg
+port recieveArtist: (Json.Decode.Value -> msg) -> Sub msg 
     
-type alias Model =
-    { currentPage : Int
-    , dropdownState : Bool 
-    
-    -- Spotify
-    , spotifydDropdownState : Bool
-    , accountDropdownState : Bool
-    , loginState : Bool
-    , token : String
-    , currentUser : UserData
-    , currentUserArtist : Artist
-    , tester : Tester
-
-    -- flags
-    , currentTime : Int
-
-    -- ports
-    , message : String
-    , accessToken: String
-    , playlists : List Playlist
-    }
-
-
-
-type alias Playlist =
-    { id : String
-    , name : String
-    , href : String
-    }
-
-type alias PlaylistResponse =
-    { items : List Playlist }
-  
-
-
-init : Int -> (Model, Cmd Msg)
-init currentTime =
-  ( { currentPage = 0 
-    , dropdownState = False
-
-    -- Spotify
-    , spotifydDropdownState = False
-    , accountDropdownState = False
-    , loginState = False
-    , token = ""
-    , currentUser = { country = ""
-                    , display_name = ""
-                    , email = ""
-                    , id = "" }
-    , currentUserArtist = { name = ""
-                          , followers = { href = ""
-                                        , total = 0 
-                                        }
-                          , id = ""
-                          , href = ""
-                          --, genres : List String    
-                          --, images : List Image  
-                          } 
-    , tester = { total = 0, offset = 0}
-    , playlists = []
-    
-    -- Flags
-    , currentTime = currentTime
-    
-    -- Ports
-    , message = ""
-    , accessToken = ""
-
-    }
-  , Cmd.none
-  )
 
 --##########.Messages.and.Types.##########
 
@@ -114,19 +47,117 @@ type Msg
     | LogoutFromSpotify
     | RefreshToken
     | RecFromJS String 
+    | ChangeArtist String
+    | SendArtistToJS
+    | RecArtist Artist
 
     -- Spotify
     | ToggleLoginState Bool
     | LoadUserData
     | GotUserData (Result Http.Error UserData) 
-    | GetUserArtist
-    | GotUserArtist (Result Http.Error Tester)
-    | GetArtistId
+    | GetArtist
+    | GotArtist (Result Http.Error ArtistResponse)
     | ToggleUserPage
 
-
+    --JIM
     | GotPlaylists (Result Http.Error PlaylistResponse)
     | InitiatePlaylistFetch
+
+type alias Model =
+    { currentPage : Int
+    , dropdownState : Bool 
+    
+    -- Spotify
+    , spotifydDropdownState : Bool
+    , accountDropdownState : Bool
+    , loginState : Bool
+    , token : String
+    , currentUser : UserData
+    , currentUserArtist : Maybe Artist -- die ganze mybe kacke habe ich gemacht weil head nen meybe wert zurück gibt
+    --ansonsten weiß ich nicht wie ich das darstellen kann
+    , searchArtistName : String
+    , artists : List (Artist)
+
+    -- flags
+    , currentTime : Int
+
+    -- ports
+    , message : String
+    , accessToken: String
+    , playlists : List Playlist
+    }
+
+type alias Playlist =
+    { id : String
+    , name : String
+    , href : String
+    }
+
+type alias PlaylistResponse =
+    { items : List Playlist }
+
+type alias ArtistResponse = 
+    { items : List Artist}
+
+type alias Artist = 
+    { name : String 
+    , followers : Followers
+    , id : String
+    , href : String
+    --, genres : List String    
+    --, images : List Image  
+    } 
+
+type alias Followers =
+    { href : String
+    , total : Int }
+
+type alias Image = 
+    { url : String
+    , height : Int 
+    , width : Int }
+
+
+--##########.Init.##########
+
+init : Int -> (Model, Cmd Msg)
+init currentTime =
+  ( { currentPage = 0 
+    , dropdownState = False
+
+    -- Spotify
+    , spotifydDropdownState = False
+    , accountDropdownState = False
+    , loginState = False
+    , token = ""
+    , currentUser = { country = ""
+                    , display_name = ""
+                    , email = ""
+                    , id = "" }
+    , currentUserArtist = Nothing{-{ name = Nothing
+                          , followers = { href = Nothing
+                                        , total = Nothing
+                                        } 
+                          , id = Nothing
+                          , href = Nothing  
+                          --, images : List Image  
+                          } -}
+
+    --, currentUserArtist = Json.Decode.Field
+    , searchArtistName = ""
+    , playlists = []
+    , artists = []
+    
+    -- Flags
+    , currentTime = currentTime
+    
+    -- Ports
+    , message = ""
+    , accessToken = ""
+
+    }
+  , Cmd.none
+  )
      
     
 --##########.Update.##########
@@ -185,6 +216,10 @@ update msg model =
 
 -- Requests
 
+        ToggleUserPage ->
+            ( { model | currentPage = 0 }
+            , Cmd.none )
+
         LoadUserData ->
             ( { model | currentPage = 1 } 
             , ( getUserData model) )
@@ -198,15 +233,14 @@ update msg model =
                 Err _ ->
                     ( model, Cmd.none )
 
-        GetUserArtist ->
+        GetArtist ->
             ( model
-            , ( sendMessage "userArtist" ) )
+            , (getArtist model) )
 
-        GotUserArtist userArtist ->
+        GotArtist userArtist ->
             case userArtist of 
                 Ok data ->
-                    ( { model | tester = Tester data.total data.offset } 
-
+                    ( { model | currentUserArtist = head data.items}
                     , Cmd.none )
                     {-( {model | currentUserArtist = Artist data.name data.followers data.id data.href}
                     , Cmd.none ) -}
@@ -214,12 +248,19 @@ update msg model =
                 Err _ ->
                     (model , Cmd.none )
 
-        GetArtistId ->
-            (model, sendArtist "Dimitris Loizos")
-
-        ToggleUserPage ->
-            ( { model | currentPage = 0 }
+        ChangeArtist artistName ->
+            ( { model | searchArtistName = artistName }
             , Cmd.none )
+
+        SendArtistToJS -> 
+            ( model --| searchArtistName = ""
+            , sendArtist model.searchArtistName )
+
+        RecArtist artist ->
+            ( { model | currentUserArtist = Nothing}
+            , Cmd.none )
+
+        
 
        
 --##########.Navbar.uuuuh.##########
@@ -385,11 +426,25 @@ navigation model =
     
 pageSpotify : Model -> Html Msg
 pageSpotify model = 
+    let 
+        te = Maybe.fromJust model.currentUserArtist
+    in 
+
     div [ class "container for spotify" ][
-          button [ onClick GetUserArtist ][ text "Artist"]
-        , button [ onClick GetArtistId ][ text "get Dimitris-ID"]
-        , text model.currentUserArtist.name
+          button [ onClick GetArtist ][ text "Artist"]
+
+        , input [ type_ "text"
+                , placeholder "Artist Name"
+                , onInput ChangeArtist
+                , on"keydown" (ifIsEnter GetArtist)
+                , Html.Attributes.value model.searchArtistName ]
+                []
+        , button [ onClick GetArtist ] [ text "search" ] 
+
+        , text ("your artist: " ++ te )
+        
         ]
+
 
 pageUserAccount : Model -> Html Msg 
 pageUserAccount model = 
@@ -430,61 +485,45 @@ decodeUserData =
         (field "email" string)
         (field "id" string)
 
+
+
 -- Artists top
 
-type alias Item = 
-    { item : Artist 
-    , total : Int }
-
-type alias Artist = 
-    { name : String 
-    , followers : Followers
-    , id : String
-    , href : String
-    --, genres : List String    
-    --, images : List Image  
-    } 
-
-type alias Followers =
-    { href : String
-    , total : Int }
-
-type alias Image = 
-    { url : String
-    , height : Int 
-    , width : Int }
-
-type alias Tester = { total : Int, offset : Int}
-
-{-getUserArtist : Model -> Cmd Msg 
-getUserArtist model =
+getArtist : Model -> Cmd Msg 
+getArtist model =
     Http.request
         { method = "GET"
-        , headers = [ Http.header "Authorization"  model.token 
-                    , Http.header "scope" "user-top-read"]
-        , url = "https://api.spotify.com/v1/me/top/artists"
+        , headers = [ Http.header "Authorization"  model.token ]
+        , url = "https://api.spotify.com/v1/search?q=" ++ model.searchArtistName ++ "&type=artist"
         , body = Http.emptyBody
-        , expect = Http.expectJson GotUserArtist decodeItemArtist
+        , expect = Http.expectJson GotArtist decodeArtistResponse
         , timeout = Nothing
         , tracker = Nothing
         }
 
-decodeItemArtist : Decoder Tester
-decodeItemArtist = 
-    Json.Decode.map2 Tester
-        (field "total" int)
-        (field "offset" int)
+decodeArtistResponse : Decoder ArtistResponse
+decodeArtistResponse = 
+    Json.Decode.map ArtistResponse
+        (field "items" (Json.Decode.list decodeArtist))
 
 decodeArtist : Decoder Artist
 decodeArtist = 
     Json.Decode.map4 Artist
         (field "name" string)
-        (field "followers" decodeArtistFollowers)
+        (field "followers" decodeFollowers)
         (field "id" string)
         (field "href" string)
         --(field "genres" decodeGenres (Html.Attributes.list string) "[]")
         --(field "images" decodeImage  (Html.Attributes.list string) "[url,height,width]") 
 
+decodeFollowers : Decoder Followers
+decodeFollowers = 
+    Json.Decode.map2 Followers 
+        (field "href" string)
+        (field "total" int ) 
+
+
+{-
 decodeImage : Decoder Image 
 decodeImage = 
     Json.Decode.map3 Image 
@@ -492,15 +531,9 @@ decodeImage =
         (field "width" int)
         (field "height" int)
 
---decodeGenres : Decoder Genres 
---decodeGenres = 
-
-
-decodeArtistFollowers : Decoder Followers
-decodeArtistFollowers = 
-    Json.Decode.map2 Followers 
-        (field "href" string)
-        (field "total" int ) -}
+decodeGenres : Decoder Genres 
+decodeGenres = 
+-}
 
 -- Playlists
 
@@ -569,8 +602,17 @@ view model =
                     div [][text "page nothing"]
           ]
 
+
+
+-- HELP FUNCITIONS
+
+ifIsEnter: msg -> Decoder msg 
+ifIsEnter msg = 
+    Json.Decode.field "key" string
+        |> Json.Decode.andThen (\key -> if key == "Enter"then Json.Decode.succeed msg else Json.Decode.fail "some othern key")
+
 -- SUBSCRIPTIONS
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-  messageReceiver RecFromJS
+    Sub.batch [ messageReceiver RecFromJS, Sub.none ]--recieveArtist ( RecArtist << decodeValue(Artist))]
