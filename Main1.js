@@ -5341,11 +5341,17 @@ var $author$project$Main$init = function (currentTime) {
 		{
 			accessToken: '',
 			accountDropdownState: false,
+			angleState: 0,
 			artists: _List_Nil,
-			currentPage: 0,
+			currentPage: 2,
 			currentTime: currentTime,
 			currentUser: {country: '', display_name: '', email: '', id: ''},
-			currentUserArtist: $elm$core$Maybe$Nothing,
+			currentUserArtist: {
+				followers: {href: '', total: 0},
+				href: '',
+				id: '',
+				name: ''
+			},
 			dropdownState: false,
 			loginState: false,
 			message: '',
@@ -6279,15 +6285,6 @@ var $author$project$Main$getUserPlaylists = function (model) {
 			url: 'https://api.spotify.com/v1/users/' + (model.currentUser.id + '/playlists')
 		});
 };
-var $elm$core$List$head = function (list) {
-	if (list.b) {
-		var x = list.a;
-		var xs = list.b;
-		return $elm$core$Maybe$Just(x);
-	} else {
-		return $elm$core$Maybe$Nothing;
-	}
-};
 var $elm$core$Basics$not = _Basics_not;
 var $elm$json$Json$Encode$string = _Json_wrap;
 var $author$project$Main$sendArtist = _Platform_outgoingPort('sendArtist', $elm$json$Json$Encode$string);
@@ -6396,9 +6393,7 @@ var $author$project$Main$update = F2(
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
-							{
-								currentUserArtist: $elm$core$List$head(data.items)
-							}),
+							{artists: data.items}),
 						$elm$core$Platform$Cmd$none);
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
@@ -6414,13 +6409,25 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					model,
 					$author$project$Main$sendArtist(model.searchArtistName));
-			default:
+			case 'RecArtist':
 				var artist = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{currentUserArtist: $elm$core$Maybe$Nothing}),
+						{currentUserArtist: artist}),
 					$elm$core$Platform$Cmd$none);
+			default:
+				var state = msg.a;
+				var _v3 = model.angleState;
+				if (!_v3) {
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{angleState: state}),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
 		}
 	});
 var $elm$html$Html$div = _VirtualDom_node('div');
@@ -6463,6 +6470,134 @@ var $elm$html$Html$Events$onClick = function (msg) {
 };
 var $elm$html$Html$p = _VirtualDom_node('p');
 var $elm$html$Html$span = _VirtualDom_node('span');
+var $elm$svg$Svg$Attributes$fill = _VirtualDom_attribute('fill');
+var $elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
+var $elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
+var $elm$svg$Svg$line = $elm$svg$Svg$trustedNode('line');
+var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
+var $elm$svg$Svg$svg = $elm$svg$Svg$trustedNode('svg');
+var $elm$svg$Svg$Attributes$viewBox = _VirtualDom_attribute('viewBox');
+var $elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
+var $elm$svg$Svg$Attributes$x1 = _VirtualDom_attribute('x1');
+var $elm$svg$Svg$Attributes$x2 = _VirtualDom_attribute('x2');
+var $elm$svg$Svg$Attributes$y1 = _VirtualDom_attribute('y1');
+var $elm$svg$Svg$Attributes$y2 = _VirtualDom_attribute('y2');
+var $author$project$Main$svgAngleDown = A2(
+	$elm$svg$Svg$svg,
+	_List_fromArray(
+		[
+			$elm$svg$Svg$Attributes$width('20'),
+			$elm$svg$Svg$Attributes$height('20'),
+			$elm$svg$Svg$Attributes$viewBox('0 0 25 20'),
+			$elm$svg$Svg$Attributes$fill('fffff')
+		]),
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$line,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$x1('05'),
+					$elm$svg$Svg$Attributes$y1('10'),
+					$elm$svg$Svg$Attributes$x2('10'),
+					$elm$svg$Svg$Attributes$y2('20'),
+					$elm$svg$Svg$Attributes$stroke('black')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$line,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$x1('15'),
+					$elm$svg$Svg$Attributes$y1('10'),
+					$elm$svg$Svg$Attributes$x2('10'),
+					$elm$svg$Svg$Attributes$y2('20'),
+					$elm$svg$Svg$Attributes$stroke('black')
+				]),
+			_List_Nil)
+		]));
+var $author$project$Main$svgAngleRight = A2(
+	$elm$svg$Svg$svg,
+	_List_fromArray(
+		[
+			$elm$svg$Svg$Attributes$width('20'),
+			$elm$svg$Svg$Attributes$height('20'),
+			$elm$svg$Svg$Attributes$viewBox('0 0 25 20'),
+			$elm$svg$Svg$Attributes$fill('fffff')
+		]),
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$line,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$x1('05'),
+					$elm$svg$Svg$Attributes$y1('10'),
+					$elm$svg$Svg$Attributes$x2('15'),
+					$elm$svg$Svg$Attributes$y2('15'),
+					$elm$svg$Svg$Attributes$stroke('black')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$line,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$x1('05'),
+					$elm$svg$Svg$Attributes$y1('20'),
+					$elm$svg$Svg$Attributes$x2('15'),
+					$elm$svg$Svg$Attributes$y2('15'),
+					$elm$svg$Svg$Attributes$stroke('black')
+				]),
+			_List_Nil)
+		]));
+var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
+var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
+var $elm$svg$Svg$Attributes$cy = _VirtualDom_attribute('cy');
+var $elm$svg$Svg$Attributes$r = _VirtualDom_attribute('r');
+var $author$project$Main$svgProfile = A2(
+	$elm$svg$Svg$svg,
+	_List_fromArray(
+		[
+			$elm$svg$Svg$Attributes$width('20'),
+			$elm$svg$Svg$Attributes$height('20'),
+			$elm$svg$Svg$Attributes$viewBox('0 0 20 20')
+		]),
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$circle,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$cx('10'),
+					$elm$svg$Svg$Attributes$cy('10'),
+					$elm$svg$Svg$Attributes$r('09'),
+					$elm$svg$Svg$Attributes$fill('none'),
+					$elm$svg$Svg$Attributes$stroke('black')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$circle,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$cx('10'),
+					$elm$svg$Svg$Attributes$cy('7'),
+					$elm$svg$Svg$Attributes$r('4'),
+					$elm$svg$Svg$Attributes$fill('none'),
+					$elm$svg$Svg$Attributes$stroke('black')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$line,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$x1('4'),
+					$elm$svg$Svg$Attributes$y1('14'),
+					$elm$svg$Svg$Attributes$x2('16'),
+					$elm$svg$Svg$Attributes$y2('14'),
+					$elm$svg$Svg$Attributes$stroke('black')
+				]),
+			_List_Nil)
+		]));
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $author$project$Main$navigation = function (model) {
@@ -6539,23 +6674,8 @@ var $author$project$Main$navigation = function (model) {
 																				_List_Nil,
 																				_List_fromArray(
 																					[
+																						$author$project$Main$svgAngleRight,
 																						$elm$html$Html$text('navigation options')
-																					])),
-																				A2(
-																				$elm$html$Html$span,
-																				_List_fromArray(
-																					[
-																						$elm$html$Html$Attributes$class('icon is-small')
-																					]),
-																				_List_fromArray(
-																					[
-																						A2(
-																						$elm$html$Html$i,
-																						_List_fromArray(
-																							[
-																								$elm$html$Html$Attributes$class('fas fa-angle-down')
-																							]),
-																						_List_Nil)
 																					]))
 																			]))
 																	]))
@@ -6591,23 +6711,8 @@ var $author$project$Main$navigation = function (model) {
 																				_List_Nil,
 																				_List_fromArray(
 																					[
+																						$author$project$Main$svgAngleDown,
 																						$elm$html$Html$text('navigation options')
-																					])),
-																				A2(
-																				$elm$html$Html$span,
-																				_List_fromArray(
-																					[
-																						$elm$html$Html$Attributes$class('icon is-small')
-																					]),
-																				_List_fromArray(
-																					[
-																						A2(
-																						$elm$html$Html$i,
-																						_List_fromArray(
-																							[
-																								$elm$html$Html$Attributes$class(' fas fa-angle-down')
-																							]),
-																						_List_Nil)
 																					]))
 																			]))
 																	])),
@@ -6658,7 +6763,28 @@ var $author$project$Main$navigation = function (model) {
 																					]),
 																				_List_fromArray(
 																					[
-																						$elm$html$Html$text('Spotify----')
+																						$elm$html$Html$text('Spotify-data')
+																					]))
+																			])),
+																		A2(
+																		$elm$html$Html$div,
+																		_List_fromArray(
+																			[
+																				$elm$html$Html$Attributes$class('dropdown-content')
+																			]),
+																		_List_fromArray(
+																			[
+																				A2(
+																				$elm$html$Html$a,
+																				_List_fromArray(
+																					[
+																						$elm$html$Html$Attributes$class('dropdown-item'),
+																						$elm$html$Html$Events$onClick(
+																						$author$project$Main$TogglePage(2))
+																					]),
+																				_List_fromArray(
+																					[
+																						$elm$html$Html$text('SVG')
 																					]))
 																			]))
 																	]))
@@ -6716,6 +6842,7 @@ var $author$project$Main$navigation = function (model) {
 																				_List_Nil,
 																				_List_fromArray(
 																					[
+																						$author$project$Main$svgProfile,
 																						$elm$html$Html$text('Account')
 																					])),
 																				A2(
@@ -6817,6 +6944,7 @@ var $author$project$Main$navigation = function (model) {
 																				_List_Nil,
 																				_List_fromArray(
 																					[
+																						$author$project$Main$svgProfile,
 																						$elm$html$Html$text('Account')
 																					])),
 																				A2(
@@ -6845,7 +6973,7 @@ var $author$project$Main$navigation = function (model) {
 										_List_Nil,
 										_List_fromArray(
 											[
-												$elm$html$Html$text('ho')
+												$elm$html$Html$text('you are not logged in')
 											]))
 									])),
 								A2(
@@ -7136,20 +7264,10 @@ var $author$project$Main$pageSpotify = function (model) {
 		_List_fromArray(
 			[
 				A2(
-				$elm$html$Html$button,
-				_List_fromArray(
-					[
-						$elm$html$Html$Events$onClick($author$project$Main$GetArtist)
-					]),
-				_List_fromArray(
-					[
-						$elm$html$Html$text('Artist')
-					])),
-				A2(
 				$elm$html$Html$input,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$type_('text'),
+						$elm$html$Html$Attributes$type_('Html.text'),
 						$elm$html$Html$Attributes$placeholder('Artist Name'),
 						$elm$html$Html$Events$onInput($author$project$Main$ChangeArtist),
 						A2(
@@ -7168,8 +7286,16 @@ var $author$project$Main$pageSpotify = function (model) {
 				_List_fromArray(
 					[
 						$elm$html$Html$text('search')
-					]))
+					])),
+				$elm$html$Html$text('your artist: ')
 			]));
+};
+var $author$project$Main$pageSvg = function (model) {
+	return A2(
+		$elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[$author$project$Main$svgAngleDown, $author$project$Main$svgAngleRight, $author$project$Main$svgProfile]));
 };
 var $elm$html$Html$tr = _VirtualDom_node('tr');
 var $author$project$Main$pageUserAccount = function (model) {
@@ -7233,6 +7359,14 @@ var $author$project$Main$view = function (model) {
 							_List_fromArray(
 								[
 									$author$project$Main$pageUserAccount(model)
+								]));
+					case 2:
+						return A2(
+							$elm$html$Html$div,
+							_List_Nil,
+							_List_fromArray(
+								[
+									$author$project$Main$pageSvg(model)
 								]));
 					default:
 						return A2(

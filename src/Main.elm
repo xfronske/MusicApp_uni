@@ -1,7 +1,7 @@
 port module Main exposing (main)
 
 import Browser
-import Html exposing (..) --Html, button, div, text, p, nav, a, span, i, blockquote, th, tr, input, ifIsEnter)
+import Html exposing (..) --Html, button, div, Html.text, p, nav, a, span, i, blockquote, th, tr, input, ifIsEnter)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..) --onClick, onInput)
 import Json.Decode exposing (..)
@@ -9,11 +9,10 @@ import Json.Encode as Encode
 import Task
 import List exposing (..)
 import Http exposing (..)
+import Svg exposing (..)
+import Svg.Attributes as SVG
 
 --##########.MAIN.###########
--- TODO : FrontEnd für Main Page 
--- kümmert sich Xaaver um getPlaylists ?
-    -- ja tut er
 
 main =
   Browser.element
@@ -59,6 +58,9 @@ type Msg
     | GotArtist (Result Http.Error ArtistResponse)
     | ToggleUserPage
 
+    --SVG
+    | ToggleAngle Int
+
     --JIM
     | GotPlaylists (Result Http.Error PlaylistResponse)
     | InitiatePlaylistFetch
@@ -73,7 +75,7 @@ type alias Model =
     , loginState : Bool
     , token : String
     , currentUser : UserData
-    , currentUserArtist : Maybe Artist -- die ganze mybe kacke habe ich gemacht weil head nen meybe wert zurück gibt
+    , currentUserArtist : Artist -- die ganze mybe kacke habe ich gemacht weil head nen meybe wert zurück gibt
     --ansonsten weiß ich nicht wie ich das darstellen kann
 
     --und die js ports funktionieren aber machen nichts weil ich das raus genommen habe das mache ich alles sauber wenn es funktioniert
@@ -82,6 +84,9 @@ type alias Model =
 
     -- flags
     , currentTime : Int
+
+    -- SVG
+    , angleState : Int
 
     -- ports
     , message : String
@@ -124,7 +129,7 @@ type alias Image =
 
 init : Int -> (Model, Cmd Msg)
 init currentTime =
-  ( { currentPage = 0 
+  ( { currentPage = 2 
     , dropdownState = False
 
     -- Spotify
@@ -136,14 +141,14 @@ init currentTime =
                     , display_name = ""
                     , email = ""
                     , id = "" }
-    , currentUserArtist = Nothing{-{ name = Nothing
-                          , followers = { href = Nothing
-                                        , total = Nothing
+    , currentUserArtist = { name = ""
+                          , followers = { href = ""
+                                        , total = 0
                                         } 
-                          , id = Nothing
-                          , href = Nothing  
+                          , id = ""
+                          , href = ""
                           --, images : List Image  
-                          } -}
+                          } 
 
     --, currentUserArtist = Json.Decode.Field
     , searchArtistName = ""
@@ -152,6 +157,9 @@ init currentTime =
     
     -- Flags
     , currentTime = currentTime
+
+    -- SVG
+    , angleState = 0 -- rechts
     
     -- Ports
     , message = ""
@@ -242,7 +250,7 @@ update msg model =
         GotArtist userArtist ->
             case userArtist of 
                 Ok data ->
-                    ( { model | currentUserArtist = head data.items}
+                    ( { model | artists = data.items}
                     , Cmd.none )
                     {-( {model | currentUserArtist = Artist data.name data.followers data.id data.href}
                     , Cmd.none ) -}
@@ -259,10 +267,19 @@ update msg model =
             , sendArtist model.searchArtistName )
 
         RecArtist artist ->
-            ( { model | currentUserArtist = Nothing}
+            ( { model | currentUserArtist = artist}
             , Cmd.none )
 
+-- SVG 
         
+        ToggleAngle state ->
+            case model.angleState of 
+                0 -> 
+                    ( { model | angleState = state }
+                    , Cmd.none )
+
+                _->
+                    ( model , Cmd.none ) 
 
        
 --##########.Navbar.uuuuh.##########
@@ -280,10 +297,9 @@ navigation model =
                                       div [ class "dropdown" ][
                                             div [ class "dropdown-trigger", onClick ToggleNavigationDropdown][
                                                   button [ class "button is-success" ][
-                                                           span [][ text "navigation options" ]
-                                                         , span [ class "icon is-small" ][
-                                                                  i [ class "fas fa-angle-down" ][]
-                                                                ]
+                                                           span [][ svgAngleRight 
+                                                                  , Html.text "navigation options" 
+                                                                  ]
                                                          ]
                                                 ]
                                           ]
@@ -292,25 +308,27 @@ navigation model =
                                       div [ class "dropdown is-active" ][
                                             div [ class "dropdown-trigger", onClick ToggleNavigationDropdown][
                                                   button [ class "button is-success" ][
-                                                           span [][
-                                                                  text "navigation options"
-                                                                ] 
-                                                         , span [ class "icon is-small" ][ 
-                                                                  i [ class " fas fa-angle-down"][]
-                                                                ]    
+                                                           span [][ svgAngleDown
+                                                                  , Html.text "navigation options"
+                                                                  ]     
                                                          ]
                                                 ]
                                           , div [ class "dropdown-menu"][
                                                   div [ class "dropdown-content" ][
-                                                        a [ class "dropdown-item" 
-                                                          , onClick ( TogglePage 0 )
-                                                          ][ text "Spotify" ]        
+                                                        Html.a [ class "dropdown-item" 
+                                                               , onClick ( TogglePage 0 )
+                                                               ][ Html.text "Spotify" ]        
                                                       ]
 
                                                 , div [ class "dropdown-content" ][
-                                                        a [ class "dropdown-item" 
-                                                          , onClick ( TogglePage 1 )
-                                                          ][ text "Spotify----" ]
+                                                        Html.a [ class "dropdown-item" 
+                                                               , onClick ( TogglePage 1 )
+                                                               ][ Html.text "Spotify-data" ]
+                                                      ]
+                                                , div [ class "dropdown-content" ][
+                                                        Html.a [ class "dropdown-item" 
+                                                               , onClick ( TogglePage 2 )
+                                                               ][ Html.text "SVG" ]
                                                       ]
                                                 ]
                                           ]             
@@ -325,8 +343,8 @@ navigation model =
                                       div [ class "dropdown is-active" ][
                                             div [ class "dropdown-trigger", onClick ToggleAccountDropdown ][
                                                   button [ class "button" ][
-                                                           span [][
-                                                                  text "Account"
+                                                           span [][ svgProfile
+                                                                  , Html.text "Account"
                                                                 ] 
                                                          , span [ class "icon is-small" ][ 
                                                                   i [ class " fas fa-angle-down"][]
@@ -335,14 +353,14 @@ navigation model =
                                                 ]
                                           , div [ class "dropdown-menu" ][
                                                   div [ class "dropdown-content" ][
-                                                        a [ class "dropdown-item", onClick LoadUserData ]
-                                                          [ text "My Account" ]        
+                                                      Html.a [ class "dropdown-item", onClick LoadUserData ]
+                                                             [ Html.text "My Account" ]        
                                                       ]
                                                 
                                                 , div [ class "dropdown-content" ][
-                                                        a [ class "dropdown-item", onClick LogoutFromSpotify ][
-                                                            text "Logout"
-                                                          ]
+                                                      Html.a [ class "dropdown-item", onClick LogoutFromSpotify ][
+                                                             Html.text "Logout"
+                                                            ]
                                                       ]
                                                 ]
                                           ]
@@ -350,7 +368,9 @@ navigation model =
                                       div [ class "dropdown" ][
                                             div [ class "dropdown-trigger", onClick ToggleAccountDropdown ][
                                                   button [ class "button" ][
-                                                           span [][ text "Account" ]
+                                                           span [][ svgProfile
+                                                                  , Html.text "Account" 
+                                                                  ]
                                                          , span [ class "icon is-small" ][
                                                                   i [ class "fas fa-angle-down" ][]
                                                                 ]
@@ -360,7 +380,7 @@ navigation model =
                               ]
 
                             else 
-                                p [] [text "ho"]
+                                p [] [Html.text "you are not logged in"]
                           ]
 
                    ,  div [ class "options for spotify" ][
@@ -374,7 +394,7 @@ navigation model =
                                                   div [ class "dropdown" ][
                                                         div [ class "dropdown-trigger", onClick ToggleSpotifyDropdown][
                                                               button [ class "button" ][
-                                                                       span [][ text "Spotify Options" ]
+                                                                       span [][ Html.text "Spotify Options" ]
                                                                      , span [ class "icon is-small" ][
                                                                               i [ class "fas fa-angle-down" ][]
                                                                             ]
@@ -387,7 +407,7 @@ navigation model =
                                                         div [ class "dropdown-trigger", onClick ToggleSpotifyDropdown][
                                                               button [ class "button" ][
                                                                        span [][
-                                                                              text "spotify options"
+                                                                              Html.text "spotify options"
                                                                             ] 
                                                                      , span [ class "icon is-small" ][ 
                                                                               i [ class " fas fa-angle-down"][]
@@ -396,24 +416,23 @@ navigation model =
                                                             ]
                                                       , div [ class "dropdown-menu"][
                                                               div [ class "dropdown-content" ][
-                                                                    a [ class "dropdown-item" 
+                                                                    Html.a [ class "dropdown-item" 
                                                                       , onClick ( TogglePage 0 )
-                                                                      ][ text "Search artist" ]        
+                                                                      ][ Html.text "Search artist" ]        
                                                                   ]
                                                             , div [ class "dropdown-content" ][
-                                                                    a [ class "dropdown-item"
+                                                                    Html.a [ class "dropdown-item"
                                                                       , onClick ( TogglePage 1 )
-                                                                      ][ text "Search song" ]
+                                                                      ][ Html.text "Search song" ]
                                                                   ]
                                                             , div [ class "dropdown-content" ][
-                                                                    a [ class "dropdown-item" 
+                                                                    Html.a [ class "dropdown-item" 
                                                                       , onClick ( TogglePage 2 )
-                                                                      ][ text "Search album" ]
+                                                                      ][ Html.text "Search album" ]
                                                                   ]
                                                             ]
                                                       ]             
                                          ]
-        
                                 ]
                     ]
               ]
@@ -428,33 +447,71 @@ navigation model =
     
 pageSpotify : Model -> Html Msg
 pageSpotify model = 
-    let 
-        te = Maybe.fromJust model.currentUserArtist
-    in 
-
     div [ class "container for spotify" ][
-          button [ onClick GetArtist ][ text "Artist"]
-
-        , input [ type_ "text"
+          input [ type_ "Html.text"
                 , placeholder "Artist Name"
                 , onInput ChangeArtist
                 , on"keydown" (ifIsEnter GetArtist)
                 , Html.Attributes.value model.searchArtistName ]
                 []
-        , button [ onClick GetArtist ] [ text "search" ] 
+        , button [ onClick GetArtist ] [ Html.text "search" ] 
 
-        , text ("your artist: " ++ te )
+        , Html.text ("your artist: "  )
         
         ]
 
 
 pageUserAccount : Model -> Html Msg 
 pageUserAccount model = 
-    div [][ tr [] [ text ("email: " ++ model.currentUser.email)]
-          , tr [] [ text ("display name: " ++ model.currentUser.display_name)]
-          , tr [] [ text ("country:  " ++ model.currentUser.country)]
-          , tr [] [ text ("Spotify Id: " ++ model.currentUser.id)]
+    div [][ tr [] [ Html.text ("email: " ++ model.currentUser.email)]
+          , tr [] [ Html.text ("display name: " ++ model.currentUser.display_name)]
+          , tr [] [ Html.text ("country:  " ++ model.currentUser.country)]
+          , tr [] [ Html.text ("Spotify Id: " ++ model.currentUser.id)]
         ]
+
+pageSvg : Model-> Html Msg 
+pageSvg model = 
+    div [][ svgAngleDown
+          , svgAngleRight
+          , svgProfile
+          ]
+
+
+--##########.SVG.##########
+
+
+{-optionsIcon = 
+    svg [ SVG.height "130", SVG.width "130", SVG.viewBox "0 0 60 60"]
+        [ line [ SVG.x "10", SVG.y "20" ] ]
+-}
+       -- <path fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="bevel" 
+       -- d="M5.0916789,20.818994C5.0916789,20.818994,58.908321,20.818994,58.908321,20.818994">
+    
+svgAngleRight = 
+    svg [ SVG.width "20", SVG.height "20", SVG.viewBox "0 0 25 20", SVG.fill "fffff"]
+        [ Svg.line [SVG.x1 "05", SVG.y1 "10", SVG.x2 "15", SVG.y2 "15", SVG.stroke "black"] [] 
+        , Svg.line [SVG.x1 "05", SVG.y1 "20", SVG.x2 "15", SVG.y2 "15", SVG.stroke "black"] []
+        ]
+
+svgAngleDown = 
+    svg [ SVG.width "20", SVG.height "20", SVG.viewBox "0 0 25 20", SVG.fill "fffff"]
+        [ Svg.line [SVG.x1 "05", SVG.y1 "10", SVG.x2 "10", SVG.y2 "20", SVG.stroke "black"] [] 
+        , Svg.line [SVG.x1 "15", SVG.y1 "10", SVG.x2 "10", SVG.y2 "20", SVG.stroke "black"] []
+        ]
+
+svgProfile = 
+    svg [SVG.width "20", SVG.height "20", SVG.viewBox "0 0 20 20" ]
+        [ circle [SVG.cx "10", SVG.cy "10", SVG.r "09", SVG.fill "none", SVG.stroke "black"] [] 
+        , circle [SVG.cx "10", SVG.cy "7", SVG.r "4", SVG.fill "none", SVG.stroke "black"] []
+        , line [ SVG.x1 "4", SVG.y1 "14", SVG.x2 "16", SVG.y2 "14", SVG.stroke "black"] []
+        ]
+
+{-
+
+
+
+        -}
+
 
 --##########.Spotify.stuff.##########
 
@@ -599,9 +656,12 @@ view model =
 
                 1 ->
                     div[][ pageUserAccount model ]
+
+                2 ->
+                    div[][ pageSvg model ]
                 
                 _ ->
-                    div [][text "page nothing"]
+                    div [][Html.text "page nothing"]
           ]
 
 
