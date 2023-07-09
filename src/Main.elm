@@ -25,11 +25,9 @@ main =
 --##########.Ports.##########
 -- out
 port sendMessage: String -> Cmd msg
-port sendArtist: String -> Cmd msg
 
 -- in
 port messageReceiver : (String -> msg) -> Sub msg
-port recieveArtist: (Json.Decode.Value -> msg) -> Sub msg 
     
 
 --##########.Messages.and.Types.##########
@@ -47,16 +45,17 @@ type Msg
     | RefreshToken
     | RecFromJS String 
     | ChangeArtist String
-    | SendArtistToJS
-    | RecArtist Artist
 
     -- Spotify
     | ToggleLoginState Bool
+    | ToggleUserPage
+
     | LoadUserData
     | GotUserData (Result Http.Error UserData) 
     | GetArtist
     | GotArtist (Result Http.Error ArtistResponse)
-    | ToggleUserPage
+    | GetTopTracks
+    | GotTopTracks (Result Http.Error TopTracksResponse)
 
     --SVG
     | ToggleAngle Int
@@ -74,13 +73,13 @@ type alias Model =
     , accountDropdownState : Bool
     , loginState : Bool
     , token : String
-    , currentUser : UserData
-    , currentUserArtist : Artist -- die ganze mybe kacke habe ich gemacht weil head nen meybe wert zurück gibt
-    --ansonsten weiß ich nicht wie ich das darstellen kann
-
+    , userCurrent : UserData
+    , userTopTracks : List Track
+    --, userCurrentArtist : Artist 
     --und die js ports funktionieren aber machen nichts weil ich das raus genommen habe das mache ich alles sauber wenn es funktioniert
     , searchArtistName : String
     , artists : List (Artist)
+
 
     -- flags
     , currentTime : Int
@@ -103,17 +102,30 @@ type alias Playlist =
 type alias PlaylistResponse =
     { items : List Playlist }
 
+type alias TopTracksResponse =
+    { items : List Track }
+
+type alias Track =
+    { id : String
+    , name : String
+    , artists  : List Artist
+    }
+
+type alias Artist =
+    { name : String
+    }
+
 type alias ArtistResponse = 
     { items : List Artist}
 
-type alias Artist = 
+{-type alias Artist = 
     { name : String 
     , followers : Followers
     , id : String
     , href : String
     --, genres : List String    
     --, images : List Image  
-    } 
+    } -}
 
 type alias Followers =
     { href : String
@@ -137,20 +149,19 @@ init currentTime =
     , accountDropdownState = False
     , loginState = False
     , token = ""
-    , currentUser = { country = ""
+    , userCurrent = { country = ""
                     , display_name = ""
                     , email = ""
                     , id = "" }
-    , currentUserArtist = { name = ""
+    , userTopTracks = []
+    {-, userCurrentArtist = { name = ""
                           , followers = { href = ""
                                         , total = 0
                                         } 
                           , id = ""
                           , href = ""
                           --, images : List Image  
-                          } 
-
-    --, currentUserArtist = Json.Decode.Field
+                          } -}
     , searchArtistName = ""
     , playlists = []
     , artists = []
@@ -211,8 +222,7 @@ update msg model =
             , sendMessage "refreshToken" )
 
         RecFromJS token ->
-            ( { model | accessToken = token
-                      , token = "Bearer " ++ token
+            ( { model | token = "Bearer " ++ token
                       , loginState = True }
             , Cmd.none )
 
@@ -222,6 +232,10 @@ update msg model =
 
         InitiatePlaylistFetch ->
             ( model, getUserPlaylists model )
+
+        ChangeArtist artistName ->
+            ( { model | searchArtistName = artistName }
+            , Cmd.none )
 
 
 -- Requests
@@ -237,7 +251,7 @@ update msg model =
         GotUserData userData ->
             case userData of 
                 Ok data -> 
-                    ( { model | currentUser = UserData data.country data.display_name data.email data.id} 
+                    ( { model | userCurrent = UserData data.country data.display_name data.email data.id} 
                     , Cmd.none )
 
                 Err _ ->
@@ -245,30 +259,32 @@ update msg model =
 
         GetArtist ->
             ( model
-            , (getArtist model) )
+            , Cmd.none) --(getArtist model) )
 
         GotArtist userArtist ->
             case userArtist of 
                 Ok data ->
                     ( { model | artists = data.items}
                     , Cmd.none )
-                    {-( {model | currentUserArtist = Artist data.name data.followers data.id data.href}
+                    {-( {model | userCurrentArtist = Artist data.name data.followers data.id data.href}
                     , Cmd.none ) -}
 
                 Err _ ->
                     (model , Cmd.none )
 
-        ChangeArtist artistName ->
-            ( { model | searchArtistName = artistName }
-            , Cmd.none )
+        GetTopTracks ->
+            (model, getTopTracks model)
 
-        SendArtistToJS -> 
-            ( model --| searchArtistName = ""
-            , sendArtist model.searchArtistName )
+        GotTopTracks response ->
+            case response of 
+                Ok data ->
+                    ( { model | userTopTracks = data.items }
+                    , Cmd.none)
 
-        RecArtist artist ->
-            ( { model | currentUserArtist = artist}
-            , Cmd.none )
+                Err _ ->
+                    (model, Cmd.none)
+
+
 
 -- SVG 
         
@@ -297,8 +313,7 @@ navigation model =
                                       div [ class "dropdown" ][
                                             div [ class "dropdown-trigger", onClick ToggleNavigationDropdown][
                                                   button [ class "button is-success" ][
-                                                           span [][ svgAngleRight 
-                                                                  , Html.text "navigation options" 
+                                                           span [][ Html.text "navigation options" 
                                                                   ]
                                                          ]
                                                 ]
@@ -308,13 +323,12 @@ navigation model =
                                       div [ class "dropdown is-active" ][
                                             div [ class "dropdown-trigger", onClick ToggleNavigationDropdown][
                                                   button [ class "button is-success" ][
-                                                           span [][ svgAngleDown
-                                                                  , Html.text "navigation options"
+                                                           span [][ Html.text "navigation options"
                                                                   ]     
                                                          ]
                                                 ]
                                           , div [ class "dropdown-menu"][
-                                                  div [ class "dropdown-content" ][
+                                                  div [ class "dropdown-content" ][ 
                                                         Html.a [ class "dropdown-item" 
                                                                , onClick ( TogglePage 0 )
                                                                ][ Html.text "Spotify" ]        
@@ -377,10 +391,10 @@ navigation model =
                                                          ]
                                                 ]
                                           ]             
-                              ]
+                                  ]
 
                             else 
-                                p [] [Html.text "you are not logged in"]
+                                p [] [Html.text "not logged in"]
                           ]
 
                    ,  div [ class "options for spotify" ][
@@ -455,25 +469,46 @@ pageSpotify model =
                 , Html.Attributes.value model.searchArtistName ]
                 []
         , button [ onClick GetArtist ] [ Html.text "search" ] 
-
         , Html.text ("your artist: "  )
-        
+ 
+
+        , p [][Html.text ("Playlist: ")]
+        , div [] (List.map playlistNameView model.playlists)
+        , button [ onClick GetTopTracks ] [ Html.text "Top-Tracks laden" ]
+        , div []  (List.map trackView model.userTopTracks)
         ]
+
+trackView : Track -> Html Msg
+trackView track =
+    div []
+        [ p [] [ Html.text (track.name ++ " - "  )]
+        , p [] (List.map artistNames track.artists)
+        ]
+artistNames : Artist -> Html Msg
+artistNames artists =
+    span[][Html.text artists.name]
+-- Funktion zum Erzeugen der Anzeige eines Playlist-Namens
+playlistNameView : Playlist -> Html Msg
+playlistNameView playlist =
+    div [] [Html.text playlist.name]  
 
 
 pageUserAccount : Model -> Html Msg 
 pageUserAccount model = 
-    div [][ tr [] [ Html.text ("email: " ++ model.currentUser.email)]
-          , tr [] [ Html.text ("display name: " ++ model.currentUser.display_name)]
-          , tr [] [ Html.text ("country:  " ++ model.currentUser.country)]
-          , tr [] [ Html.text ("Spotify Id: " ++ model.currentUser.id)]
+    div [][ tr [] [ Html.text ("email: " ++ model.userCurrent.email)]
+          , tr [] [ Html.text ("display name: " ++ model.userCurrent.display_name)]
+          , tr [] [ Html.text ("country:  " ++ model.userCurrent.country)]
+          , tr [] [ Html.text ("Spotify Id: " ++ model.userCurrent.id)]
         ]
 
 pageSvg : Model-> Html Msg 
 pageSvg model = 
-    div [][ svgAngleDown
-          , svgAngleRight
-          , svgProfile
+    div [][ --svgAngleDown
+          --, svgAngleRight
+          --, svgProfile
+           svgAnimation
+          --, svgLogout
+          --, svgCircleAnimation
           ]
 
 
@@ -506,11 +541,58 @@ svgProfile =
         , line [ SVG.x1 "4", SVG.y1 "14", SVG.x2 "16", SVG.y2 "14", SVG.stroke "black"] []
         ]
 
-{-
+svgAnimation = -----------------------------------------
+    svg [ SVG.width "200", SVG.height "50", SVG.viewBox "0 0 200 50" ]
+        [ rect [ SVG.x "0", SVG.y "0", SVG.width "200", SVG.height "50", SVG.fill "none", SVG.stroke "black" ][] --Rahmen
+
+        , rect [ SVG.x "0", SVG.y "0", SVG.width "0", SVG.height "0", SVG.rx"0", SVG.ry "0" ]
+               [ animate [SVG.attributeName "width", SVG.from "0", SVG.to "100", SVG.dur "1.5s"][]
+               , animate [SVG.attributeName "height", SVG.from "0", SVG.to "50", SVG.dur "1.5s"][]
+               , animate [SVG.attributeName "y", SVG.from "25", SVG.to "0", SVG.dur "1.5s"][]
+               , animate [SVG.attributeName "rx", SVG.from "40", SVG.to "0", SVG.dur "1.5s"][]
+               , animate [SVG.attributeName "ry", SVG.from "40", SVG.to "0", SVG.dur "1.5s"][]
+               ] 
+        , rect [ SVG.x "0", SVG.y "0", SVG.width "0", SVG.height "0", SVG.rx"0", SVG.ry "0" ]
+               [ animate [SVG.attributeName "x", SVG.from "200", SVG.to "100", SVG.dur "1.5s"][]
+               , animate [SVG.attributeName "width", SVG.from "0", SVG.to "100", SVG.dur "1.5s"][]
+               , animate [SVG.attributeName "height", SVG.from "0", SVG.to "50", SVG.dur "1.5s"][]
+               , animate [SVG.attributeName "y", SVG.from "25", SVG.to "0", SVG.dur "1.5s"][]
+               , animate [SVG.attributeName "rx", SVG.from "40", SVG.to "0", SVG.dur "1.5s"][]
+               , animate [SVG.attributeName "ry", SVG.from "40", SVG.to "0", SVG.dur "1.5s"][]
+               ] 
+        ]
 
 
 
-        -}
+
+
+
+
+
+svgLogout = 
+    svg [ SVG.width "20", SVG.height "20", SVG.viewBox "0 0 20 20", SVG.fill "black"]
+        [ line [ SVG.x1 "0", SVG.y1 "0", SVG.x2 "20", SVG.y2 "20", SVG.stroke "black"] 
+               [ animate [ SVG.attributeName "x2", SVG.from "0", SVG.to "20", SVG.dur "0.3s" ][] 
+               , animate [ SVG.attributeName "y2", SVG.from "0", SVG.to "20", SVG.dur "0.3s" ][] 
+               ] 
+        , line [ SVG.x1 "20", SVG.y1 "0", SVG.x2 "0", SVG.y2 "20", SVG.stroke "black"] 
+               [ animate [ SVG.attributeName "x2", SVG.from "20", SVG.to "0", SVG.dur "0.3s" ][] 
+               , animate [ SVG.attributeName "y2", SVG.from "0", SVG.to "20", SVG.dur "0.3s" ][] 
+               ]
+        ]
+
+svgCircleAnimation = 
+    svg [ SVG.width "100", SVG.height "10", SVG.viewBox "0 0 10 10", SVG.fill "none", SVG.stroke "black"]
+        [ circle [ SVG.cx "5", SVG.cy "5", SVG.r "5" ] 
+               [ animate [ SVG.attributeName "r", SVG.from "0", SVG.to "5", SVG.dur "0.3s" ][] ] 
+        , text_
+    [ SVG.x "20"
+    , SVG.y "35"
+    --, SVG.fontFamily [ "Helvetica", "sans-serif" ]
+    , SVG.fontSize "30"
+    ]
+    [ Svg.text "Hello World" ]
+        ]
 
 
 --##########.Spotify.stuff.##########
@@ -548,7 +630,7 @@ decodeUserData =
 
 -- Artists top
 
-getArtist : Model -> Cmd Msg 
+{-getArtist : Model -> Cmd Msg 
 getArtist model =
     Http.request
         { method = "GET"
@@ -579,7 +661,7 @@ decodeFollowers : Decoder Followers
 decodeFollowers = 
     Json.Decode.map2 Followers 
         (field "href" string)
-        (field "total" int ) 
+        (field "total" int ) -}
 
 
 {-
@@ -601,7 +683,7 @@ getUserPlaylists model =
   Http.request
     { method = "GET"
     , headers = [Http.header "Authorization" model.token]
-    , url = "https://api.spotify.com/v1/users/"++ model.currentUser.id ++"/playlists"
+    , url = "https://api.spotify.com/v1/users/"++ model.userCurrent.id ++"/playlists"
     , body = Http.emptyBody
     , expect = Http.expectJson GotPlaylists playlistResponseDecoder
     , timeout = Nothing
@@ -628,7 +710,36 @@ decodeUserPlaylists =
         (field "email" string)
         (field "id" string)
 
+-- Tracks
 
+getTopTracks : Model -> Cmd Msg
+getTopTracks model =
+    Http.request
+        { 
+            method = "GET",
+            headers = [ Http.header "Authorization" model.token ],
+            url = "https://api.spotify.com/v1/me/top/tracks",
+            body = Http.emptyBody,
+            expect = Http.expectJson GotTopTracks topTracksResponseDecoder,
+            timeout = Nothing,
+            tracker = Nothing
+        }
+
+topTracksResponseDecoder : Decoder TopTracksResponse
+topTracksResponseDecoder =
+    Json.Decode.map TopTracksResponse
+        (field "items" (Json.Decode.list trackDecoder))
+
+trackDecoder : Decoder Track
+trackDecoder =
+    Json.Decode.map3 Track
+        (field "id" string)
+        (field "name" string)
+        (field "artists" (Json.Decode.list artistDecoder))
+
+artistDecoder : Decoder Artist
+artistDecoder =
+    Json.Decode.map Artist (field "name" string)
 
 
 --##########.VIEW.##########

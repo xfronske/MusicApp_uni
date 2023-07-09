@@ -5345,20 +5345,15 @@ var $author$project$Main$init = function (currentTime) {
 			artists: _List_Nil,
 			currentPage: 2,
 			currentTime: currentTime,
-			currentUser: {country: '', display_name: '', email: '', id: ''},
-			currentUserArtist: {
-				followers: {href: '', total: 0},
-				href: '',
-				id: '',
-				name: ''
-			},
 			dropdownState: false,
 			loginState: false,
 			message: '',
 			playlists: _List_Nil,
 			searchArtistName: '',
 			spotifydDropdownState: false,
-			token: ''
+			token: '',
+			userCurrent: {country: '', display_name: '', email: '', id: ''},
+			userTopTracks: _List_Nil
 		},
 		$elm$core$Platform$Cmd$none);
 };
@@ -5382,42 +5377,9 @@ var $author$project$Main$UserData = F4(
 	function (country, display_name, email, id) {
 		return {country: country, display_name: display_name, email: email, id: id};
 	});
-var $author$project$Main$GotArtist = function (a) {
-	return {$: 'GotArtist', a: a};
+var $author$project$Main$GotTopTracks = function (a) {
+	return {$: 'GotTopTracks', a: a};
 };
-var $author$project$Main$ArtistResponse = function (items) {
-	return {items: items};
-};
-var $author$project$Main$Artist = F4(
-	function (name, followers, id, href) {
-		return {followers: followers, href: href, id: id, name: name};
-	});
-var $author$project$Main$Followers = F2(
-	function (href, total) {
-		return {href: href, total: total};
-	});
-var $elm$json$Json$Decode$field = _Json_decodeField;
-var $author$project$Main$decodeFollowers = A3(
-	$elm$json$Json$Decode$map2,
-	$author$project$Main$Followers,
-	A2($elm$json$Json$Decode$field, 'href', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'total', $elm$json$Json$Decode$int));
-var $elm$json$Json$Decode$map4 = _Json_map4;
-var $author$project$Main$decodeArtist = A5(
-	$elm$json$Json$Decode$map4,
-	$author$project$Main$Artist,
-	A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'followers', $author$project$Main$decodeFollowers),
-	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'href', $elm$json$Json$Decode$string));
-var $elm$json$Json$Decode$list = _Json_decodeList;
-var $author$project$Main$decodeArtistResponse = A2(
-	$elm$json$Json$Decode$map,
-	$author$project$Main$ArtistResponse,
-	A2(
-		$elm$json$Json$Decode$field,
-		'items',
-		$elm$json$Json$Decode$list($author$project$Main$decodeArtist)));
 var $elm$http$Http$BadStatus_ = F2(
 	function (a, b) {
 		return {$: 'BadStatus_', a: a, b: b};
@@ -6206,11 +6168,44 @@ var $elm$http$Http$request = function (r) {
 		$elm$http$Http$Request(
 			{allowCookiesFromOtherDomains: false, body: r.body, expect: r.expect, headers: r.headers, method: r.method, timeout: r.timeout, tracker: r.tracker, url: r.url}));
 };
-var $author$project$Main$getArtist = function (model) {
+var $author$project$Main$TopTracksResponse = function (items) {
+	return {items: items};
+};
+var $elm$json$Json$Decode$field = _Json_decodeField;
+var $elm$json$Json$Decode$list = _Json_decodeList;
+var $author$project$Main$Track = F3(
+	function (id, name, artists) {
+		return {artists: artists, id: id, name: name};
+	});
+var $author$project$Main$Artist = function (name) {
+	return {name: name};
+};
+var $author$project$Main$artistDecoder = A2(
+	$elm$json$Json$Decode$map,
+	$author$project$Main$Artist,
+	A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string));
+var $elm$json$Json$Decode$map3 = _Json_map3;
+var $author$project$Main$trackDecoder = A4(
+	$elm$json$Json$Decode$map3,
+	$author$project$Main$Track,
+	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string),
+	A2(
+		$elm$json$Json$Decode$field,
+		'artists',
+		$elm$json$Json$Decode$list($author$project$Main$artistDecoder)));
+var $author$project$Main$topTracksResponseDecoder = A2(
+	$elm$json$Json$Decode$map,
+	$author$project$Main$TopTracksResponse,
+	A2(
+		$elm$json$Json$Decode$field,
+		'items',
+		$elm$json$Json$Decode$list($author$project$Main$trackDecoder)));
+var $author$project$Main$getTopTracks = function (model) {
 	return $elm$http$Http$request(
 		{
 			body: $elm$http$Http$emptyBody,
-			expect: A2($elm$http$Http$expectJson, $author$project$Main$GotArtist, $author$project$Main$decodeArtistResponse),
+			expect: A2($elm$http$Http$expectJson, $author$project$Main$GotTopTracks, $author$project$Main$topTracksResponseDecoder),
 			headers: _List_fromArray(
 				[
 					A2($elm$http$Http$header, 'Authorization', model.token)
@@ -6218,12 +6213,13 @@ var $author$project$Main$getArtist = function (model) {
 			method: 'GET',
 			timeout: $elm$core$Maybe$Nothing,
 			tracker: $elm$core$Maybe$Nothing,
-			url: 'https://api.spotify.com/v1/search?q=' + (model.searchArtistName + '&type=artist')
+			url: 'https://api.spotify.com/v1/me/top/tracks'
 		});
 };
 var $author$project$Main$GotUserData = function (a) {
 	return {$: 'GotUserData', a: a};
 };
+var $elm$json$Json$Decode$map4 = _Json_map4;
 var $author$project$Main$decodeUserData = A5(
 	$elm$json$Json$Decode$map4,
 	$author$project$Main$UserData,
@@ -6256,7 +6252,6 @@ var $author$project$Main$Playlist = F3(
 	function (id, name, href) {
 		return {href: href, id: id, name: name};
 	});
-var $elm$json$Json$Decode$map3 = _Json_map3;
 var $author$project$Main$playlistDecoder = A4(
 	$elm$json$Json$Decode$map3,
 	$author$project$Main$Playlist,
@@ -6282,12 +6277,11 @@ var $author$project$Main$getUserPlaylists = function (model) {
 			method: 'GET',
 			timeout: $elm$core$Maybe$Nothing,
 			tracker: $elm$core$Maybe$Nothing,
-			url: 'https://api.spotify.com/v1/users/' + (model.currentUser.id + '/playlists')
+			url: 'https://api.spotify.com/v1/users/' + (model.userCurrent.id + '/playlists')
 		});
 };
 var $elm$core$Basics$not = _Basics_not;
 var $elm$json$Json$Encode$string = _Json_wrap;
-var $author$project$Main$sendArtist = _Platform_outgoingPort('sendArtist', $elm$json$Json$Encode$string);
 var $author$project$Main$sendMessage = _Platform_outgoingPort('sendMessage', $elm$json$Json$Encode$string);
 var $author$project$Main$update = F2(
 	function (msg, model) {
@@ -6343,7 +6337,7 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{accessToken: token, loginState: true, token: 'Bearer ' + token}),
+						{loginState: true, token: 'Bearer ' + token}),
 					$elm$core$Platform$Cmd$none);
 			case 'ToggleLoginState':
 				var state = msg.a;
@@ -6356,6 +6350,13 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					model,
 					$author$project$Main$getUserPlaylists(model));
+			case 'ChangeArtist':
+				var artistName = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{searchArtistName: artistName}),
+					$elm$core$Platform$Cmd$none);
 			case 'ToggleUserPage':
 				return _Utils_Tuple2(
 					_Utils_update(
@@ -6376,16 +6377,14 @@ var $author$project$Main$update = F2(
 						_Utils_update(
 							model,
 							{
-								currentUser: A4($author$project$Main$UserData, data.country, data.display_name, data.email, data.id)
+								userCurrent: A4($author$project$Main$UserData, data.country, data.display_name, data.email, data.id)
 							}),
 						$elm$core$Platform$Cmd$none);
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
 			case 'GetArtist':
-				return _Utils_Tuple2(
-					model,
-					$author$project$Main$getArtist(model));
+				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 			case 'GotArtist':
 				var userArtist = msg.a;
 				if (userArtist.$ === 'Ok') {
@@ -6398,28 +6397,26 @@ var $author$project$Main$update = F2(
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
-			case 'ChangeArtist':
-				var artistName = msg.a;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{searchArtistName: artistName}),
-					$elm$core$Platform$Cmd$none);
-			case 'SendArtistToJS':
+			case 'GetTopTracks':
 				return _Utils_Tuple2(
 					model,
-					$author$project$Main$sendArtist(model.searchArtistName));
-			case 'RecArtist':
-				var artist = msg.a;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{currentUserArtist: artist}),
-					$elm$core$Platform$Cmd$none);
+					$author$project$Main$getTopTracks(model));
+			case 'GotTopTracks':
+				var response = msg.a;
+				if (response.$ === 'Ok') {
+					var data = response.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{userTopTracks: data.items}),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
 			default:
 				var state = msg.a;
-				var _v3 = model.angleState;
-				if (!_v3) {
+				var _v4 = model.angleState;
+				if (!_v4) {
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
@@ -6470,10 +6467,14 @@ var $elm$html$Html$Events$onClick = function (msg) {
 };
 var $elm$html$Html$p = _VirtualDom_node('p');
 var $elm$html$Html$span = _VirtualDom_node('span');
+var $elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
+var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
+var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
+var $elm$svg$Svg$Attributes$cy = _VirtualDom_attribute('cy');
 var $elm$svg$Svg$Attributes$fill = _VirtualDom_attribute('fill');
 var $elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
-var $elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
 var $elm$svg$Svg$line = $elm$svg$Svg$trustedNode('line');
+var $elm$svg$Svg$Attributes$r = _VirtualDom_attribute('r');
 var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
 var $elm$svg$Svg$svg = $elm$svg$Svg$trustedNode('svg');
 var $elm$svg$Svg$Attributes$viewBox = _VirtualDom_attribute('viewBox');
@@ -6482,78 +6483,6 @@ var $elm$svg$Svg$Attributes$x1 = _VirtualDom_attribute('x1');
 var $elm$svg$Svg$Attributes$x2 = _VirtualDom_attribute('x2');
 var $elm$svg$Svg$Attributes$y1 = _VirtualDom_attribute('y1');
 var $elm$svg$Svg$Attributes$y2 = _VirtualDom_attribute('y2');
-var $author$project$Main$svgAngleDown = A2(
-	$elm$svg$Svg$svg,
-	_List_fromArray(
-		[
-			$elm$svg$Svg$Attributes$width('20'),
-			$elm$svg$Svg$Attributes$height('20'),
-			$elm$svg$Svg$Attributes$viewBox('0 0 25 20'),
-			$elm$svg$Svg$Attributes$fill('fffff')
-		]),
-	_List_fromArray(
-		[
-			A2(
-			$elm$svg$Svg$line,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$x1('05'),
-					$elm$svg$Svg$Attributes$y1('10'),
-					$elm$svg$Svg$Attributes$x2('10'),
-					$elm$svg$Svg$Attributes$y2('20'),
-					$elm$svg$Svg$Attributes$stroke('black')
-				]),
-			_List_Nil),
-			A2(
-			$elm$svg$Svg$line,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$x1('15'),
-					$elm$svg$Svg$Attributes$y1('10'),
-					$elm$svg$Svg$Attributes$x2('10'),
-					$elm$svg$Svg$Attributes$y2('20'),
-					$elm$svg$Svg$Attributes$stroke('black')
-				]),
-			_List_Nil)
-		]));
-var $author$project$Main$svgAngleRight = A2(
-	$elm$svg$Svg$svg,
-	_List_fromArray(
-		[
-			$elm$svg$Svg$Attributes$width('20'),
-			$elm$svg$Svg$Attributes$height('20'),
-			$elm$svg$Svg$Attributes$viewBox('0 0 25 20'),
-			$elm$svg$Svg$Attributes$fill('fffff')
-		]),
-	_List_fromArray(
-		[
-			A2(
-			$elm$svg$Svg$line,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$x1('05'),
-					$elm$svg$Svg$Attributes$y1('10'),
-					$elm$svg$Svg$Attributes$x2('15'),
-					$elm$svg$Svg$Attributes$y2('15'),
-					$elm$svg$Svg$Attributes$stroke('black')
-				]),
-			_List_Nil),
-			A2(
-			$elm$svg$Svg$line,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$x1('05'),
-					$elm$svg$Svg$Attributes$y1('20'),
-					$elm$svg$Svg$Attributes$x2('15'),
-					$elm$svg$Svg$Attributes$y2('15'),
-					$elm$svg$Svg$Attributes$stroke('black')
-				]),
-			_List_Nil)
-		]));
-var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
-var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
-var $elm$svg$Svg$Attributes$cy = _VirtualDom_attribute('cy');
-var $elm$svg$Svg$Attributes$r = _VirtualDom_attribute('r');
 var $author$project$Main$svgProfile = A2(
 	$elm$svg$Svg$svg,
 	_List_fromArray(
@@ -6674,7 +6603,6 @@ var $author$project$Main$navigation = function (model) {
 																				_List_Nil,
 																				_List_fromArray(
 																					[
-																						$author$project$Main$svgAngleRight,
 																						$elm$html$Html$text('navigation options')
 																					]))
 																			]))
@@ -6711,7 +6639,6 @@ var $author$project$Main$navigation = function (model) {
 																				_List_Nil,
 																				_List_fromArray(
 																					[
-																						$author$project$Main$svgAngleDown,
 																						$elm$html$Html$text('navigation options')
 																					]))
 																			]))
@@ -6973,7 +6900,7 @@ var $author$project$Main$navigation = function (model) {
 										_List_Nil,
 										_List_fromArray(
 											[
-												$elm$html$Html$text('you are not logged in')
+												$elm$html$Html$text('not logged in')
 											]))
 									])),
 								A2(
@@ -7209,6 +7136,7 @@ var $author$project$Main$ChangeArtist = function (a) {
 	return {$: 'ChangeArtist', a: a};
 };
 var $author$project$Main$GetArtist = {$: 'GetArtist'};
+var $author$project$Main$GetTopTracks = {$: 'GetTopTracks'};
 var $elm$json$Json$Decode$andThen = _Json_andThen;
 var $elm$json$Json$Decode$fail = _Json_fail;
 var $author$project$Main$ifIsEnter = function (msg) {
@@ -7252,6 +7180,43 @@ var $elm$html$Html$Events$onInput = function (tagger) {
 			A2($elm$json$Json$Decode$map, tagger, $elm$html$Html$Events$targetValue)));
 };
 var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
+var $author$project$Main$playlistNameView = function (playlist) {
+	return A2(
+		$elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				$elm$html$Html$text(playlist.name)
+			]));
+};
+var $author$project$Main$artistNames = function (artists) {
+	return A2(
+		$elm$html$Html$span,
+		_List_Nil,
+		_List_fromArray(
+			[
+				$elm$html$Html$text(artists.name)
+			]));
+};
+var $author$project$Main$trackView = function (track) {
+	return A2(
+		$elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$p,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text(track.name + ' - ')
+					])),
+				A2(
+				$elm$html$Html$p,
+				_List_Nil,
+				A2($elm$core$List$map, $author$project$Main$artistNames, track.artists))
+			]));
+};
 var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
 var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
 var $author$project$Main$pageSpotify = function (model) {
@@ -7287,15 +7252,221 @@ var $author$project$Main$pageSpotify = function (model) {
 					[
 						$elm$html$Html$text('search')
 					])),
-				$elm$html$Html$text('your artist: ')
+				$elm$html$Html$text('your artist: '),
+				A2(
+				$elm$html$Html$p,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Playlist: ')
+					])),
+				A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				A2($elm$core$List$map, $author$project$Main$playlistNameView, model.playlists)),
+				A2(
+				$elm$html$Html$button,
+				_List_fromArray(
+					[
+						$elm$html$Html$Events$onClick($author$project$Main$GetTopTracks)
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Top-Tracks laden')
+					])),
+				A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				A2($elm$core$List$map, $author$project$Main$trackView, model.userTopTracks))
 			]));
 };
+var $elm$svg$Svg$animate = $elm$svg$Svg$trustedNode('animate');
+var $elm$svg$Svg$Attributes$attributeName = _VirtualDom_attribute('attributeName');
+var $elm$svg$Svg$Attributes$dur = _VirtualDom_attribute('dur');
+var $elm$svg$Svg$Attributes$from = function (value) {
+	return A2(
+		_VirtualDom_attribute,
+		'from',
+		_VirtualDom_noJavaScriptUri(value));
+};
+var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
+var $elm$svg$Svg$Attributes$rx = _VirtualDom_attribute('rx');
+var $elm$svg$Svg$Attributes$ry = _VirtualDom_attribute('ry');
+var $elm$svg$Svg$Attributes$to = function (value) {
+	return A2(
+		_VirtualDom_attribute,
+		'to',
+		_VirtualDom_noJavaScriptUri(value));
+};
+var $elm$svg$Svg$Attributes$x = _VirtualDom_attribute('x');
+var $elm$svg$Svg$Attributes$y = _VirtualDom_attribute('y');
+var $author$project$Main$svgAnimation = A2(
+	$elm$svg$Svg$svg,
+	_List_fromArray(
+		[
+			$elm$svg$Svg$Attributes$width('200'),
+			$elm$svg$Svg$Attributes$height('50'),
+			$elm$svg$Svg$Attributes$viewBox('0 0 200 50')
+		]),
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$rect,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$x('0'),
+					$elm$svg$Svg$Attributes$y('0'),
+					$elm$svg$Svg$Attributes$width('200'),
+					$elm$svg$Svg$Attributes$height('50'),
+					$elm$svg$Svg$Attributes$fill('none'),
+					$elm$svg$Svg$Attributes$stroke('black')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$rect,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$x('0'),
+					$elm$svg$Svg$Attributes$y('0'),
+					$elm$svg$Svg$Attributes$width('0'),
+					$elm$svg$Svg$Attributes$height('0'),
+					$elm$svg$Svg$Attributes$rx('0'),
+					$elm$svg$Svg$Attributes$ry('0')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$elm$svg$Svg$animate,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$attributeName('width'),
+							$elm$svg$Svg$Attributes$from('0'),
+							$elm$svg$Svg$Attributes$to('100'),
+							$elm$svg$Svg$Attributes$dur('1.5s')
+						]),
+					_List_Nil),
+					A2(
+					$elm$svg$Svg$animate,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$attributeName('height'),
+							$elm$svg$Svg$Attributes$from('0'),
+							$elm$svg$Svg$Attributes$to('50'),
+							$elm$svg$Svg$Attributes$dur('1.5s')
+						]),
+					_List_Nil),
+					A2(
+					$elm$svg$Svg$animate,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$attributeName('y'),
+							$elm$svg$Svg$Attributes$from('25'),
+							$elm$svg$Svg$Attributes$to('0'),
+							$elm$svg$Svg$Attributes$dur('1.5s')
+						]),
+					_List_Nil),
+					A2(
+					$elm$svg$Svg$animate,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$attributeName('rx'),
+							$elm$svg$Svg$Attributes$from('40'),
+							$elm$svg$Svg$Attributes$to('0'),
+							$elm$svg$Svg$Attributes$dur('1.5s')
+						]),
+					_List_Nil),
+					A2(
+					$elm$svg$Svg$animate,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$attributeName('ry'),
+							$elm$svg$Svg$Attributes$from('40'),
+							$elm$svg$Svg$Attributes$to('0'),
+							$elm$svg$Svg$Attributes$dur('1.5s')
+						]),
+					_List_Nil)
+				])),
+			A2(
+			$elm$svg$Svg$rect,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$x('0'),
+					$elm$svg$Svg$Attributes$y('0'),
+					$elm$svg$Svg$Attributes$width('0'),
+					$elm$svg$Svg$Attributes$height('0'),
+					$elm$svg$Svg$Attributes$rx('0'),
+					$elm$svg$Svg$Attributes$ry('0')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$elm$svg$Svg$animate,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$attributeName('x'),
+							$elm$svg$Svg$Attributes$from('200'),
+							$elm$svg$Svg$Attributes$to('100'),
+							$elm$svg$Svg$Attributes$dur('1.5s')
+						]),
+					_List_Nil),
+					A2(
+					$elm$svg$Svg$animate,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$attributeName('width'),
+							$elm$svg$Svg$Attributes$from('0'),
+							$elm$svg$Svg$Attributes$to('100'),
+							$elm$svg$Svg$Attributes$dur('1.5s')
+						]),
+					_List_Nil),
+					A2(
+					$elm$svg$Svg$animate,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$attributeName('height'),
+							$elm$svg$Svg$Attributes$from('0'),
+							$elm$svg$Svg$Attributes$to('50'),
+							$elm$svg$Svg$Attributes$dur('1.5s')
+						]),
+					_List_Nil),
+					A2(
+					$elm$svg$Svg$animate,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$attributeName('y'),
+							$elm$svg$Svg$Attributes$from('25'),
+							$elm$svg$Svg$Attributes$to('0'),
+							$elm$svg$Svg$Attributes$dur('1.5s')
+						]),
+					_List_Nil),
+					A2(
+					$elm$svg$Svg$animate,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$attributeName('rx'),
+							$elm$svg$Svg$Attributes$from('40'),
+							$elm$svg$Svg$Attributes$to('0'),
+							$elm$svg$Svg$Attributes$dur('1.5s')
+						]),
+					_List_Nil),
+					A2(
+					$elm$svg$Svg$animate,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$attributeName('ry'),
+							$elm$svg$Svg$Attributes$from('40'),
+							$elm$svg$Svg$Attributes$to('0'),
+							$elm$svg$Svg$Attributes$dur('1.5s')
+						]),
+					_List_Nil)
+				]))
+		]));
 var $author$project$Main$pageSvg = function (model) {
 	return A2(
 		$elm$html$Html$div,
 		_List_Nil,
 		_List_fromArray(
-			[$author$project$Main$svgAngleDown, $author$project$Main$svgAngleRight, $author$project$Main$svgProfile]));
+			[$author$project$Main$svgAnimation]));
 };
 var $elm$html$Html$tr = _VirtualDom_node('tr');
 var $author$project$Main$pageUserAccount = function (model) {
@@ -7309,28 +7480,28 @@ var $author$project$Main$pageUserAccount = function (model) {
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text('email: ' + model.currentUser.email)
+						$elm$html$Html$text('email: ' + model.userCurrent.email)
 					])),
 				A2(
 				$elm$html$Html$tr,
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text('display name: ' + model.currentUser.display_name)
+						$elm$html$Html$text('display name: ' + model.userCurrent.display_name)
 					])),
 				A2(
 				$elm$html$Html$tr,
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text('country:  ' + model.currentUser.country)
+						$elm$html$Html$text('country:  ' + model.userCurrent.country)
 					])),
 				A2(
 				$elm$html$Html$tr,
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text('Spotify Id: ' + model.currentUser.id)
+						$elm$html$Html$text('Spotify Id: ' + model.userCurrent.id)
 					]))
 			]));
 };
