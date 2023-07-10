@@ -320,7 +320,6 @@ pageMain model =
                             [ 
                               button [ onClick LoadUserData,class "button is-medium  is-success mt-2" ] [ text "Get User Data" ],
                               a [ onClick LoadUserPlaylist, href "#getPlaylists",class "button is-medium  is-success mt-2" ] [ text "Get Playlists" ],
-                              p [ ] [ text ("Token:" ++ model.accessToken) ],
                               a [ onClick LoadTopTracks, href "#getTopTracks" ,class "button is-medium  is-success mt-2" ] [ text "Get Top Tracks" ],
                               a [ href "#getUserInfo" ,class "button is-medium  is-success mt-2" ] [ text "get Profile Information" ]
                             ]
@@ -333,7 +332,7 @@ pageMain model =
             [ p []
                 [ strong [] [text "Klangkapsel"]
                 , text " by "
-                , a [href "https://eremiyarifat.de"] [text "Eremiya Rifatoo"]
+                , a [href "https://eremiyarifat.de"] [text "Eremiya Rifat"]
                 , text " and Xaver Fronske" 
                 , text ". The source code is on "
                 , a [href "https://github.com/xfronske/MusicApp_uni/"] [text "GitHub"]

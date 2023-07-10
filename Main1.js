@@ -6855,13 +6855,6 @@ var $author$project$Main$pageMain = function (model) {
 																		$elm$html$Html$text('Get Playlists')
 																	])),
 																A2(
-																$elm$html$Html$p,
-																_List_Nil,
-																_List_fromArray(
-																	[
-																		$elm$html$Html$text('Token:' + model.accessToken)
-																	])),
-																A2(
 																$elm$html$Html$a,
 																_List_fromArray(
 																	[
@@ -6926,7 +6919,7 @@ var $author$project$Main$pageMain = function (model) {
 													]),
 												_List_fromArray(
 													[
-														$elm$html$Html$text('Eremiya Rifatoo')
+														$elm$html$Html$text('Eremiya Rifat')
 													])),
 												$elm$html$Html$text(' and Xaver Fronske'),
 												$elm$html$Html$text('. The source code is on '),
