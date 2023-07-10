@@ -5343,17 +5343,19 @@ var $author$project$Main$init = function (currentTime) {
 			accountDropdownState: false,
 			angleState: 0,
 			artists: _List_Nil,
-			currentPage: 2,
+			currentPage: 0,
 			currentTime: currentTime,
 			dropdownState: false,
 			loginState: false,
 			message: '',
+			playbackState: false,
 			playlists: _List_Nil,
 			searchArtistName: '',
 			spotifydDropdownState: false,
 			token: '',
 			userCurrent: {country: '', display_name: '', email: '', id: ''},
-			userTopTracks: _List_Nil
+			userTopTracks: _List_Nil,
+			volume: 5
 		},
 		$elm$core$Platform$Cmd$none);
 };
@@ -6357,6 +6359,32 @@ var $author$project$Main$update = F2(
 						model,
 						{searchArtistName: artistName}),
 					$elm$core$Platform$Cmd$none);
+			case 'IncVolume':
+				return (model.volume < 10) ? _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{volume: model.volume + 1}),
+					$author$project$Main$sendMessage('inc_vol')) : _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+			case 'DecVolume':
+				return (model.volume > 0) ? _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{volume: model.volume - 1}),
+					$author$project$Main$sendMessage('dec_vol')) : _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+			case 'TogglePlay':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{playbackState: !model.playbackState}),
+					$author$project$Main$sendMessage('toggle_play'));
+			case 'NextTrack':
+				return _Utils_Tuple2(
+					model,
+					$author$project$Main$sendMessage('next_track'));
+			case 'PrevTrack':
+				return _Utils_Tuple2(
+					model,
+					$author$project$Main$sendMessage('prev_track'));
 			case 'ToggleUserPage':
 				return _Utils_Tuple2(
 					_Utils_update(
@@ -6670,27 +6698,6 @@ var $author$project$Main$navigation = function (model) {
 																				_List_fromArray(
 																					[
 																						$elm$html$Html$text('Spotify')
-																					]))
-																			])),
-																		A2(
-																		$elm$html$Html$div,
-																		_List_fromArray(
-																			[
-																				$elm$html$Html$Attributes$class('dropdown-content')
-																			]),
-																		_List_fromArray(
-																			[
-																				A2(
-																				$elm$html$Html$a,
-																				_List_fromArray(
-																					[
-																						$elm$html$Html$Attributes$class('dropdown-item'),
-																						$elm$html$Html$Events$onClick(
-																						$author$project$Main$TogglePage(1))
-																					]),
-																				_List_fromArray(
-																					[
-																						$elm$html$Html$text('Spotify-data')
 																					]))
 																			])),
 																		A2(
@@ -7132,93 +7139,168 @@ var $author$project$Main$navigation = function (model) {
 					]))
 			]));
 };
-var $author$project$Main$ChangeArtist = function (a) {
-	return {$: 'ChangeArtist', a: a};
-};
-var $author$project$Main$GetArtist = {$: 'GetArtist'};
-var $author$project$Main$GetTopTracks = {$: 'GetTopTracks'};
-var $elm$json$Json$Decode$andThen = _Json_andThen;
-var $elm$json$Json$Decode$fail = _Json_fail;
-var $author$project$Main$ifIsEnter = function (msg) {
-	return A2(
-		$elm$json$Json$Decode$andThen,
-		function (key) {
-			return (key === 'Enter') ? $elm$json$Json$Decode$succeed(msg) : $elm$json$Json$Decode$fail('some othern key');
-		},
-		A2($elm$json$Json$Decode$field, 'key', $elm$json$Json$Decode$string));
-};
-var $elm$html$Html$input = _VirtualDom_node('input');
-var $elm$html$Html$Events$alwaysStop = function (x) {
-	return _Utils_Tuple2(x, true);
-};
-var $elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
-	return {$: 'MayStopPropagation', a: a};
-};
-var $elm$html$Html$Events$stopPropagationOn = F2(
-	function (event, decoder) {
-		return A2(
-			$elm$virtual_dom$VirtualDom$on,
-			event,
-			$elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
-	});
-var $elm$json$Json$Decode$at = F2(
-	function (fields, decoder) {
-		return A3($elm$core$List$foldr, $elm$json$Json$Decode$field, decoder, fields);
-	});
-var $elm$html$Html$Events$targetValue = A2(
-	$elm$json$Json$Decode$at,
+var $author$project$Main$DecVolume = {$: 'DecVolume'};
+var $author$project$Main$IncVolume = {$: 'IncVolume'};
+var $author$project$Main$NextTrack = {$: 'NextTrack'};
+var $author$project$Main$PrevTrack = {$: 'PrevTrack'};
+var $author$project$Main$TogglePlay = {$: 'TogglePlay'};
+var $elm$core$Basics$ge = _Utils_ge;
+var $elm$svg$Svg$Attributes$points = _VirtualDom_attribute('points');
+var $elm$svg$Svg$polyline = $elm$svg$Svg$trustedNode('polyline');
+var $author$project$Main$svgVolumeHigh = A2(
+	$elm$svg$Svg$svg,
 	_List_fromArray(
-		['target', 'value']),
-	$elm$json$Json$Decode$string);
-var $elm$html$Html$Events$onInput = function (tagger) {
-	return A2(
-		$elm$html$Html$Events$stopPropagationOn,
-		'input',
-		A2(
-			$elm$json$Json$Decode$map,
-			$elm$html$Html$Events$alwaysStop,
-			A2($elm$json$Json$Decode$map, tagger, $elm$html$Html$Events$targetValue)));
-};
-var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
-var $author$project$Main$playlistNameView = function (playlist) {
-	return A2(
-		$elm$html$Html$div,
-		_List_Nil,
-		_List_fromArray(
-			[
-				$elm$html$Html$text(playlist.name)
-			]));
-};
-var $author$project$Main$artistNames = function (artists) {
-	return A2(
-		$elm$html$Html$span,
-		_List_Nil,
-		_List_fromArray(
-			[
-				$elm$html$Html$text(artists.name)
-			]));
-};
-var $author$project$Main$trackView = function (track) {
-	return A2(
-		$elm$html$Html$div,
-		_List_Nil,
-		_List_fromArray(
-			[
-				A2(
-				$elm$html$Html$p,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$elm$html$Html$text(track.name + ' - ')
-					])),
-				A2(
-				$elm$html$Html$p,
-				_List_Nil,
-				A2($elm$core$List$map, $author$project$Main$artistNames, track.artists))
-			]));
-};
-var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
-var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
+		[
+			$elm$svg$Svg$Attributes$width('40'),
+			$elm$svg$Svg$Attributes$height('20'),
+			$elm$svg$Svg$Attributes$viewBox('0 0 30 20'),
+			$elm$svg$Svg$Attributes$stroke('black')
+		]),
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$polyline,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$fill('black'),
+					$elm$svg$Svg$Attributes$stroke('black'),
+					$elm$svg$Svg$Attributes$points('0,10 10,3 10,17 0,10')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$polyline,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$fill('none'),
+					$elm$svg$Svg$Attributes$points('15,6 17,9 18,10 17,11 15,14')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$polyline,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$fill('none'),
+					$elm$svg$Svg$Attributes$points('20,5 22,8 23,10 22,12 20,15')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$polyline,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$fill('none'),
+					$elm$svg$Svg$Attributes$points('25,4 27,7 28,10 27,13 25,16')
+				]),
+			_List_Nil)
+		]));
+var $author$project$Main$svgVolumeLow = A2(
+	$elm$svg$Svg$svg,
+	_List_fromArray(
+		[
+			$elm$svg$Svg$Attributes$width('40'),
+			$elm$svg$Svg$Attributes$height('20'),
+			$elm$svg$Svg$Attributes$viewBox('0 0 30 20'),
+			$elm$svg$Svg$Attributes$stroke('black')
+		]),
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$polyline,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$fill('black'),
+					$elm$svg$Svg$Attributes$points('0,10 10,3 10,17 0,10')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$polyline,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$fill('none'),
+					$elm$svg$Svg$Attributes$points('15,6 17,9 18,10 17,11 15,14')
+				]),
+			_List_Nil)
+		]));
+var $author$project$Main$svgVolumeMed = A2(
+	$elm$svg$Svg$svg,
+	_List_fromArray(
+		[
+			$elm$svg$Svg$Attributes$width('40'),
+			$elm$svg$Svg$Attributes$height('20'),
+			$elm$svg$Svg$Attributes$viewBox('0 0 30 20'),
+			$elm$svg$Svg$Attributes$stroke('black')
+		]),
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$polyline,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$fill('black'),
+					$elm$svg$Svg$Attributes$stroke('black'),
+					$elm$svg$Svg$Attributes$points('0,10 10,3 10,17 0,10')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$polyline,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$fill('none'),
+					$elm$svg$Svg$Attributes$points('15,6 17,9 18,10 17,11 15,14')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$polyline,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$fill('none'),
+					$elm$svg$Svg$Attributes$points('20,5 22,8 23,10 22,12 20,15')
+				]),
+			_List_Nil)
+		]));
+var $author$project$Main$svgVolumeNone = A2(
+	$elm$svg$Svg$svg,
+	_List_fromArray(
+		[
+			$elm$svg$Svg$Attributes$width('30'),
+			$elm$svg$Svg$Attributes$height('20'),
+			$elm$svg$Svg$Attributes$viewBox('0 0 30 20'),
+			$elm$svg$Svg$Attributes$fill('black')
+		]),
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$polyline,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$fill('black'),
+					$elm$svg$Svg$Attributes$stroke('black'),
+					$elm$svg$Svg$Attributes$points('0,10 10,3 10,17 0,10')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$line,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$x1('15'),
+					$elm$svg$Svg$Attributes$y1('5'),
+					$elm$svg$Svg$Attributes$x2('25'),
+					$elm$svg$Svg$Attributes$y2('15'),
+					$elm$svg$Svg$Attributes$stroke('black')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$line,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$x1('15'),
+					$elm$svg$Svg$Attributes$y1('15'),
+					$elm$svg$Svg$Attributes$x2('25'),
+					$elm$svg$Svg$Attributes$y2('5'),
+					$elm$svg$Svg$Attributes$stroke('black')
+				]),
+			_List_Nil)
+		]));
+var $elm$html$Html$th = _VirtualDom_node('th');
 var $author$project$Main$pageSpotify = function (model) {
 	return A2(
 		$elm$html$Html$div,
@@ -7229,55 +7311,79 @@ var $author$project$Main$pageSpotify = function (model) {
 		_List_fromArray(
 			[
 				A2(
-				$elm$html$Html$input,
+				$elm$html$Html$th,
+				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$type_('Html.text'),
-						$elm$html$Html$Attributes$placeholder('Artist Name'),
-						$elm$html$Html$Events$onInput($author$project$Main$ChangeArtist),
 						A2(
-						$elm$html$Html$Events$on,
-						'keydown',
-						$author$project$Main$ifIsEnter($author$project$Main$GetArtist)),
-						$elm$html$Html$Attributes$value(model.searchArtistName)
-					]),
-				_List_Nil),
+						$elm$html$Html$button,
+						_List_fromArray(
+							[
+								$elm$html$Html$Events$onClick($author$project$Main$IncVolume)
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('+')
+							]))
+					])),
+				A2(
+				$elm$html$Html$th,
+				_List_Nil,
+				_List_fromArray(
+					[
+						(!model.volume) ? $author$project$Main$svgVolumeNone : (((model.volume > 0) && (model.volume < 5)) ? $author$project$Main$svgVolumeLow : (((model.volume >= 4) && (model.volume < 10)) ? $author$project$Main$svgVolumeMed : $author$project$Main$svgVolumeHigh))
+					])),
+				A2(
+				$elm$html$Html$th,
+				_List_Nil,
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$button,
+						_List_fromArray(
+							[
+								$elm$html$Html$Events$onClick($author$project$Main$DecVolume)
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('-')
+							]))
+					])),
+				$elm$html$Html$text(
+				$elm$core$String$fromInt(model.volume)),
 				A2(
 				$elm$html$Html$button,
 				_List_fromArray(
 					[
-						$elm$html$Html$Events$onClick($author$project$Main$GetArtist)
+						$elm$html$Html$Attributes$class('button is-success is-outlined is-rounded is-small'),
+						$elm$html$Html$Events$onClick($author$project$Main$NextTrack)
 					]),
 				_List_fromArray(
 					[
-						$elm$html$Html$text('search')
+						$elm$html$Html$text('next')
 					])),
-				$elm$html$Html$text('your artist: '),
-				A2(
-				$elm$html$Html$p,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$elm$html$Html$text('Playlist: ')
-					])),
-				A2(
-				$elm$html$Html$div,
-				_List_Nil,
-				A2($elm$core$List$map, $author$project$Main$playlistNameView, model.playlists)),
 				A2(
 				$elm$html$Html$button,
 				_List_fromArray(
 					[
-						$elm$html$Html$Events$onClick($author$project$Main$GetTopTracks)
+						$elm$html$Html$Attributes$class('button is-success is-outlined is-rounded is-small'),
+						$elm$html$Html$Events$onClick($author$project$Main$PrevTrack)
 					]),
 				_List_fromArray(
 					[
-						$elm$html$Html$text('Top-Tracks laden')
+						$elm$html$Html$text('prev')
 					])),
 				A2(
-				$elm$html$Html$div,
-				_List_Nil,
-				A2($elm$core$List$map, $author$project$Main$trackView, model.userTopTracks))
+				$elm$html$Html$button,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('button is-dark is-outlined is-rounded is-small'),
+						$elm$html$Html$Events$onClick($author$project$Main$TogglePlay)
+					]),
+				_List_fromArray(
+					[
+						model.playbackState ? $elm$html$Html$text('pause') : $elm$html$Html$text('play')
+					]))
 			]));
 };
 var $elm$svg$Svg$animate = $elm$svg$Svg$trustedNode('animate');

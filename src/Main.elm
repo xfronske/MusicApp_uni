@@ -57,6 +57,13 @@ type Msg
     | GetTopTracks
     | GotTopTracks (Result Http.Error TopTracksResponse)
 
+    -- Playback
+    | IncVolume
+    | DecVolume
+    | TogglePlay 
+    | NextTrack
+    | PrevTrack
+
     --SVG
     | ToggleAngle Int
 
@@ -75,11 +82,12 @@ type alias Model =
     , token : String
     , userCurrent : UserData
     , userTopTracks : List Track
-    --, userCurrentArtist : Artist 
-    --und die js ports funktionieren aber machen nichts weil ich das raus genommen habe das mache ich alles sauber wenn es funktioniert
     , searchArtistName : String
     , artists : List (Artist)
 
+    -- Playback
+    , volume : Int
+    , playbackState : Bool
 
     -- flags
     , currentTime : Int
@@ -141,7 +149,7 @@ type alias Image =
 
 init : Int -> (Model, Cmd Msg)
 init currentTime =
-  ( { currentPage = 2 
+  ( { currentPage = 0 
     , dropdownState = False
 
     -- Spotify
@@ -154,17 +162,13 @@ init currentTime =
                     , email = ""
                     , id = "" }
     , userTopTracks = []
-    {-, userCurrentArtist = { name = ""
-                          , followers = { href = ""
-                                        , total = 0
-                                        } 
-                          , id = ""
-                          , href = ""
-                          --, images : List Image  
-                          } -}
     , searchArtistName = ""
     , playlists = []
     , artists = []
+
+    -- Playback
+    , volume = 5
+    , playbackState = False
     
     -- Flags
     , currentTime = currentTime
@@ -237,6 +241,29 @@ update msg model =
             ( { model | searchArtistName = artistName }
             , Cmd.none )
 
+-- Playback
+
+        IncVolume ->
+            if model.volume < 10 then 
+                ( { model | volume = model.volume + 1 }
+                , sendMessage "inc_vol" ) 
+            else ( model , Cmd.none )
+
+        DecVolume -> 
+            if model.volume > 0 then 
+                ( { model | volume = model.volume - 1 }
+                , sendMessage "dec_vol" ) 
+            else ( model , Cmd.none )
+
+        TogglePlay ->
+            ( { model | playbackState = not model.playbackState } 
+            , sendMessage "toggle_play" )
+
+        NextTrack ->
+            ( model, sendMessage "next_track" )
+
+        PrevTrack ->
+            ( model, sendMessage"prev_track" )
 
 -- Requests
 
@@ -313,12 +340,11 @@ navigation model =
                                       div [ class "dropdown" ][
                                             div [ class "dropdown-trigger", onClick ToggleNavigationDropdown][
                                                   button [ class "button is-success" ][
-                                                           span [][ Html.text "navigation options" 
-                                                                  ]
+                                                           span [][ Html.text "navigation options" ]
                                                          ]
                                                 ]
                                           ]
-                                
+
                                   True -> -- Dropdown offen
                                       div [ class "dropdown is-active" ][
                                             div [ class "dropdown-trigger", onClick ToggleNavigationDropdown][
@@ -332,12 +358,6 @@ navigation model =
                                                         Html.a [ class "dropdown-item" 
                                                                , onClick ( TogglePage 0 )
                                                                ][ Html.text "Spotify" ]        
-                                                      ]
-
-                                                , div [ class "dropdown-content" ][
-                                                        Html.a [ class "dropdown-item" 
-                                                               , onClick ( TogglePage 1 )
-                                                               ][ Html.text "Spotify-data" ]
                                                       ]
                                                 , div [ class "dropdown-content" ][
                                                         Html.a [ class "dropdown-item" 
@@ -462,7 +482,7 @@ navigation model =
 pageSpotify : Model -> Html Msg
 pageSpotify model = 
     div [ class "container for spotify" ][
-          input [ type_ "Html.text"
+         {- input [ type_ "Html.text"
                 , placeholder "Artist Name"
                 , onInput ChangeArtist
                 , on"keydown" (ifIsEnter GetArtist)
@@ -475,7 +495,27 @@ pageSpotify model =
         , p [][Html.text ("Playlist: ")]
         , div [] (List.map playlistNameView model.playlists)
         , button [ onClick GetTopTracks ] [ Html.text "Top-Tracks laden" ]
-        , div []  (List.map trackView model.userTopTracks)
+        , div []  (List.map trackView model.userTopTracks) -}
+
+
+
+          th [] [ button [ onClick IncVolume ][ Html.text "+" ] ]
+        , th [] [ if model.volume == 0 then svgVolumeNone 
+                  else if model.volume > 0 && model.volume < 5 then svgVolumeLow 
+                       else if model.volume >= 4 && model.volume <10 then svgVolumeMed 
+                            else svgVolumeHigh
+                ] 
+
+
+
+        , th [] [ button [ onClick DecVolume ][ Html.text "-" ] ]
+        , Html.text (String.fromInt model.volume )
+        , button [ class "button is-success is-outlined is-rounded is-small", onClick NextTrack ]
+                 [ Html.text "next" ]
+        , button [ class "button is-success is-outlined is-rounded is-small", onClick PrevTrack ]
+                 [ Html.text "prev" ]
+        , button [ class "button is-dark is-outlined is-rounded is-small", onClick TogglePlay ]
+                 [ if model.playbackState then Html.text "pause" else Html.text "play" ]
         ]
 
 trackView : Track -> Html Msg
@@ -487,6 +527,7 @@ trackView track =
 artistNames : Artist -> Html Msg
 artistNames artists =
     span[][Html.text artists.name]
+
 -- Funktion zum Erzeugen der Anzeige eines Playlist-Namens
 playlistNameView : Playlist -> Html Msg
 playlistNameView playlist =
@@ -503,24 +544,10 @@ pageUserAccount model =
 
 pageSvg : Model-> Html Msg 
 pageSvg model = 
-    div [][ --svgAngleDown
-          --, svgAngleRight
-          --, svgProfile
-           svgAnimation
-          --, svgLogout
-          --, svgCircleAnimation
-          ]
+    div [][ svgAnimation ]
 
 
 --##########.SVG.##########
-
-
-{-optionsIcon = 
-    svg [ SVG.height "130", SVG.width "130", SVG.viewBox "0 0 60 60"]
-        [ line [ SVG.x "10", SVG.y "20" ] ]
--}
-       -- <path fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="bevel" 
-       -- d="M5.0916789,20.818994C5.0916789,20.818994,58.908321,20.818994,58.908321,20.818994">
     
 svgAngleRight = 
     svg [ SVG.width "20", SVG.height "20", SVG.viewBox "0 0 25 20", SVG.fill "fffff"]
@@ -563,37 +590,33 @@ svgAnimation = -----------------------------------------
         ]
 
 
-
-
-
-
-
-
-svgLogout = 
-    svg [ SVG.width "20", SVG.height "20", SVG.viewBox "0 0 20 20", SVG.fill "black"]
-        [ line [ SVG.x1 "0", SVG.y1 "0", SVG.x2 "20", SVG.y2 "20", SVG.stroke "black"] 
-               [ animate [ SVG.attributeName "x2", SVG.from "0", SVG.to "20", SVG.dur "0.3s" ][] 
-               , animate [ SVG.attributeName "y2", SVG.from "0", SVG.to "20", SVG.dur "0.3s" ][] 
-               ] 
-        , line [ SVG.x1 "20", SVG.y1 "0", SVG.x2 "0", SVG.y2 "20", SVG.stroke "black"] 
-               [ animate [ SVG.attributeName "x2", SVG.from "20", SVG.to "0", SVG.dur "0.3s" ][] 
-               , animate [ SVG.attributeName "y2", SVG.from "0", SVG.to "20", SVG.dur "0.3s" ][] 
-               ]
+svgVolumeNone = 
+    svg [ SVG.width "30", SVG.height "20", SVG.viewBox "0 0 30 20", SVG.fill "black"]
+        [ polyline [ SVG.fill "black", SVG.stroke "black", SVG.points "0,10 10,3 10,17 0,10" ] []
+        , line [ SVG.x1 "15", SVG.y1 "5", SVG.x2 "25", SVG.y2 "15", SVG.stroke "black" ] []
+        , line [ SVG.x1 "15", SVG.y1 "15", SVG.x2 "25", SVG.y2 "5", SVG.stroke "black" ] []
         ]
 
-svgCircleAnimation = 
-    svg [ SVG.width "100", SVG.height "10", SVG.viewBox "0 0 10 10", SVG.fill "none", SVG.stroke "black"]
-        [ circle [ SVG.cx "5", SVG.cy "5", SVG.r "5" ] 
-               [ animate [ SVG.attributeName "r", SVG.from "0", SVG.to "5", SVG.dur "0.3s" ][] ] 
-        , text_
-    [ SVG.x "20"
-    , SVG.y "35"
-    --, SVG.fontFamily [ "Helvetica", "sans-serif" ]
-    , SVG.fontSize "30"
-    ]
-    [ Svg.text "Hello World" ]
+svgVolumeLow = 
+    svg [ SVG.width "40", SVG.height "20", SVG.viewBox "0 0 30 20", SVG.stroke "black" ]
+        [ polyline [ SVG.fill "black", SVG.points "0,10 10,3 10,17 0,10" ] []
+        , polyline [ SVG.fill "none", SVG.points "15,6 17,9 18,10 17,11 15,14" ] []        
         ]
 
+svgVolumeMed = 
+    svg [ SVG.width "40", SVG.height "20", SVG.viewBox "0 0 30 20", SVG.stroke "black"]
+        [ polyline [ SVG.fill "black", SVG.stroke "black", SVG.points "0,10 10,3 10,17 0,10" ] []
+        , polyline [ SVG.fill "none", SVG.points "15,6 17,9 18,10 17,11 15,14" ] []
+        , polyline [ SVG.fill "none", SVG.points "20,5 22,8 23,10 22,12 20,15" ] []
+        ]
+
+svgVolumeHigh = 
+    svg [ SVG.width "40", SVG.height "20", SVG.viewBox "0 0 30 20", SVG.stroke "black"]
+        [ polyline [ SVG.fill "black", SVG.stroke "black", SVG.points "0,10 10,3 10,17 0,10" ] []
+        , polyline [ SVG.fill "none", SVG.points "15,6 17,9 18,10 17,11 15,14" ] []
+        , polyline [ SVG.fill "none", SVG.points "20,5 22,8 23,10 22,12 20,15" ] []
+        , polyline [ SVG.fill "none", SVG.points "25,4 27,7 28,10 27,13 25,16" ] []
+        ]
 
 --##########.Spotify.stuff.##########
 

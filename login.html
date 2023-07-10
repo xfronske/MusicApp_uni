@@ -85,7 +85,7 @@ app.ports.sendMessage.subscribe(
         {
           response_type: 'code',
           client_id: 'c294decfda3b412bb97b8c7951d93631',
-          scope: 'user-read-private user-read-email',
+          scope: 'user-read-private user-read-email streaming user-modify-playback-state', 
           code_challenge_method: 'S256',
           code_challenge,
           redirect_uri,

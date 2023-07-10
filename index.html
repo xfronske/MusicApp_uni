@@ -10,7 +10,9 @@
 </head>
 
 <body>
-    <div id="app"></div>
+  <script src="https://sdk.scdn.co/spotify-player.js"></script>
+  <div id="app"></div>
+   <!--<button id="togglePlay">Toggle Play</button> -->
 </body>
 
 <script type="text/javascript">
@@ -19,7 +21,7 @@
 
 var app = Elm.Main.init({
     node: document.getElementById('app'),
-    flags : Date.now()
+    flags: Date.now()
 });
 
   app.ports.sendMessage.subscribe(
@@ -36,16 +38,46 @@ var app = Elm.Main.init({
       case 'userArtist':
         getUserArtist();
         break;
+
+      case 'toggle_play':
+        window.player.togglePlay();
+        console.log("toggled");
+        console.log(window.player);
+        break; 
+
+      case 'inc_vol':
+        window.volume += 1;
+        window.player.setVolume(window.volume/10).then (() => { 
+          console.log("volume updated!");
+        });
+        console.log(window.volume);
+        break;
+
+      case 'dec_vol':
+        window.volume -= 1;
+        window.player.setVolume(window.volume/10).then (() => {
+          console.log("dec");
+        });
+        console.log(window.volume);
+        break;
+
+      case 'next_track':
+        window.volume -= 1;
+        window.player.nextTrack().then (() => {
+          console.log("next");
+        });
+        console.log(window.volume);
+        break;
+
+      case 'prev_track':
+        window.player.previousTrack().then (() => {
+          console.log("prev");
+        });
+        console.log(window.volume);
+        break;
       }
     }
   );
-
-//  app.ports.sendArtist.subscribe(
-//   function(message){
-//      getArtist(message);
-//    }
-//  );
-  
 
 
 
@@ -55,10 +87,59 @@ var app = Elm.Main.init({
   const client_id = 'c294decfda3b412bb97b8c7951d93631';
   const redirect_uri = 'http://localhost:8000/index.html'; // Your redirect uri
 
+  //window.volume = 5;
+
   // after recieving the code from spotify it gets exchanged for the accessToken
   if (code) {
    exchangeToken(code);
+
+  if (!window.volume) {window.volume = 5;}
+
+   window.onSpotifyWebPlaybackSDKReady = () => {
+        var volume = window.volume;
+        const token = localStorage.getItem('access_token');
+        console.log(token);
+        window.player = new Spotify.Player({
+            name: 'MusicApp Spotify Player',
+            getOAuthToken: cb => { cb(token); },
+            volume: volume/10
+        });
+
+        // Ready
+        player.addListener('ready', ({ device_id }) => {
+            console.log('Ready with Device ID', device_id);
+        });
+
+        // Not Ready
+        player.addListener('not_ready', ({ device_id }) => {
+            console.log('Device ID has gone offline', device_id);
+        });
+
+        player.addListener('initialization_error', ({ message }) => {
+            console.error(message);
+        });
+
+        player.addListener('authentication_error', ({ message }) => {
+            console.error(message);
+        });
+
+        player.addListener('account_error', ({ message }) => {
+            console.error(message);
+        });
+
+        player.addListener('player_state_changed', ({
+          position, duration, track_window: { current_track }
+        }) => {
+          console.log('Currently Playing', current_track);
+          console.log('Position in Song', position);
+          console.log('Duration of Song', duration);
+        });
+
+        player.connect();
+    }
   } 
+
+
 
   function getArtist(artistName) {
     let artist = artistName.replace(" ", "+");
@@ -189,12 +270,7 @@ var app = Elm.Main.init({
   // Restore tokens from localStorage
   let access_token = localStorage.getItem('access_token') || null;
   let refresh_token = localStorage.getItem('refresh_token') || null;
-  let expires_at = localStorage.getItem('expires_at') || null;
-
-
-
-
-
-</script>
+  let expires_at = localStorage.getItem('expires_at') || null;    
+  </script>
 
 </html>
