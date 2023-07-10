@@ -4545,7 +4545,13 @@ function _Http_track(router, xhr, tracker)
 			size: event.lengthComputable ? $elm$core$Maybe$Just(event.total) : $elm$core$Maybe$Nothing
 		}))));
 	});
-}var $elm$core$Basics$EQ = {$: 'EQ'};
+}var $author$project$Main$LinkClicked = function (a) {
+	return {$: 'LinkClicked', a: a};
+};
+var $author$project$Main$UrlChanged = function (a) {
+	return {$: 'UrlChanged', a: a};
+};
+var $elm$core$Basics$EQ = {$: 'EQ'};
 var $elm$core$Basics$GT = {$: 'GT'};
 var $elm$core$Basics$LT = {$: 'LT'};
 var $elm$core$List$cons = _List_cons;
@@ -5333,28 +5339,29 @@ var $elm$core$Task$perform = F2(
 			$elm$core$Task$Perform(
 				A2($elm$core$Task$map, toMessage, task)));
 	});
-var $elm$browser$Browser$element = _Browser_element;
+var $elm$browser$Browser$application = _Browser_application;
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
-var $author$project$Main$init = function (currentTime) {
-	return _Utils_Tuple2(
-		{
-			accessToken: '',
-			accountDropdownState: false,
-			currentPage: 2,
-			currentTime: currentTime,
-			currentUser: {country: '', display_name: '', email: '', id: ''},
-			dropdownState: false,
-			loginState: false,
-			message: '',
-			playlists: _List_Nil,
-			spotifydDropdownState: false,
-			token: '',
-			topTracks: _List_Nil
-		},
-		$elm$core$Platform$Cmd$none);
-};
-var $elm$json$Json$Decode$int = _Json_decodeInt;
+var $author$project$Main$init = F3(
+	function (flag, url, key) {
+		return _Utils_Tuple2(
+			{
+				accessToken: '',
+				accountDropdownState: false,
+				currentPage: 2,
+				currentUser: {country: '', display_name: '', email: '', id: ''},
+				dropdownState: false,
+				key: key,
+				loginState: false,
+				message: '',
+				playlists: _List_Nil,
+				spotifydDropdownState: false,
+				token: '',
+				topTracks: _List_Nil,
+				url: url
+			},
+			$elm$core$Platform$Cmd$none);
+	});
 var $author$project$Main$RecFromJS = function (a) {
 	return {$: 'RecFromJS', a: a};
 };
@@ -6175,6 +6182,7 @@ var $author$project$Main$Image = F3(
 	function (url, height, width) {
 		return {height: height, url: url, width: width};
 	});
+var $elm$json$Json$Decode$int = _Json_decodeInt;
 var $elm$json$Json$Decode$map3 = _Json_map3;
 var $author$project$Main$imageDecoder = A4(
 	$elm$json$Json$Decode$map3,
@@ -6294,9 +6302,55 @@ var $author$project$Main$getUserPlaylists = function (model) {
 			url: 'https://api.spotify.com/v1/users/' + (model.currentUser.id + '/playlists')
 		});
 };
+var $elm$browser$Browser$Navigation$load = _Browser_load;
 var $elm$core$Basics$not = _Basics_not;
+var $elm$browser$Browser$Navigation$pushUrl = _Browser_pushUrl;
 var $elm$json$Json$Encode$string = _Json_wrap;
 var $author$project$Main$sendMessage = _Platform_outgoingPort('sendMessage', $elm$json$Json$Encode$string);
+var $elm$url$Url$addPort = F2(
+	function (maybePort, starter) {
+		if (maybePort.$ === 'Nothing') {
+			return starter;
+		} else {
+			var port_ = maybePort.a;
+			return starter + (':' + $elm$core$String$fromInt(port_));
+		}
+	});
+var $elm$url$Url$addPrefixed = F3(
+	function (prefix, maybeSegment, starter) {
+		if (maybeSegment.$ === 'Nothing') {
+			return starter;
+		} else {
+			var segment = maybeSegment.a;
+			return _Utils_ap(
+				starter,
+				_Utils_ap(prefix, segment));
+		}
+	});
+var $elm$url$Url$toString = function (url) {
+	var http = function () {
+		var _v0 = url.protocol;
+		if (_v0.$ === 'Http') {
+			return 'http://';
+		} else {
+			return 'https://';
+		}
+	}();
+	return A3(
+		$elm$url$Url$addPrefixed,
+		'#',
+		url.fragment,
+		A3(
+			$elm$url$Url$addPrefixed,
+			'?',
+			url.query,
+			_Utils_ap(
+				A2(
+					$elm$url$Url$addPort,
+					url.port_,
+					_Utils_ap(http, url.host)),
+				url.path)));
+};
 var $author$project$Main$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
@@ -6339,6 +6393,29 @@ var $author$project$Main$update = F2(
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
+			case 'LinkClicked':
+				var urlRequest = msg.a;
+				if (urlRequest.$ === 'Internal') {
+					var url = urlRequest.a;
+					return _Utils_Tuple2(
+						model,
+						A2(
+							$elm$browser$Browser$Navigation$pushUrl,
+							model.key,
+							$elm$url$Url$toString(url)));
+				} else {
+					var href = urlRequest.a;
+					return _Utils_Tuple2(
+						model,
+						$elm$browser$Browser$Navigation$load(href));
+				}
+			case 'UrlChanged':
+				var url = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{url: url}),
+					$elm$core$Platform$Cmd$none);
 			case 'ToggleSpotifyDropdown':
 				return _Utils_Tuple2(
 					_Utils_update(
@@ -6411,11 +6488,10 @@ var $author$project$Main$update = F2(
 					$elm$core$Platform$Cmd$none);
 		}
 	});
-var $elm$html$Html$div = _VirtualDom_node('div');
 var $author$project$Main$LoadTopTracks = {$: 'LoadTopTracks'};
 var $author$project$Main$LoadUserData = {$: 'LoadUserData'};
 var $author$project$Main$LoadUserPlaylist = {$: 'LoadUserPlaylist'};
-var $elm$html$Html$button = _VirtualDom_node('button');
+var $elm$html$Html$a = _VirtualDom_node('a');
 var $elm$html$Html$Attributes$stringProperty = F2(
 	function (key, string) {
 		return A2(
@@ -6423,7 +6499,33 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 			key,
 			$elm$json$Json$Encode$string(string));
 	});
+var $elm$html$Html$Attributes$alt = $elm$html$Html$Attributes$stringProperty('alt');
+var $elm$virtual_dom$VirtualDom$attribute = F2(
+	function (key, value) {
+		return A2(
+			_VirtualDom_attribute,
+			_VirtualDom_noOnOrFormAction(key),
+			_VirtualDom_noJavaScriptOrHtmlUri(value));
+	});
+var $elm$html$Html$Attributes$attribute = $elm$virtual_dom$VirtualDom$attribute;
+var $elm$html$Html$br = _VirtualDom_node('br');
+var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
+var $elm$html$Html$div = _VirtualDom_node('div');
+var $elm$html$Html$figure = _VirtualDom_node('figure');
+var $elm$html$Html$footer = _VirtualDom_node('footer');
+var $elm$html$Html$h1 = _VirtualDom_node('h1');
+var $elm$html$Html$h2 = _VirtualDom_node('h2');
+var $elm$html$Html$Attributes$href = function (url) {
+	return A2(
+		$elm$html$Html$Attributes$stringProperty,
+		'href',
+		_VirtualDom_noJavaScriptUri(url));
+};
+var $elm$html$Html$Attributes$id = $elm$html$Html$Attributes$stringProperty('id');
+var $elm$html$Html$img = _VirtualDom_node('img');
+var $elm$html$Html$li = _VirtualDom_node('li');
+var $elm$html$Html$nav = _VirtualDom_node('nav');
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
 };
@@ -6442,18 +6544,448 @@ var $elm$html$Html$Events$onClick = function (msg) {
 		$elm$json$Json$Decode$succeed(msg));
 };
 var $elm$html$Html$p = _VirtualDom_node('p');
+var $elm$html$Html$section = _VirtualDom_node('section');
+var $elm$html$Html$span = _VirtualDom_node('span');
+var $elm$html$Html$Attributes$src = function (url) {
+	return A2(
+		$elm$html$Html$Attributes$stringProperty,
+		'src',
+		_VirtualDom_noJavaScriptOrHtmlUri(url));
+};
+var $elm$html$Html$strong = _VirtualDom_node('strong');
+var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
+var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
-var $author$project$Main$playlistNameView = function (playlist) {
+var $elm$html$Html$ul = _VirtualDom_node('ul');
+var $author$project$Main$pageMain = function (model) {
 	return A2(
 		$elm$html$Html$div,
-		_List_Nil,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('container')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$section,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('hero is-fullheight is-default is-bold')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('hero-head')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$nav,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('navbar')
+									]),
+								_List_fromArray(
+									[
+										A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('container')
+											]),
+										_List_fromArray(
+											[
+												A2(
+												$elm$html$Html$div,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$class('navbar-brand')
+													]),
+												_List_fromArray(
+													[
+														A2(
+														$elm$html$Html$a,
+														_List_fromArray(
+															[
+																$elm$html$Html$Attributes$class(' is-rounded '),
+																A2($elm$html$Html$Attributes$style, 'width', '80px'),
+																$elm$html$Html$Attributes$href('')
+															]),
+														_List_fromArray(
+															[
+																A2(
+																$elm$html$Html$img,
+																_List_fromArray(
+																	[
+																		$elm$html$Html$Attributes$src('https://eremiyarifat.de/logoDesign2.png'),
+																		$elm$html$Html$Attributes$alt('Logo')
+																	]),
+																_List_Nil)
+															])),
+														A2(
+														$elm$html$Html$span,
+														_List_fromArray(
+															[
+																$elm$html$Html$Attributes$class('navbar-burger burger'),
+																A2($elm$html$Html$Attributes$attribute, 'data-target', 'navbarMenu')
+															]),
+														_List_fromArray(
+															[
+																A2($elm$html$Html$span, _List_Nil, _List_Nil),
+																A2($elm$html$Html$span, _List_Nil, _List_Nil),
+																A2($elm$html$Html$span, _List_Nil, _List_Nil)
+															]))
+													])),
+												A2(
+												$elm$html$Html$div,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$id('navbarMenu'),
+														$elm$html$Html$Attributes$class('navbar-menu')
+													]),
+												_List_fromArray(
+													[
+														A2(
+														$elm$html$Html$div,
+														_List_fromArray(
+															[
+																$elm$html$Html$Attributes$class('navbar-end')
+															]),
+														_List_fromArray(
+															[
+																A2(
+																$elm$html$Html$div,
+																_List_fromArray(
+																	[
+																		$elm$html$Html$Attributes$class('tabs is-right')
+																	]),
+																_List_fromArray(
+																	[
+																		A2(
+																		$elm$html$Html$ul,
+																		_List_Nil,
+																		_List_fromArray(
+																			[
+																				A2(
+																				$elm$html$Html$li,
+																				_List_fromArray(
+																					[
+																						$elm$html$Html$Attributes$class('is-active')
+																					]),
+																				_List_fromArray(
+																					[
+																						A2(
+																						$elm$html$Html$a,
+																						_List_Nil,
+																						_List_fromArray(
+																							[
+																								$elm$html$Html$text('Home')
+																							]))
+																					])),
+																				A2(
+																				$elm$html$Html$li,
+																				_List_Nil,
+																				_List_fromArray(
+																					[
+																						A2(
+																						$elm$html$Html$a,
+																						_List_fromArray(
+																							[
+																								$elm$html$Html$Events$onClick($author$project$Main$LoadUserPlaylist),
+																								$elm$html$Html$Attributes$href('#getPlaylists')
+																							]),
+																						_List_fromArray(
+																							[
+																								$elm$html$Html$text('My Playlists')
+																							]))
+																					])),
+																				A2(
+																				$elm$html$Html$li,
+																				_List_Nil,
+																				_List_fromArray(
+																					[
+																						A2(
+																						$elm$html$Html$a,
+																						_List_fromArray(
+																							[
+																								$elm$html$Html$Events$onClick($author$project$Main$LoadTopTracks),
+																								$elm$html$Html$Attributes$href('#getTopTracks')
+																							]),
+																						_List_fromArray(
+																							[
+																								$elm$html$Html$text('Top Tracks')
+																							]))
+																					])),
+																				A2(
+																				$elm$html$Html$li,
+																				_List_Nil,
+																				_List_fromArray(
+																					[
+																						A2(
+																						$elm$html$Html$a,
+																						_List_fromArray(
+																							[
+																								$elm$html$Html$Events$onClick($author$project$Main$LoadUserData),
+																								$elm$html$Html$Attributes$href('#getUserInfo')
+																							]),
+																						_List_fromArray(
+																							[
+																								$elm$html$Html$text('User Info')
+																							]))
+																					]))
+																			]))
+																	]))
+															]))
+													]))
+											]))
+									]))
+							])),
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('hero-body')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$div,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('container has-text-centered')
+									]),
+								_List_fromArray(
+									[
+										A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('columns is-vcentered')
+											]),
+										_List_fromArray(
+											[
+												A2(
+												$elm$html$Html$div,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$class('column is-5')
+													]),
+												_List_fromArray(
+													[
+														A2(
+														$elm$html$Html$figure,
+														_List_fromArray(
+															[
+																$elm$html$Html$Attributes$class('image is-1by1')
+															]),
+														_List_fromArray(
+															[
+																A2(
+																$elm$html$Html$img,
+																_List_fromArray(
+																	[
+																		$elm$html$Html$Attributes$src('https://eremiyarifat.de/blondGirlMusic.png'),
+																		$elm$html$Html$Attributes$alt('Description')
+																	]),
+																_List_Nil)
+															]))
+													])),
+												A2(
+												$elm$html$Html$div,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$class('column is-6 is-offset-1')
+													]),
+												_List_fromArray(
+													[
+														A2(
+														$elm$html$Html$h1,
+														_List_fromArray(
+															[
+																$elm$html$Html$Attributes$class('title is-2')
+															]),
+														_List_fromArray(
+															[
+																$elm$html$Html$text('KlangKapsel - Musik neu erleben')
+															])),
+														A2(
+														$elm$html$Html$h2,
+														_List_fromArray(
+															[
+																$elm$html$Html$Attributes$class('subtitle is-4')
+															]),
+														_List_fromArray(
+															[
+																$elm$html$Html$text('Ihr Soundtrack auf Knopfdruck')
+															])),
+														A2($elm$html$Html$br, _List_Nil, _List_Nil),
+														A2(
+														$elm$html$Html$div,
+														_List_fromArray(
+															[
+																$elm$html$Html$Attributes$class('column is-1 has-text-centered ')
+															]),
+														_List_fromArray(
+															[
+																A2(
+																$elm$html$Html$button,
+																_List_fromArray(
+																	[
+																		$elm$html$Html$Events$onClick($author$project$Main$LoadUserData),
+																		$elm$html$Html$Attributes$class('button is-medium  is-success mt-2')
+																	]),
+																_List_fromArray(
+																	[
+																		$elm$html$Html$text('Get User Data')
+																	])),
+																A2(
+																$elm$html$Html$a,
+																_List_fromArray(
+																	[
+																		$elm$html$Html$Events$onClick($author$project$Main$LoadUserPlaylist),
+																		$elm$html$Html$Attributes$href('#getPlaylists'),
+																		$elm$html$Html$Attributes$class('button is-medium  is-success mt-2')
+																	]),
+																_List_fromArray(
+																	[
+																		$elm$html$Html$text('Get Playlists')
+																	])),
+																A2(
+																$elm$html$Html$a,
+																_List_fromArray(
+																	[
+																		$elm$html$Html$Events$onClick($author$project$Main$LoadTopTracks),
+																		$elm$html$Html$Attributes$href('#getTopTracks'),
+																		$elm$html$Html$Attributes$class('button is-medium  is-success mt-2')
+																	]),
+																_List_fromArray(
+																	[
+																		$elm$html$Html$text('Get Top Tracks')
+																	])),
+																A2(
+																$elm$html$Html$a,
+																_List_fromArray(
+																	[
+																		$elm$html$Html$Attributes$href('#getUserInfo'),
+																		$elm$html$Html$Attributes$class('button is-medium  is-success mt-2')
+																	]),
+																_List_fromArray(
+																	[
+																		$elm$html$Html$text('get Profile Information')
+																	]))
+															]))
+													]))
+											]))
+									]))
+							])),
+						A2(
+						$elm$html$Html$footer,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('footer')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$div,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('content has-text-centered')
+									]),
+								_List_fromArray(
+									[
+										A2(
+										$elm$html$Html$p,
+										_List_Nil,
+										_List_fromArray(
+											[
+												A2(
+												$elm$html$Html$strong,
+												_List_Nil,
+												_List_fromArray(
+													[
+														$elm$html$Html$text('Klangkapsel')
+													])),
+												$elm$html$Html$text(' by '),
+												A2(
+												$elm$html$Html$a,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$href('https://eremiyarifat.de')
+													]),
+												_List_fromArray(
+													[
+														$elm$html$Html$text('Eremiya Rifat')
+													])),
+												$elm$html$Html$text(' and Xaver Fronske'),
+												$elm$html$Html$text('. The source code is on '),
+												A2(
+												$elm$html$Html$a,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$href('https://github.com/xfronske/MusicApp_uni/')
+													]),
+												_List_fromArray(
+													[
+														$elm$html$Html$text('GitHub')
+													])),
+												$elm$html$Html$text('. The website content is made with Elm ')
+											]))
+									]))
+							]))
+					]))
+			]));
+};
+var $author$project$Main$playlistItemView = function (playlist) {
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('column is-full has-background-primary m-2 strong has-text-centered has-text-weight-bold')
+			]),
 		_List_fromArray(
 			[
 				$elm$html$Html$text(playlist.name)
 			]));
 };
-var $elm$html$Html$span = _VirtualDom_node('span');
+var $author$project$Main$playlistView = function (model) {
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('columns')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('column is-full')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$h1,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('column is-size-1 is-full has-text-centered	')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Meine Playlists')
+							])),
+						A2(
+						$elm$html$Html$div,
+						_List_Nil,
+						A2($elm$core$List$map, $author$project$Main$playlistItemView, model.playlists))
+					]))
+			]));
+};
 var $author$project$Main$artistNames = function (artists) {
 	return A2(
 		$elm$html$Html$span,
@@ -6493,13 +7025,6 @@ var $elm$core$List$head = function (list) {
 		return $elm$core$Maybe$Nothing;
 	}
 };
-var $elm$html$Html$img = _VirtualDom_node('img');
-var $elm$html$Html$Attributes$src = function (url) {
-	return A2(
-		$elm$html$Html$Attributes$stringProperty,
-		'src',
-		_VirtualDom_noJavaScriptOrHtmlUri(url));
-};
 var $author$project$Main$viewImage = function (image) {
 	return A2(
 		$elm$html$Html$div,
@@ -6515,10 +7040,13 @@ var $author$project$Main$viewImage = function (image) {
 				_List_Nil)
 			]));
 };
-var $author$project$Main$trackView = function (track) {
+var $author$project$Main$trackItemView = function (track) {
 	return A2(
 		$elm$html$Html$div,
-		_List_Nil,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('column is-full  m-2 strong has-text-centered has-text-weight-bold')
+			]),
 		_List_fromArray(
 			[
 				function () {
@@ -6544,85 +7072,186 @@ var $author$project$Main$trackView = function (track) {
 				A2($elm$core$List$map, $author$project$Main$artistNames, track.artists))
 			]));
 };
-var $author$project$Main$pageMain = function (model) {
+var $author$project$Main$tracksView = function (model) {
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				$elm$html$Html$Attributes$class('container')
+				$elm$html$Html$Attributes$class('columns')
 			]),
 		_List_fromArray(
 			[
-				$elm$html$Html$text('Main Page' + model.accessToken),
-				A2(
-				$elm$html$Html$p,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$elm$html$Html$text('User Data : ' + model.currentUser.display_name)
-					])),
-				A2(
-				$elm$html$Html$button,
-				_List_fromArray(
-					[
-						$elm$html$Html$Events$onClick($author$project$Main$LoadUserData)
-					]),
-				_List_fromArray(
-					[
-						$elm$html$Html$text('getuserData')
-					])),
-				A2(
-				$elm$html$Html$button,
-				_List_fromArray(
-					[
-						$elm$html$Html$Events$onClick($author$project$Main$LoadUserPlaylist)
-					]),
-				_List_fromArray(
-					[
-						$elm$html$Html$text('getuserPlaylist')
-					])),
-				A2(
-				$elm$html$Html$p,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$elm$html$Html$text('Playlist: ')
-					])),
 				A2(
 				$elm$html$Html$div,
-				_List_Nil,
-				A2($elm$core$List$map, $author$project$Main$playlistNameView, model.playlists)),
-				A2(
-				$elm$html$Html$button,
 				_List_fromArray(
 					[
-						$elm$html$Html$Events$onClick($author$project$Main$LoadTopTracks)
+						$elm$html$Html$Attributes$class('column is-full')
 					]),
 				_List_fromArray(
 					[
-						$elm$html$Html$text('Top-Tracks laden')
-					])),
-				A2(
-				$elm$html$Html$div,
-				_List_Nil,
-				A2($elm$core$List$map, $author$project$Main$trackView, model.topTracks))
+						A2(
+						$elm$html$Html$h1,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('column is-size-1 is-full has-text-centered	')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Meine Top Tracks')
+							])),
+						A2(
+						$elm$html$Html$div,
+						_List_Nil,
+						A2($elm$core$List$map, $author$project$Main$trackItemView, model.topTracks))
+					]))
 			]));
 };
-var $author$project$Main$view = function (model) {
+var $author$project$Main$userInfoView = function (model) {
 	return A2(
 		$elm$html$Html$div,
-		_List_Nil,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('columns')
+			]),
 		_List_fromArray(
 			[
 				A2(
 				$elm$html$Html$div,
-				_List_Nil,
 				_List_fromArray(
 					[
-						$author$project$Main$pageMain(model)
+						$elm$html$Html$Attributes$class('column is-full')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$h1,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('column is-size-1 is-full has-text-centered')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Mein Profil')
+							])),
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('column has-text-centered ')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$p,
+								_List_Nil,
+								_List_fromArray(
+									[
+										A2(
+										$elm$html$Html$strong,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('has-text-weight-bold')
+											]),
+										_List_fromArray(
+											[
+												$elm$html$Html$text('Name : ')
+											])),
+										$elm$html$Html$text(model.currentUser.display_name)
+									]))
+							])),
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('column has-text-centered ')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$p,
+								_List_Nil,
+								_List_fromArray(
+									[
+										A2(
+										$elm$html$Html$strong,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('has-text-weight-bold')
+											]),
+										_List_fromArray(
+											[
+												$elm$html$Html$text('Email : ')
+											])),
+										$elm$html$Html$text(model.currentUser.email)
+									]))
+							])),
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('column has-text-centered ')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$p,
+								_List_Nil,
+								_List_fromArray(
+									[
+										A2(
+										$elm$html$Html$strong,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('has-text-weight-bold')
+											]),
+										_List_fromArray(
+											[
+												$elm$html$Html$text('Country : ')
+											])),
+										$elm$html$Html$text(model.currentUser.country)
+									]))
+							]))
 					]))
 			]));
 };
-var $author$project$Main$main = $elm$browser$Browser$element(
-	{init: $author$project$Main$init, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
-_Platform_export({'Main':{'init':$author$project$Main$main($elm$json$Json$Decode$int)(0)}});}(this));
+var $author$project$Main$view = function (model) {
+	var currentPath = $elm$url$Url$toString(model.url);
+	switch (currentPath) {
+		case 'http://127.0.0.1:5500/#getPlaylists':
+			return {
+				body: _List_fromArray(
+					[
+						$author$project$Main$playlistView(model)
+					]),
+				title: 'My Playlists'
+			};
+		case 'http://127.0.0.1:5500/#getTopTracks':
+			return {
+				body: _List_fromArray(
+					[
+						$author$project$Main$tracksView(model)
+					]),
+				title: 'Top Tracks'
+			};
+		case 'http://127.0.0.1:5500/#getUserInfo':
+			return {
+				body: _List_fromArray(
+					[
+						$author$project$Main$userInfoView(model)
+					]),
+				title: 'Profile'
+			};
+		default:
+			return {
+				body: _List_fromArray(
+					[
+						$author$project$Main$pageMain(model)
+					]),
+				title: 'Home'
+			};
+	}
+};
+var $author$project$Main$main = $elm$browser$Browser$application(
+	{init: $author$project$Main$init, onUrlChange: $author$project$Main$UrlChanged, onUrlRequest: $author$project$Main$LinkClicked, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
+_Platform_export({'Main':{'init':$author$project$Main$main(
+	$elm$json$Json$Decode$succeed(_Utils_Tuple0))(0)}});}(this));

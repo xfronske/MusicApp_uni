@@ -1,7 +1,7 @@
 port module Main exposing (main, subscriptions)
 
 import Browser
-import Html exposing (Html, button, div, text, p, nav, a, span, i, blockquote, th, tr)
+import Html exposing (Html, button, div, text, p, nav, a, span, i, blockquote, th, tr,li,li,section,figure,ul,h1,h2,br,footer,strong)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Json.Decode exposing (..)
@@ -9,19 +9,15 @@ import Json.Encode as Encode
 import Task
 import Http exposing (..)
 import Html exposing (img)
+import Url
+import Browser.Navigation as Nav
+
 
 --##########.MAIN.###########
--- TODO : FrontEnd für Main Page 
--- kümmert sich Xaaver um getPlaylists ?
-    -- ja tut er
 
-main =
-  Browser.element
-    { init = init
-    , view = view
-    , update = update
-    , subscriptions = subscriptions
-    }
+-- ACHTUNG ACHTUNG !!!
+-- Beim clonen oder online stellen muss die Navigation in der View Methode ab zeile 251 gewechselt werden ! 
+
     
 --##########.Ports
 port sendMessage: String -> Cmd msg
@@ -31,6 +27,8 @@ port loginStatePort : (String -> msg) -> Sub msg
 type alias Model =
     { currentPage : Int
     , dropdownState : Bool 
+    , key : Nav.Key
+    , url : Url.Url
     
     -- Spotify
     , spotifydDropdownState : Bool
@@ -39,9 +37,6 @@ type alias Model =
     , token : String
     , currentUser : UserData,
       topTracks : List Track
-
-    -- flags
-    , currentTime : Int
 
     -- ports
     , message : String
@@ -88,13 +83,15 @@ type alias Artist =
     { name : String
     }
 
-init : Int -> (Model, Cmd Msg)
-init currentTime =
+init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
+init flag url key =
   ( { currentPage = 2 -- 0 = Main Page
     , dropdownState = False
 
     -- Spotify
     , spotifydDropdownState = False
+    , key = key
+    , url = url
     , accountDropdownState = False
     , loginState = False
     , token = ""
@@ -106,7 +103,6 @@ init currentTime =
      topTracks = []
     
     -- Flags
-    , currentTime = currentTime
     
     -- Ports
     , message = ""
@@ -121,7 +117,8 @@ init currentTime =
 type Msg
     = 
      TogglePage Int
-
+    | LinkClicked Browser.UrlRequest
+    | UrlChanged Url.Url
     -- Dropdown
     | ToggleNavigationDropdown
     | ToggleSpotifyDropdown
@@ -172,6 +169,19 @@ update msg model =
 
         GotTopTracks (Err _) ->
             (model, Cmd.none)
+
+        LinkClicked urlRequest ->
+             case urlRequest of
+                Browser.Internal url ->
+                    ( model, Nav.pushUrl model.key (Url.toString url) )
+
+                Browser.External href ->
+                    ( model, Nav.load href )
+
+        UrlChanged url ->
+            ( { model | url = url }
+            , Cmd.none
+            )
             
 -- Spotify
 
@@ -230,39 +240,146 @@ update msg model =
             , Cmd.none )
 
        
---##########.Navbar.uuuuh.##########
-    
-navigation : Model -> Html Msg
-navigation model = 
-    div [][text "asd"]
-        
+--##########.VIEW.##########
 
+view : Model -> Browser.Document Msg
+view model =
+  let
+    currentPath = Url.toString model.url
+  in
+    case currentPath of
+      "http://127.0.0.1:5500/#getPlaylists" ->
+        { title = "My Playlists"
+        , body = [ playlistView model ]
+        }
+        
+      "http://127.0.0.1:5500/#getTopTracks" ->
+        { title = "Top Tracks"
+        , body = [ tracksView model ]
+        }
+      "http://127.0.0.1:5500/#getUserInfo" ->
+        { title = "Profile"
+        , body = [ userInfoView model ]
+        }
+      _ ->
+        { title = "Home"
+        , body = [ pageMain model ]
+        }
+
+        
 --##########.PAGES.##########
 
 pageMain : Model -> Html Msg
 pageMain model = 
     div [ class "container" ][
-          text ("Main Page"++model.accessToken),
-          p [][text ("User Data : " ++ model.currentUser.display_name)],
-          button [onClick LoadUserData][text "getuserData"],
-          button [onClick LoadUserPlaylist][text "getuserPlaylist"],
-          p [][text ("Playlist: ")],
-          div [] (List.map playlistNameView model.playlists),
-          button [ onClick LoadTopTracks ] [ text "Top-Tracks laden" ],
-            div []  (List.map trackView model.topTracks)
-               
+         section [ class "hero is-fullheight is-default is-bold" ]
+        [ div [ class "hero-head" ]
+            [ nav [ class "navbar" ]
+                [ div [ class "container" ]
+                    [ div [ class "navbar-brand" ]
+                        [ a [ class " is-rounded ",style "width" "80px", href "" ]
+                            [ img [ src "https://eremiyarifat.de/logoDesign2.png",  alt "Logo" ] []
+                            ]
+                        , span [ class "navbar-burger burger", attribute "data-target" "navbarMenu" ]
+                            [ span [] []
+                            , span [] []
+                            , span [] []
+                            ]
+                        ]
+                    , div [ id "navbarMenu", class "navbar-menu" ]
+                        [ div [ class "navbar-end" ]
+                            [ div [ class "tabs is-right" ]
+                                [ ul []
+                                    [ li [ class "is-active" ] [ a [] [ text "Home" ] ]
+                                    , li [] [ a [onClick LoadUserPlaylist, href "#getPlaylists" ] [ text "My Playlists" ] ]
+                                    , li [] [ a [onClick LoadTopTracks, href "#getTopTracks" ] [ text "Top Tracks" ] ]
+                                    , li [] [ a [onClick LoadUserData, href "#getUserInfo" ] [ text "User Info" ] ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        , div [ class "hero-body" ]
+            [ div [ class "container has-text-centered" ]
+                [ div [ class "columns is-vcentered" ]
+                    [ div [ class "column is-5" ]
+                        [ figure [ class "image is-1by1" ]
+                            [ img [ src "https://eremiyarifat.de/blondGirlMusic.png", alt "Description" ] []
+                            ]
+                        ]
+                    , div [ class "column is-6 is-offset-1" ]
+                        [ h1 [ class "title is-2" ] [ text "KlangKapsel - Musik neu erleben" ]
+                        , h2 [ class "subtitle is-4" ] [ text "Ihr Soundtrack auf Knopfdruck" ]
+                        , br [] []
+                        , div [ class "column is-1 has-text-centered " ]
+                            [ 
+                              button [ onClick LoadUserData,class "button is-medium  is-success mt-2" ] [ text "Get User Data" ],
+                              a [ onClick LoadUserPlaylist, href "#getPlaylists",class "button is-medium  is-success mt-2" ] [ text "Get Playlists" ],
+                              a [ onClick LoadTopTracks, href "#getTopTracks" ,class "button is-medium  is-success mt-2" ] [ text "Get Top Tracks" ],
+                              a [ href "#getUserInfo" ,class "button is-medium  is-success mt-2" ] [ text "get Profile Information" ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ,   footer [class "footer"]
+        [ div [class "content has-text-centered"]
+            [ p []
+                [ strong [] [text "Klangkapsel"]
+                , text " by "
+                , a [href "https://eremiyarifat.de"] [text "Eremiya Rifat"]
+                , text " and Xaver Fronske" 
+                , text ". The source code is on "
+                , a [href "https://github.com/xfronske/MusicApp_uni/"] [text "GitHub"]
+                , text ". The website content is made with Elm "
+                ]
+            ]
         ]
-trackView : Track -> Html Msg
-trackView track =
-    div []
-        [
-            
+    ]
+    ]
+playlistView : Model -> Html Msg
+playlistView model = 
+    div[class "columns"][
+        div[class "column is-full"][
+            h1[class "column is-size-1 is-full has-text-centered	"][text "Meine Playlists"],
+             div [] (List.map playlistItemView model.playlists)
+        ]
+    ]
+playlistItemView : Playlist -> Html Msg
+playlistItemView playlist =
+    div [class "column is-full has-background-primary m-2 strong has-text-centered has-text-weight-bold"] [text playlist.name]      
+tracksView : Model -> Html Msg
+tracksView model = 
+    div[class "columns"][
+        div[class "column is-full"][
+            h1[class "column is-size-1 is-full has-text-centered	"][text "Meine Top Tracks"],
+             div [] (List.map trackItemView model.topTracks)
+        ]
+    ]
+trackItemView : Track -> Html Msg
+trackItemView track =
+    div [class "column is-full  m-2 strong has-text-centered has-text-weight-bold"] [
             case List.drop 1 track.album.images |> List.head  of
             Just firstImage -> viewImage firstImage
             Nothing -> text "",
             p [] [ text (track.name ++ " - "  ) ]
             , p[] (List.map artistNames track.artists) 
+    ]      
+
+userInfoView : Model -> Html Msg
+userInfoView model = 
+    div[class "columns"][
+        div[class "column is-full"][
+            h1[class "column is-size-1 is-full has-text-centered"][text "Mein Profil"],
+            div[class "column has-text-centered "][p[][strong[class "has-text-weight-bold"][text "Name : "],text model.currentUser.display_name]],
+            div[class "column has-text-centered "][p[][strong[class "has-text-weight-bold"][text "Email : "],text model.currentUser.email]],
+            div[class "column has-text-centered "][p[][strong[class "has-text-weight-bold"][text "Country : "],text model.currentUser.country]]
+             
         ]
+    ]
+
 viewImage : Image -> Html Msg
 viewImage image =
     div []
@@ -271,9 +388,6 @@ artistNames : Artist -> Html Msg
 artistNames artists =
     span[][text artists.name]
 -- Funktion zum Erzeugen der Anzeige eines Playlist-Namens
-playlistNameView : Playlist -> Html Msg
-playlistNameView playlist =
-    div [] [text playlist.name]      
   
     
 pageSpotify : Model -> Html Msg
@@ -369,19 +483,11 @@ playlistDecoder =
         (field "id" string)
         (field "name" string)
         (field "href" string)
+
 playlistResponseDecoder : Decoder PlaylistResponse
 playlistResponseDecoder =
     Json.Decode.map PlaylistResponse
         (field "items" (Json.Decode.list playlistDecoder))
-
-decodeUserPlaylists : Decoder UserData
-decodeUserPlaylists = 
-    Json.Decode.map4 UserData
-        (field "country" string)
-        (field "display_name" string)
-        (field "email" string)
-        (field "id" string)
-
 
 decodeUserData : Decoder UserData
 decodeUserData = 
@@ -392,29 +498,7 @@ decodeUserData =
         (field "id" string)
 
 
---##########.VIEW.##########
 
---When adding a page you habe to ->
---    1. add a number in the index list 
---    2. add a page function
---    3. add dropdown-item
-
---##########Page Index List#########
---##  0 -> Main                   ##
---##  1 -> Time (big)             ##
---##  2 -> Spotify                ##
---##  3 -> User Account           ##
---##  4 -> 
---##################################
-
-view : Model -> Html Msg
-view model =
-
-    
-    div [][ 
-                    div[][ pageMain model ]
-
-          ]
 
 -- SUBSCRIPTIONS
 
@@ -422,6 +506,17 @@ subscriptions : Model -> Sub Msg
 subscriptions _ =
   messageReceiver RecFromJS
 
+
+main : Program () Model Msg
+main =
+  Browser.application
+    { init = init
+    , view = view
+    , update = update
+    , subscriptions = subscriptions
+    , onUrlChange = UrlChanged
+    , onUrlRequest = LinkClicked
+    }
 
 
 {-model =
