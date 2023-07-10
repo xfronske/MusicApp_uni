@@ -320,7 +320,7 @@ pageMain model =
                             [ 
                               button [ onClick LoadUserData,class "button is-medium  is-success mt-2" ] [ text "Get User Data" ],
                               a [ onClick LoadUserPlaylist, href "#getPlaylists",class "button is-medium  is-success mt-2" ] [ text "Get Playlists" ],
-                              p[][ text model.accessToken ],
+                              p [ ] [ text ("Token:" ++ model.accessToken) ],
                               a [ onClick LoadTopTracks, href "#getTopTracks" ,class "button is-medium  is-success mt-2" ] [ text "Get Top Tracks" ],
                               a [ href "#getUserInfo" ,class "button is-medium  is-success mt-2" ] [ text "get Profile Information" ]
                             ]
