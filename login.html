@@ -10,7 +10,7 @@
 </head>
 
 <body>
-    <div id="Main.elm">as</div>
+    <div id="Login.elm">as</div>
 </body>
 
 <script type="text/javascript">
@@ -18,7 +18,7 @@
   // Start the Elm application.
 
 var app = Elm.Login.init({
-    node: document.getElementById('Main.elm'),
+    node: document.getElementById('Login.elm'),
 });
 app.ports.sendMessage.subscribe(
     function(message) {
@@ -84,8 +84,8 @@ app.ports.sendMessage.subscribe(
         'https://accounts.spotify.com/authorize',
         {
           response_type: 'code',
-          client_id: 'c294decfda3b412bb97b8c7951d93631',
-          scope: 'user-read-private user-read-email',
+          client_id: '95b88d3b5a5745748fb58777ed7a1318',
+          scope: 'user-read-private user-read-email user-top-read streaming user-modify-playback-state',
           code_challenge_method: 'S256',
           code_challenge,
           redirect_uri,
@@ -96,31 +96,31 @@ app.ports.sendMessage.subscribe(
   }
 
   //  Tauscht den empfangenen Code gegen ein Zugriffstoken (Access Token) und ein Aktualisierungstoken (Refresh Token) ein. Die Funktion sendet eine POST-Anforderung an Spotify's Token-API-Endpunkt und verarbeitet die Antwort.
-  function exchangeToken(code) {
-    const code_verifier = localStorage.getItem('code_verifier');
+  // function exchangeToken(code) {
+  //   const code_verifier = localStorage.getItem('code_verifier');
 
-    fetch('https://accounts.spotify.com/api/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-      },
-      body: new URLSearchParams({
-        client_id,
-        grant_type: 'authorization_code',
-        code,
-        redirect_uri,
-        code_verifier,
-      }),
-    })
-      .then(addThrowErrorToFetch)
-      .then((data) => {
-        processTokenResponse(data);
+  //   fetch('https://accounts.spotify.com/api/token', {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+  //     },
+  //     body: new URLSearchParams({
+  //       client_id,
+  //       grant_type: 'authorization_code',
+  //       code,
+  //       redirect_uri,
+  //       code_verifier,
+  //     }),
+  //   })
+  //     .then(addThrowErrorToFetch)
+  //     .then((data) => {
+  //       processTokenResponse(data);
 
-        // clear search query params in the url
-        window.history.replaceState({}, document.title, '/');
-      })
-      .catch(handleError);
-  }
+  //       // clear search query params in the url
+  //       window.history.replaceState({}, document.title, '/');
+  //     })
+  //     .catch(handleError);
+  // }
 
 
 //   //: Erneuert das Zugriffstoken, indem es eine POST-Anforderung an Spotify's Token-API-Endpunkt sendet und die Antwort verarbeitet.
@@ -179,7 +179,7 @@ app.ports.sendMessage.subscribe(
 
 
   const client_id = '95b88d3b5a5745748fb58777ed7a1318';
-  const redirect_uri = 'http://localhost:8000/ELM/index.html'; // Your redirect uri
+  const redirect_uri = 'http://127.0.0.1:5500/ELM/index.html'; // Your redirect uri
 
   // Restore tokens from localStorage
   let access_token = localStorage.getItem('access_token') || null;
@@ -190,10 +190,10 @@ app.ports.sendMessage.subscribe(
   const args = new URLSearchParams(window.location.search);
   const code = args.get('code');
 
-  // after recieving the code from spotify it gets exchanged for the accessToken
-  if (code) {
-    exchangeToken(code);
-  } 
+  // // after recieving the code from spotify it gets exchanged for the accessToken
+  // if (code) {
+  //   exchangeToken(code);
+  // } 
 
   
 
