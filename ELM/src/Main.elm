@@ -17,6 +17,9 @@ import Browser.Navigation as Nav
 
 -- ACHTUNG ACHTUNG !!!
 -- Beim clonen oder online stellen muss die Navigation in der View Methode ab zeile 251 gewechselt werden ! 
+-- Damit die Funktionen richtig funktionieren muss zuerst der Button "Get User Data" aufgerufen werden
+-- beim clonen auf die SpotifyAPI client_id und redirect uri achten
+-- dieser Coder verwerden : http://127.0.0.1:5500/ als uri 
 
     
 --##########.Ports
