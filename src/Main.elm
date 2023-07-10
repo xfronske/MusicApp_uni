@@ -333,7 +333,7 @@ pageMain model =
             [ p []
                 [ strong [] [text "Klangkapsel"]
                 , text " by "
-                , a [href "https://eremiyarifat.de"] [text "Eremiya Rifat"]
+                , a [href "https://eremiyarifat.de"] [text "Eremiya Rifatoo"]
                 , text " and Xaver Fronske" 
                 , text ". The source code is on "
                 , a [href "https://github.com/xfronske/MusicApp_uni/"] [text "GitHub"]
