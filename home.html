@@ -1,0 +1,145 @@
+<!DOCTYPE HTML>
+<html>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+
+<head>
+  <meta charset="UTF-8">
+  <title>MusicApp</title>
+  <script type="text/javascript" src="Main1.js"></script>
+</head>
+
+<body>
+    <div id="app"></div>
+</body>
+
+<script type="text/javascript">
+
+  // Start the Elm application.
+
+var app = Elm.Main.init({
+    node: document.getElementById('app'),
+    flags : Date.now()
+});
+
+  app.ports.sendMessage.subscribe(
+    function(message) {
+      switch(message) {
+      case 'logout':
+        logout();
+        break;
+
+      case 'refreshToken':
+        refreshToken();
+        break;
+      }
+    }
+  );
+
+
+
+  const args = new URLSearchParams(window.location.search);
+  const code = args.get('code');
+
+  const client_id = '95b88d3b5a5745748fb58777ed7a1318';
+  const redirect_uri = 'https://xfronske.github.io/MusicApp_uni/home.html'; // Your redirect uri
+
+  // after recieving the code from spotify it gets exchanged for the accessToken
+  if (code) {
+    console.log(code);
+   exchangeToken(code);
+  } 
+
+  // Nimmt den Authentication Code und wandelt ihn in richtigen Token um
+  function exchangeToken(code) {
+    const code_verifier = localStorage.getItem('code_verifier');
+
+    console.log("HALOOO  "+redirect_uri)
+
+    fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+      },
+      body: new URLSearchParams({
+        client_id,
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri,
+        code_verifier,
+      }),
+    })
+      .then(addThrowErrorToFetch)
+      .then((data) => {
+        console.log("asdasdkjsakldasd"+data)
+        processTokenResponse(data)
+        // clear search query params in the url
+        window.history.replaceState({}, document.title, '/');
+        app.ports.messageReceiver.send(access_token);  
+      })
+      .catch(handleError);
+  }
+
+  // Wenn der Token abgelaufen ist, wird ein neuer generiert
+  function refreshToken() {
+    fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+      },
+      body: new URLSearchParams({
+        client_id,
+        grant_type: 'refresh_token',
+        refresh_token,
+      }),
+    })
+      .then(addThrowErrorToFetch)
+      .then(processTokenResponse)
+      .catch(handleError);
+  }
+
+  function handleError(error) {
+    console.error(error);
+  }
+
+  async function addThrowErrorToFetch(response) {
+    if (response.ok) {
+      return response.json();
+    } else {
+      throw { response, error: await response.json() };
+    }
+  }
+
+  function logout() {
+    localStorage.clear();
+    window.location.reload();
+  }
+
+  // Der übertragene Token wird im localStorage gespeichert
+  function processTokenResponse(data) {
+
+    access_token = data.access_token;
+    refresh_token = data.refresh_token;
+
+    const t = new Date();
+    expires_at = t.setSeconds(t.getSeconds() + data.expires_in);
+
+    localStorage.setItem('access_token', access_token);
+    localStorage.setItem('refresh_token', refresh_token);
+    localStorage.setItem('expires_at', expires_at);
+
+
+  }
+
+  // Restore tokens from localStorage
+  let access_token = localStorage.getItem('access_token') || null;
+  let refresh_token = localStorage.getItem('refresh_token') || null;
+  let expires_at = localStorage.getItem('expires_at') || null;
+
+
+
+
+
+</script>
+
+</html>
