@@ -7583,7 +7583,7 @@ var $author$project$Main$view = function (model) {
 					]),
 				title: 'Profile'
 			};
-		case 'http://127.0.0.1:5500/#errorPage':
+		case 'https://xfronske.github.io/#errorPage':
 			return {
 				body: _List_fromArray(
 					[

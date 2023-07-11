@@ -267,7 +267,7 @@ view model =
         { title = "Profile"
         , body = [ userInfoView model ]
         }
-      "http://127.0.0.1:5500/#errorPage" ->
+      "https://xfronske.github.io/#errorPage" ->
         { title = "Profile"
         , body = [ errorView model ]
         }
