@@ -6488,6 +6488,337 @@ var $author$project$Main$update = F2(
 					$elm$core$Platform$Cmd$none);
 		}
 	});
+var $elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
+var $elm$svg$Svg$animate = $elm$svg$Svg$trustedNode('animate');
+var $elm$svg$Svg$Attributes$attributeName = _VirtualDom_attribute('attributeName');
+var $elm$svg$Svg$Attributes$dur = _VirtualDom_attribute('dur');
+var $elm$svg$Svg$Attributes$fill = _VirtualDom_attribute('fill');
+var $elm$svg$Svg$Attributes$from = function (value) {
+	return A2(
+		_VirtualDom_attribute,
+		'from',
+		_VirtualDom_noJavaScriptUri(value));
+};
+var $elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
+var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
+var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
+var $elm$svg$Svg$svg = $elm$svg$Svg$trustedNode('svg');
+var $elm$svg$Svg$Attributes$to = function (value) {
+	return A2(
+		_VirtualDom_attribute,
+		'to',
+		_VirtualDom_noJavaScriptUri(value));
+};
+var $elm$svg$Svg$Attributes$viewBox = _VirtualDom_attribute('viewBox');
+var $elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
+var $elm$svg$Svg$Attributes$x = _VirtualDom_attribute('x');
+var $elm$svg$Svg$Attributes$y = _VirtualDom_attribute('y');
+var $author$project$Main$errorView = function (model) {
+	return A2(
+		$elm$svg$Svg$svg,
+		_List_fromArray(
+			[
+				$elm$svg$Svg$Attributes$width('600'),
+				$elm$svg$Svg$Attributes$height('300'),
+				$elm$svg$Svg$Attributes$viewBox('0 0 600 300'),
+				$elm$svg$Svg$Attributes$fill('red')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$svg$Svg$rect,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$x('20'),
+						$elm$svg$Svg$Attributes$y('  0'),
+						$elm$svg$Svg$Attributes$width('75'),
+						$elm$svg$Svg$Attributes$height(' 40'),
+						$elm$svg$Svg$Attributes$stroke('red')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$svg$Svg$animate,
+						_List_fromArray(
+							[
+								$elm$svg$Svg$Attributes$attributeName('width'),
+								$elm$svg$Svg$Attributes$from('0'),
+								$elm$svg$Svg$Attributes$to('75'),
+								$elm$svg$Svg$Attributes$dur('1.5s')
+							]),
+						_List_Nil)
+					])),
+				A2(
+				$elm$svg$Svg$rect,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$x('20'),
+						$elm$svg$Svg$Attributes$y('110'),
+						$elm$svg$Svg$Attributes$width('75'),
+						$elm$svg$Svg$Attributes$height(' 40'),
+						$elm$svg$Svg$Attributes$stroke('red')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$svg$Svg$animate,
+						_List_fromArray(
+							[
+								$elm$svg$Svg$Attributes$attributeName('width'),
+								$elm$svg$Svg$Attributes$from('0'),
+								$elm$svg$Svg$Attributes$to('75'),
+								$elm$svg$Svg$Attributes$dur('1.5s')
+							]),
+						_List_Nil)
+					])),
+				A2(
+				$elm$svg$Svg$rect,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$x('20'),
+						$elm$svg$Svg$Attributes$y('260'),
+						$elm$svg$Svg$Attributes$width('75'),
+						$elm$svg$Svg$Attributes$height(' 40'),
+						$elm$svg$Svg$Attributes$stroke('red')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$svg$Svg$animate,
+						_List_fromArray(
+							[
+								$elm$svg$Svg$Attributes$attributeName('width'),
+								$elm$svg$Svg$Attributes$from('0'),
+								$elm$svg$Svg$Attributes$to('75'),
+								$elm$svg$Svg$Attributes$dur('1.5s')
+							]),
+						_List_Nil)
+					])),
+				A2(
+				$elm$svg$Svg$rect,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$x(' 0'),
+						$elm$svg$Svg$Attributes$y('  0'),
+						$elm$svg$Svg$Attributes$width('20'),
+						$elm$svg$Svg$Attributes$height('300'),
+						$elm$svg$Svg$Attributes$stroke('red')
+					]),
+				_List_Nil),
+				A2(
+				$elm$svg$Svg$rect,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$x('100'),
+						$elm$svg$Svg$Attributes$y('  0'),
+						$elm$svg$Svg$Attributes$width('20'),
+						$elm$svg$Svg$Attributes$height('300'),
+						$elm$svg$Svg$Attributes$stroke('red')
+					]),
+				_List_Nil),
+				A2(
+				$elm$svg$Svg$rect,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$x('120'),
+						$elm$svg$Svg$Attributes$y('  0'),
+						$elm$svg$Svg$Attributes$width('75'),
+						$elm$svg$Svg$Attributes$height('40'),
+						$elm$svg$Svg$Attributes$stroke('red')
+					]),
+				_List_Nil),
+				A2(
+				$elm$svg$Svg$rect,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$x('120'),
+						$elm$svg$Svg$Attributes$y('110'),
+						$elm$svg$Svg$Attributes$width('75'),
+						$elm$svg$Svg$Attributes$height('40'),
+						$elm$svg$Svg$Attributes$stroke('red')
+					]),
+				_List_Nil),
+				A2(
+				$elm$svg$Svg$rect,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$x('195'),
+						$elm$svg$Svg$Attributes$y('  0'),
+						$elm$svg$Svg$Attributes$width('20'),
+						$elm$svg$Svg$Attributes$height('300'),
+						$elm$svg$Svg$Attributes$stroke('red')
+					]),
+				_List_Nil),
+				A2(
+				$elm$svg$Svg$rect,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$x('220'),
+						$elm$svg$Svg$Attributes$y('  0'),
+						$elm$svg$Svg$Attributes$width('20'),
+						$elm$svg$Svg$Attributes$height('300'),
+						$elm$svg$Svg$Attributes$stroke('red')
+					]),
+				_List_Nil),
+				A2(
+				$elm$svg$Svg$rect,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$x('240'),
+						$elm$svg$Svg$Attributes$y('  0'),
+						$elm$svg$Svg$Attributes$width('75'),
+						$elm$svg$Svg$Attributes$height('40'),
+						$elm$svg$Svg$Attributes$stroke('red')
+					]),
+				_List_Nil),
+				A2(
+				$elm$svg$Svg$rect,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$x('240'),
+						$elm$svg$Svg$Attributes$y('110'),
+						$elm$svg$Svg$Attributes$width('75'),
+						$elm$svg$Svg$Attributes$height('40'),
+						$elm$svg$Svg$Attributes$stroke('red')
+					]),
+				_List_Nil),
+				A2(
+				$elm$svg$Svg$rect,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$x('315'),
+						$elm$svg$Svg$Attributes$y('  0'),
+						$elm$svg$Svg$Attributes$width('20'),
+						$elm$svg$Svg$Attributes$height('300'),
+						$elm$svg$Svg$Attributes$stroke('red')
+					]),
+				_List_Nil),
+				A2(
+				$elm$svg$Svg$rect,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$x('340'),
+						$elm$svg$Svg$Attributes$y('  0'),
+						$elm$svg$Svg$Attributes$width('20'),
+						$elm$svg$Svg$Attributes$height('300'),
+						$elm$svg$Svg$Attributes$stroke('red')
+					]),
+				_List_Nil),
+				A2(
+				$elm$svg$Svg$rect,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$x('360'),
+						$elm$svg$Svg$Attributes$y('  0'),
+						$elm$svg$Svg$Attributes$width('75'),
+						$elm$svg$Svg$Attributes$height('40'),
+						$elm$svg$Svg$Attributes$stroke('red')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$svg$Svg$animate,
+						_List_fromArray(
+							[
+								$elm$svg$Svg$Attributes$attributeName('width'),
+								$elm$svg$Svg$Attributes$from('0'),
+								$elm$svg$Svg$Attributes$to('75'),
+								$elm$svg$Svg$Attributes$dur('1.5s')
+							]),
+						_List_Nil)
+					])),
+				A2(
+				$elm$svg$Svg$rect,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$x('360'),
+						$elm$svg$Svg$Attributes$y('260'),
+						$elm$svg$Svg$Attributes$width('75'),
+						$elm$svg$Svg$Attributes$height('40'),
+						$elm$svg$Svg$Attributes$stroke('red')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$svg$Svg$animate,
+						_List_fromArray(
+							[
+								$elm$svg$Svg$Attributes$attributeName('width'),
+								$elm$svg$Svg$Attributes$from('0'),
+								$elm$svg$Svg$Attributes$to('75'),
+								$elm$svg$Svg$Attributes$dur('1.5s')
+							]),
+						_List_Nil)
+					])),
+				A2(
+				$elm$svg$Svg$rect,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$x('435'),
+						$elm$svg$Svg$Attributes$y('  0'),
+						$elm$svg$Svg$Attributes$width('20'),
+						$elm$svg$Svg$Attributes$height('300'),
+						$elm$svg$Svg$Attributes$stroke('red')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$svg$Svg$animate,
+						_List_fromArray(
+							[
+								$elm$svg$Svg$Attributes$attributeName('height'),
+								$elm$svg$Svg$Attributes$from('0'),
+								$elm$svg$Svg$Attributes$to('300'),
+								$elm$svg$Svg$Attributes$dur('1.5s')
+							]),
+						_List_Nil)
+					])),
+				A2(
+				$elm$svg$Svg$rect,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$x('460'),
+						$elm$svg$Svg$Attributes$y('  0'),
+						$elm$svg$Svg$Attributes$width('20'),
+						$elm$svg$Svg$Attributes$height('300'),
+						$elm$svg$Svg$Attributes$stroke('red')
+					]),
+				_List_Nil),
+				A2(
+				$elm$svg$Svg$rect,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$x('480'),
+						$elm$svg$Svg$Attributes$y('  0'),
+						$elm$svg$Svg$Attributes$width('75'),
+						$elm$svg$Svg$Attributes$height('40'),
+						$elm$svg$Svg$Attributes$stroke('red')
+					]),
+				_List_Nil),
+				A2(
+				$elm$svg$Svg$rect,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$x('480'),
+						$elm$svg$Svg$Attributes$y('110'),
+						$elm$svg$Svg$Attributes$width('75'),
+						$elm$svg$Svg$Attributes$height('40'),
+						$elm$svg$Svg$Attributes$stroke('red')
+					]),
+				_List_Nil),
+				A2(
+				$elm$svg$Svg$rect,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$x('555'),
+						$elm$svg$Svg$Attributes$y('  0'),
+						$elm$svg$Svg$Attributes$width('20'),
+						$elm$svg$Svg$Attributes$height('300'),
+						$elm$svg$Svg$Attributes$stroke('red')
+					]),
+				_List_Nil)
+			]));
+};
 var $author$project$Main$LoadTopTracks = {$: 'LoadTopTracks'};
 var $author$project$Main$LoadUserData = {$: 'LoadUserData'};
 var $author$project$Main$LoadUserPlaylist = {$: 'LoadUserPlaylist'};
@@ -6876,6 +7207,17 @@ var $author$project$Main$pageMain = function (model) {
 																_List_fromArray(
 																	[
 																		$elm$html$Html$text('get Profile Information')
+																	])),
+																A2(
+																$elm$html$Html$a,
+																_List_fromArray(
+																	[
+																		$elm$html$Html$Attributes$href('#errorPage'),
+																		$elm$html$Html$Attributes$class('button is-medium  is-success mt-2')
+																	]),
+																_List_fromArray(
+																	[
+																		$elm$html$Html$text('go To Error Page')
 																	]))
 															]))
 													]))
@@ -7238,6 +7580,14 @@ var $author$project$Main$view = function (model) {
 				body: _List_fromArray(
 					[
 						$author$project$Main$userInfoView(model)
+					]),
+				title: 'Profile'
+			};
+		case 'http://127.0.0.1:5500/#errorPage':
+			return {
+				body: _List_fromArray(
+					[
+						$author$project$Main$errorView(model)
 					]),
 				title: 'Profile'
 			};

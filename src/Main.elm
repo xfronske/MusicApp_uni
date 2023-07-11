@@ -11,6 +11,9 @@ import Http exposing (..)
 import Html exposing (img)
 import Url
 import Browser.Navigation as Nav
+import Svg exposing (svg,rect,animate)
+import Svg.Attributes as SVG
+
 
 
 --##########.MAIN.###########
@@ -264,12 +267,50 @@ view model =
         { title = "Profile"
         , body = [ userInfoView model ]
         }
+      "http://127.0.0.1:5500/#errorPage" ->
+        { title = "Profile"
+        , body = [ errorView model ]
+        }
       _ ->
         { title = "Home"
         , body = [ pageMain model ]
         }
 
-        
+errorView : Model -> Html Msg
+errorView model = 
+    svg [ SVG.width "600", SVG.height "300", SVG.viewBox "0 0 600 300", SVG.fill "red"]
+        [ Svg.rect [SVG.x "20", SVG.y "  0", SVG.width "75", SVG.height " 40", SVG.stroke "red"] -- E
+            [ animate [SVG.attributeName "width", SVG.from "0", SVG.to "75", SVG.dur "1.5s"][] ]
+        , Svg.rect [SVG.x "20", SVG.y "110", SVG.width "75", SVG.height " 40", SVG.stroke "red"] 
+            [ animate [SVG.attributeName "width", SVG.from "0", SVG.to "75", SVG.dur "1.5s"][] ]      
+        , Svg.rect [SVG.x "20", SVG.y "260", SVG.width "75", SVG.height " 40", SVG.stroke "red"] 
+            [ animate [SVG.attributeName "width", SVG.from "0", SVG.to "75", SVG.dur "1.5s"][] ] 
+        , Svg.rect [SVG.x " 0", SVG.y "  0", SVG.width "20", SVG.height "300", SVG.stroke "red"] [] 
+
+        , Svg.rect [SVG.x "100", SVG.y "  0", SVG.width "20", SVG.height "300", SVG.stroke "red"] [] -- R
+        , Svg.rect [SVG.x "120", SVG.y "  0", SVG.width "75", SVG.height "40", SVG.stroke "red"] [] 
+        , Svg.rect [SVG.x "120", SVG.y "110", SVG.width "75", SVG.height "40", SVG.stroke "red"] [] 
+        , Svg.rect [SVG.x "195", SVG.y "  0", SVG.width "20", SVG.height "300", SVG.stroke "red"] [] 
+
+        , Svg.rect [SVG.x "220", SVG.y "  0", SVG.width "20", SVG.height "300", SVG.stroke "red"] [] -- R
+        , Svg.rect [SVG.x "240", SVG.y "  0", SVG.width "75", SVG.height "40", SVG.stroke "red"] [] 
+        , Svg.rect [SVG.x "240", SVG.y "110", SVG.width "75", SVG.height "40", SVG.stroke "red"] [] 
+        , Svg.rect [SVG.x "315", SVG.y "  0", SVG.width "20", SVG.height "300", SVG.stroke "red"] []
+
+        , Svg.rect [SVG.x "340", SVG.y "  0", SVG.width "20", SVG.height "300", SVG.stroke "red"] [] -- O
+        , Svg.rect [SVG.x "360", SVG.y "  0", SVG.width "75", SVG.height "40", SVG.stroke "red"] 
+            [ animate [SVG.attributeName "width", SVG.from "0", SVG.to "75", SVG.dur "1.5s"][] ]
+        , Svg.rect [SVG.x "360", SVG.y "260", SVG.width "75", SVG.height "40", SVG.stroke "red"] 
+            [ animate [SVG.attributeName "width", SVG.from "0", SVG.to "75", SVG.dur "1.5s"][] ] 
+        , Svg.rect [SVG.x "435", SVG.y "  0", SVG.width "20", SVG.height "300", SVG.stroke "red"] 
+            [ animate [SVG.attributeName "height", SVG.from "0", SVG.to "300", SVG.dur "1.5s"][] ] 
+
+        , Svg.rect [SVG.x "460", SVG.y "  0", SVG.width "20", SVG.height "300", SVG.stroke "red"] [] -- R
+        , Svg.rect [SVG.x "480", SVG.y "  0", SVG.width "75", SVG.height "40", SVG.stroke "red"] [] 
+        , Svg.rect [SVG.x "480", SVG.y "110", SVG.width "75", SVG.height "40", SVG.stroke "red"] [] 
+        , Svg.rect [SVG.x "555", SVG.y "  0", SVG.width "20", SVG.height "300", SVG.stroke "red"] [] 
+
+        ]
 --##########.PAGES.##########
 
 pageMain : Model -> Html Msg
@@ -321,7 +362,8 @@ pageMain model =
                               button [ onClick LoadUserData,class "button is-medium  is-success mt-2" ] [ text "Get User Data" ],
                               a [ onClick LoadUserPlaylist, href "#getPlaylists",class "button is-medium  is-success mt-2" ] [ text "Get Playlists" ],
                               a [ onClick LoadTopTracks, href "#getTopTracks" ,class "button is-medium  is-success mt-2" ] [ text "Get Top Tracks" ],
-                              a [ href "#getUserInfo" ,class "button is-medium  is-success mt-2" ] [ text "get Profile Information" ]
+                              a [ href "#getUserInfo" ,class "button is-medium  is-success mt-2" ] [ text "get Profile Information" ],
+                              a [ href "#errorPage" ,class "button is-medium  is-success mt-2" ] [ text "go To Error Page" ]
                             ]
                         ]
                     ]
