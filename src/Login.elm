@@ -87,7 +87,8 @@ view _ =
                 [ strong [] [text "Klangkapsel"]
                 , text " by "
                 , a [href "https://eremiyarifat.de"] [text "Eremiya Rifat"]
-                , text " and Xaver Fronske" 
+                , text " and "
+                , a [href "https://github.com/xfronske/MusicApp_uni/"][text "Xaver Fronske"] 
                 , text ". The source code is on "
                 , a [href "https://github.com/xfronske/MusicApp_uni/"] [text "GitHub"]
                 , text ". The website content is made with Elm "
