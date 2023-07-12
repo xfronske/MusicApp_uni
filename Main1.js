@@ -6170,9 +6170,9 @@ var $author$project$Main$TopTracksResponse = function (items) {
 };
 var $elm$json$Json$Decode$field = _Json_decodeField;
 var $elm$json$Json$Decode$list = _Json_decodeList;
-var $author$project$Main$Track = F4(
-	function (id, name, artists, album) {
-		return {album: album, artists: artists, id: id, name: name};
+var $author$project$Main$Track = F5(
+	function (id, name, artists, album, popularity) {
+		return {album: album, artists: artists, id: id, name: name, popularity: popularity};
 	});
 var $author$project$Main$Album = F3(
 	function (name, id, images) {
@@ -6206,9 +6206,9 @@ var $author$project$Main$artistDecoder = A2(
 	$elm$json$Json$Decode$map,
 	$author$project$Main$Artist,
 	A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string));
-var $elm$json$Json$Decode$map4 = _Json_map4;
-var $author$project$Main$trackDecoder = A5(
-	$elm$json$Json$Decode$map4,
+var $elm$json$Json$Decode$map5 = _Json_map5;
+var $author$project$Main$trackDecoder = A6(
+	$elm$json$Json$Decode$map5,
 	$author$project$Main$Track,
 	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$string),
 	A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string),
@@ -6216,7 +6216,8 @@ var $author$project$Main$trackDecoder = A5(
 		$elm$json$Json$Decode$field,
 		'artists',
 		$elm$json$Json$Decode$list($author$project$Main$artistDecoder)),
-	A2($elm$json$Json$Decode$field, 'album', $author$project$Main$albumDecoder));
+	A2($elm$json$Json$Decode$field, 'album', $author$project$Main$albumDecoder),
+	A2($elm$json$Json$Decode$field, 'popularity', $elm$json$Json$Decode$int));
 var $author$project$Main$topTracksResponseDecoder = A2(
 	$elm$json$Json$Decode$map,
 	$author$project$Main$TopTracksResponse,
@@ -6242,6 +6243,7 @@ var $author$project$Main$getTopTracks = function (model) {
 var $author$project$Main$GotUserData = function (a) {
 	return {$: 'GotUserData', a: a};
 };
+var $elm$json$Json$Decode$map4 = _Json_map4;
 var $author$project$Main$decodeUserData = A5(
 	$elm$json$Json$Decode$map4,
 	$author$project$Main$UserData,
@@ -7411,7 +7413,15 @@ var $author$project$Main$trackItemView = function (track) {
 				A2(
 				$elm$html$Html$p,
 				_List_Nil,
-				A2($elm$core$List$map, $author$project$Main$artistNames, track.artists))
+				A2($elm$core$List$map, $author$project$Main$artistNames, track.artists)),
+				A2(
+				$elm$html$Html$p,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text(
+						$elm$core$String$fromInt(track.popularity))
+					]))
 			]));
 };
 var $author$project$Main$tracksView = function (model) {
@@ -7559,7 +7569,7 @@ var $author$project$Main$userInfoView = function (model) {
 var $author$project$Main$view = function (model) {
 	var currentPath = $elm$url$Url$toString(model.url);
 	switch (currentPath) {
-		case 'https://xfronske.github.io/#getPlaylists':
+		case 'http://127.0.0.1:5500/#getPlaylists':
 			return {
 				body: _List_fromArray(
 					[
@@ -7567,7 +7577,7 @@ var $author$project$Main$view = function (model) {
 					]),
 				title: 'My Playlists'
 			};
-		case 'https://xfronske.github.io/#getTopTracks':
+		case 'http://127.0.0.1:5500/#getTopTracks':
 			return {
 				body: _List_fromArray(
 					[
@@ -7575,7 +7585,7 @@ var $author$project$Main$view = function (model) {
 					]),
 				title: 'Top Tracks'
 			};
-		case 'https://xfronske.github.io/#getUserInfo':
+		case 'http://127.0.0.1:5500/#getUserInfo':
 			return {
 				body: _List_fromArray(
 					[

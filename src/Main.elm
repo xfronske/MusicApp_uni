@@ -13,6 +13,9 @@ import Url
 import Browser.Navigation as Nav
 import Svg exposing (svg,rect,animate)
 import Svg.Attributes as SVG
+import Debug exposing (toString)
+import Dict exposing (Dict)
+
 
 
 
@@ -72,7 +75,8 @@ type alias Track =
      id : String
     , name : String,
     artists  : List Artist,
-    album : Album
+    album : Album,
+    popularity : Int
 
     }
 type alias Album =
@@ -244,6 +248,7 @@ update msg model =
         ToggleUserPage ->
             ( { model | currentPage = 0 }
             , Cmd.none )
+-- Histogramm 
 
        
 --##########.VIEW.##########
@@ -254,16 +259,16 @@ view model =
     currentPath = Url.toString model.url
   in
     case currentPath of
-      "https://xfronske.github.io/#getPlaylists" ->
+      "http://127.0.0.1:5500/#getPlaylists" ->
         { title = "My Playlists"
         , body = [ playlistView model ]
         }
         
-      "https://xfronske.github.io/#getTopTracks" ->
+      "http://127.0.0.1:5500/#getTopTracks" ->
         { title = "Top Tracks"
         , body = [ tracksView model ]
         }
-      "https://xfronske.github.io/#getUserInfo" ->
+      "http://127.0.0.1:5500/#getUserInfo" ->
         { title = "Profile"
         , body = [ userInfoView model ]
         }
@@ -410,7 +415,8 @@ trackItemView track =
             Just firstImage -> viewImage firstImage
             Nothing -> text "",
             p [] [ text (track.name ++ " - "  ) ]
-            , p[] (List.map artistNames track.artists) 
+            , p[] (List.map artistNames track.artists) ,
+            p [][text (String.fromInt track.popularity)]
     ]      
 
 userInfoView : Model -> Html Msg
@@ -498,11 +504,12 @@ topTracksResponseDecoder =
 
 trackDecoder : Decoder Track
 trackDecoder =
-    Json.Decode.map4 Track
+    Json.Decode.map5 Track
         (field "id" string)
         (field "name" string)
         (field "artists" (Json.Decode.list artistDecoder))
         (field "album" albumDecoder)
+        (field "popularity" int)
      
 artistDecoder : Decoder Artist
 artistDecoder =
