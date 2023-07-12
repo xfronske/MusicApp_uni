@@ -7231,7 +7231,7 @@ var $author$project$Main$tracksView = function (model) {
 							]),
 						_List_fromArray(
 							[
-								$elm$html$Html$text('Meine Top Tracks')
+								$elm$html$Html$text('Meine Topa Tracks')
 							])),
 						A2(
 						$elm$html$Html$div,

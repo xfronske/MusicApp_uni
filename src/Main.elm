@@ -409,7 +409,7 @@ tracksView model =
     in
     div [class "columns"]
         [ div [class "column is-full"]
-            [ h1 [class "column is-size-1 is-full has-text-centered"] [text "Meine Top Tracks"]
+            [ h1 [class "column is-size-1 is-full has-text-centered"] [text "Meine Topa Tracks"]
             , div [] (List.map trackItemView model.topTracks)
             , histogram
             ,div [] [  svgHistogram  ]
