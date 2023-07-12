@@ -286,7 +286,7 @@ histogramToSvg histogram =
             []
         ) dictList)
 
-       
+
 --##########.VIEW.##########
 
 view : Model -> Browser.Document Msg
