@@ -295,16 +295,16 @@ view model =
     currentPath = Url.toString model.url
   in
     case currentPath of
-      "http://127.0.0.1:5500/#getPlaylists" ->
+      "https://xfronske.github.io/#getPlaylists" ->
         { title = "My Playlists"
         , body = [ playlistView model ]
         }
         
-      "http://127.0.0.1:5500/#getTopTracks" ->
+      "https://xfronske.github.io/#getTopTracks" ->
         { title = "Top Tracks"
         , body = [ tracksView model ]
         }
-      "http://127.0.0.1:5500/#getUserInfo" ->
+      "https://xfronske.github.io//#getUserInfo" ->
         { title = "Profile"
         , body = [ userInfoView model ]
         }

@@ -7357,7 +7357,7 @@ var $author$project$Main$userInfoView = function (model) {
 var $author$project$Main$view = function (model) {
 	var currentPath = $elm$url$Url$toString(model.url);
 	switch (currentPath) {
-		case 'http://127.0.0.1:5500/#getPlaylists':
+		case 'https://xfronske.github.io/#getPlaylists':
 			return {
 				body: _List_fromArray(
 					[
@@ -7365,7 +7365,7 @@ var $author$project$Main$view = function (model) {
 					]),
 				title: 'My Playlists'
 			};
-		case 'http://127.0.0.1:5500/#getTopTracks':
+		case 'https://xfronske.github.io/#getTopTracks':
 			return {
 				body: _List_fromArray(
 					[
@@ -7373,7 +7373,7 @@ var $author$project$Main$view = function (model) {
 					]),
 				title: 'Top Tracks'
 			};
-		case 'http://127.0.0.1:5500/#getUserInfo':
+		case 'https://xfronske.github.io//#getUserInfo':
 			return {
 				body: _List_fromArray(
 					[
