@@ -11,8 +11,11 @@ import Http exposing (..)
 import Html exposing (img)
 import Url
 import Browser.Navigation as Nav
-import Svg exposing (svg,rect,animate)
-import Svg.Attributes as SVG
+import Svg 
+import Svg.Attributes  
+import Debug exposing (toString)
+import Dict exposing (Dict)
+
 
 
 
@@ -72,7 +75,8 @@ type alias Track =
      id : String
     , name : String,
     artists  : List Artist,
-    album : Album
+    album : Album,
+    popularity : Int
 
     }
 type alias Album =
@@ -244,8 +248,45 @@ update msg model =
         ToggleUserPage ->
             ( { model | currentPage = 0 }
             , Cmd.none )
+-- Histogramm 
+popularityHistogram : List Track -> Dict Int Int
+popularityHistogram tracks =
+    List.foldl (\track acc -> 
+                    let 
+                        popularity = track.popularity
+                        count = Maybe.withDefault 0 (Dict.get popularity acc)
+                    in 
+                        Dict.insert popularity (count + 1) acc
+                ) Dict.empty tracks
+displayHistogram : Dict Int Int -> Html msg
+displayHistogram histogram =
+    let
+        toBar (popularity, count) =
+            div [] [ text (String.fromInt popularity ++ ": " ++ String.fromInt count) ]
 
-       
+        sortedHistogram =
+            List.sortBy Tuple.first (Dict.toList histogram)
+    in
+    div [] (List.map toBar sortedHistogram)
+histogramToSvg : Dict.Dict Int Int -> Svg.Svg Msg
+histogramToSvg histogram =
+    let
+        dictList = Dict.toList histogram
+        maxCount = List.maximum (List.map Tuple.second dictList) |> Maybe.withDefault 0
+    in
+    Svg.svg [ Svg.Attributes.width "100%", Svg.Attributes.height "100%", Svg.Attributes.viewBox "0 0 100 100" ] 
+        (List.indexedMap (\i (popularity, count) -> 
+            Svg.rect 
+            [ Svg.Attributes.x <| String.fromFloat (toFloat i ) 
+            , Svg.Attributes.y <| String.fromFloat (toFloat (100 - (count * 10 // maxCount))) 
+            , Svg.Attributes.width "1"
+            , Svg.Attributes.height <| String.fromFloat (toFloat (count * 10 // maxCount))
+            , Svg.Attributes.fill "black"
+            ] 
+            []
+        ) dictList)
+
+
 --##########.VIEW.##########
 
 view : Model -> Browser.Document Msg
@@ -254,63 +295,28 @@ view model =
     currentPath = Url.toString model.url
   in
     case currentPath of
-      "https://xfronske.github.io/#getPlaylists" ->
+      "http://127.0.0.1:5500/#getPlaylists" ->
         { title = "My Playlists"
         , body = [ playlistView model ]
         }
         
-      "https://xfronske.github.io/#getTopTracks" ->
+      "http://127.0.0.1:5500/#getTopTracks" ->
         { title = "Top Tracks"
         , body = [ tracksView model ]
         }
-      "https://xfronske.github.io/#getUserInfo" ->
+      "http://127.0.0.1:5500/#getUserInfo" ->
         { title = "Profile"
         , body = [ userInfoView model ]
         }
       "https://xfronske.github.io/#errorPage" ->
         { title = "Profile"
-        , body = [ errorView model ]
+        , body = [ text "Hallo Error" ]
         }
       _ ->
         { title = "Home"
         , body = [ pageMain model ]
         }
 
-errorView : Model -> Html Msg
-errorView model = 
-    svg [ SVG.width "600", SVG.height "300", SVG.viewBox "0 0 600 300", SVG.fill "red"]
-        [ Svg.rect [SVG.x "20", SVG.y "  0", SVG.width "75", SVG.height " 40", SVG.stroke "red"] -- E
-            [ animate [SVG.attributeName "width", SVG.from "0", SVG.to "75", SVG.dur "1.5s"][] ]
-        , Svg.rect [SVG.x "20", SVG.y "110", SVG.width "75", SVG.height " 40", SVG.stroke "red"] 
-            [ animate [SVG.attributeName "width", SVG.from "0", SVG.to "75", SVG.dur "1.5s"][] ]      
-        , Svg.rect [SVG.x "20", SVG.y "260", SVG.width "75", SVG.height " 40", SVG.stroke "red"] 
-            [ animate [SVG.attributeName "width", SVG.from "0", SVG.to "75", SVG.dur "1.5s"][] ] 
-        , Svg.rect [SVG.x " 0", SVG.y "  0", SVG.width "20", SVG.height "300", SVG.stroke "red"] [] 
-
-        , Svg.rect [SVG.x "100", SVG.y "  0", SVG.width "20", SVG.height "300", SVG.stroke "red"] [] -- R
-        , Svg.rect [SVG.x "120", SVG.y "  0", SVG.width "75", SVG.height "40", SVG.stroke "red"] [] 
-        , Svg.rect [SVG.x "120", SVG.y "110", SVG.width "75", SVG.height "40", SVG.stroke "red"] [] 
-        , Svg.rect [SVG.x "195", SVG.y "  0", SVG.width "20", SVG.height "300", SVG.stroke "red"] [] 
-
-        , Svg.rect [SVG.x "220", SVG.y "  0", SVG.width "20", SVG.height "300", SVG.stroke "red"] [] -- R
-        , Svg.rect [SVG.x "240", SVG.y "  0", SVG.width "75", SVG.height "40", SVG.stroke "red"] [] 
-        , Svg.rect [SVG.x "240", SVG.y "110", SVG.width "75", SVG.height "40", SVG.stroke "red"] [] 
-        , Svg.rect [SVG.x "315", SVG.y "  0", SVG.width "20", SVG.height "300", SVG.stroke "red"] []
-
-        , Svg.rect [SVG.x "340", SVG.y "  0", SVG.width "20", SVG.height "300", SVG.stroke "red"] [] -- O
-        , Svg.rect [SVG.x "360", SVG.y "  0", SVG.width "75", SVG.height "40", SVG.stroke "red"] 
-            [ animate [SVG.attributeName "width", SVG.from "0", SVG.to "75", SVG.dur "1.5s"][] ]
-        , Svg.rect [SVG.x "360", SVG.y "260", SVG.width "75", SVG.height "40", SVG.stroke "red"] 
-            [ animate [SVG.attributeName "width", SVG.from "0", SVG.to "75", SVG.dur "1.5s"][] ] 
-        , Svg.rect [SVG.x "435", SVG.y "  0", SVG.width "20", SVG.height "300", SVG.stroke "red"] 
-            [ animate [SVG.attributeName "height", SVG.from "0", SVG.to "300", SVG.dur "1.5s"][] ] 
-
-        , Svg.rect [SVG.x "460", SVG.y "  0", SVG.width "20", SVG.height "300", SVG.stroke "red"] [] -- R
-        , Svg.rect [SVG.x "480", SVG.y "  0", SVG.width "75", SVG.height "40", SVG.stroke "red"] [] 
-        , Svg.rect [SVG.x "480", SVG.y "110", SVG.width "75", SVG.height "40", SVG.stroke "red"] [] 
-        , Svg.rect [SVG.x "555", SVG.y "  0", SVG.width "20", SVG.height "300", SVG.stroke "red"] [] 
-
-        ]
 --##########.PAGES.##########
 
 pageMain : Model -> Html Msg
@@ -396,13 +402,19 @@ playlistItemView : Playlist -> Html Msg
 playlistItemView playlist =
     div [class "column is-full has-background-primary m-2 strong has-text-centered has-text-weight-bold"] [text playlist.name]      
 tracksView : Model -> Html Msg
-tracksView model = 
-    div[class "columns"][
-        div[class "column is-full"][
-            h1[class "column is-size-1 is-full has-text-centered	"][text "Meine Top Tracks"],
-             div [] (List.map trackItemView model.topTracks)
+tracksView model =
+    let
+        histogram = model.topTracks |> popularityHistogram |> displayHistogram
+        svgHistogram = histogramToSvg (popularityHistogram model.topTracks)
+    in
+    div [class "columns"]
+        [ div [class "column is-full"]
+            [ h1 [class "column is-size-1 is-full has-text-centered"] [text "Meine Top Tracks"]
+            , div [] (List.map trackItemView model.topTracks)
+            , histogram
+            ,div [] [  svgHistogram  ]
+            ]
         ]
-    ]
 trackItemView : Track -> Html Msg
 trackItemView track =
     div [class "column is-full  m-2 strong has-text-centered has-text-weight-bold"] [
@@ -410,7 +422,8 @@ trackItemView track =
             Just firstImage -> viewImage firstImage
             Nothing -> text "",
             p [] [ text (track.name ++ " - "  ) ]
-            , p[] (List.map artistNames track.artists) 
+            , p[] (List.map artistNames track.artists) ,
+            p [][text (String.fromInt track.popularity)]
     ]      
 
 userInfoView : Model -> Html Msg
@@ -498,11 +511,12 @@ topTracksResponseDecoder =
 
 trackDecoder : Decoder Track
 trackDecoder =
-    Json.Decode.map4 Track
+    Json.Decode.map5 Track
         (field "id" string)
         (field "name" string)
         (field "artists" (Json.Decode.list artistDecoder))
         (field "album" albumDecoder)
+        (field "popularity" int)
      
 artistDecoder : Decoder Artist
 artistDecoder =
