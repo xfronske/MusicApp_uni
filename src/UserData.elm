@@ -23,6 +23,7 @@ decodeUserData =
         (field "display_name" string)
         (field "email" string)
         (field "id" string)
+        
 getUserData : String -> Cmd Msg  
 getUserData token =
   Http.request

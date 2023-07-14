@@ -5354,11 +5354,13 @@ var $author$project$Main$init = F3(
 				key: key,
 				loginState: false,
 				message: '',
+				playbackState: false,
 				playlists: _List_Nil,
 				spotifydDropdownState: false,
 				token: '',
 				topTracks: _List_Nil,
-				url: url
+				url: url,
+				volume: 5
 			},
 			$elm$core$Platform$Cmd$none);
 	});
@@ -6369,55 +6371,6 @@ var $author$project$Main$update = F2(
 						model,
 						{currentPage: newPage}),
 					$elm$core$Platform$Cmd$none);
-			case 'GotPlaylists':
-				if (msg.a.$ === 'Ok') {
-					var response = msg.a.a;
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{playlists: response.items}),
-						$elm$core$Platform$Cmd$none);
-				} else {
-					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-				}
-			case 'LoadTopTracks':
-				return _Utils_Tuple2(
-					model,
-					$author$project$Main$getTopTracks(model));
-			case 'GotTopTracks':
-				if (msg.a.$ === 'Ok') {
-					var response = msg.a.a;
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{topTracks: response.items}),
-						$elm$core$Platform$Cmd$none);
-				} else {
-					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-				}
-			case 'LinkClicked':
-				var urlRequest = msg.a;
-				if (urlRequest.$ === 'Internal') {
-					var url = urlRequest.a;
-					return _Utils_Tuple2(
-						model,
-						A2(
-							$elm$browser$Browser$Navigation$pushUrl,
-							model.key,
-							$elm$url$Url$toString(url)));
-				} else {
-					var href = urlRequest.a;
-					return _Utils_Tuple2(
-						model,
-						$elm$browser$Browser$Navigation$load(href));
-				}
-			case 'UrlChanged':
-				var url = msg.a;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{url: url}),
-					$elm$core$Platform$Cmd$none);
 			case 'ToggleSpotifyDropdown':
 				return _Utils_Tuple2(
 					_Utils_update(
@@ -6454,15 +6407,11 @@ var $author$project$Main$update = F2(
 						model,
 						{loginState: state}),
 					$elm$core$Platform$Cmd$none);
-			case 'InitiatePlaylistFetch':
+			case 'GetUserPlaylist':
 				return _Utils_Tuple2(
 					model,
 					$author$project$Main$getUserPlaylists(model));
-			case 'LoadUserPlaylist':
-				return _Utils_Tuple2(
-					model,
-					$author$project$Main$getUserPlaylists(model));
-			case 'LoadUserData':
+			case 'GetUserData':
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
@@ -6482,17 +6431,98 @@ var $author$project$Main$update = F2(
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
-			default:
+			case 'ToggleUserPage':
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
 						{currentPage: 0}),
 					$elm$core$Platform$Cmd$none);
+			case 'GetPlaylists':
+				return _Utils_Tuple2(
+					model,
+					$author$project$Main$getUserPlaylists(model));
+			case 'GotPlaylists':
+				var response = msg.a;
+				if (response.$ === 'Ok') {
+					var data = response.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{playlists: data.items}),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
+			case 'GetTopTracks':
+				return _Utils_Tuple2(
+					model,
+					$author$project$Main$getTopTracks(model));
+			case 'GotTopTracks':
+				var response = msg.a;
+				if (response.$ === 'Ok') {
+					var data = response.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{topTracks: data.items}),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
+			case 'IncVolume':
+				return (model.volume < 10) ? _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{volume: model.volume + 1}),
+					$author$project$Main$sendMessage('inc_vol')) : _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+			case 'DecVolume':
+				return (model.volume > 0) ? _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{volume: model.volume - 1}),
+					$author$project$Main$sendMessage('dec_vol')) : _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+			case 'TogglePlay':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{playbackState: !model.playbackState}),
+					$author$project$Main$sendMessage('toggle_play'));
+			case 'NextTrack':
+				return _Utils_Tuple2(
+					model,
+					$author$project$Main$sendMessage('next_track'));
+			case 'PrevTrack':
+				return _Utils_Tuple2(
+					model,
+					$author$project$Main$sendMessage('prev_track'));
+			case 'LinkClicked':
+				var urlRequest = msg.a;
+				if (urlRequest.$ === 'Internal') {
+					var url = urlRequest.a;
+					return _Utils_Tuple2(
+						model,
+						A2(
+							$elm$browser$Browser$Navigation$pushUrl,
+							model.key,
+							$elm$url$Url$toString(url)));
+				} else {
+					var href = urlRequest.a;
+					return _Utils_Tuple2(
+						model,
+						$elm$browser$Browser$Navigation$load(href));
+				}
+			default:
+				var url = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{url: url}),
+					$elm$core$Platform$Cmd$none);
 		}
 	});
-var $author$project$Main$LoadTopTracks = {$: 'LoadTopTracks'};
-var $author$project$Main$LoadUserData = {$: 'LoadUserData'};
-var $author$project$Main$LoadUserPlaylist = {$: 'LoadUserPlaylist'};
+var $author$project$Main$GetTopTracks = {$: 'GetTopTracks'};
+var $author$project$Main$GetUserData = {$: 'GetUserData'};
+var $author$project$Main$GetUserPlaylist = {$: 'GetUserPlaylist'};
 var $elm$html$Html$a = _VirtualDom_node('a');
 var $elm$html$Html$Attributes$stringProperty = F2(
 	function (key, string) {
@@ -6697,7 +6727,7 @@ var $author$project$Main$pageMain = function (model) {
 																						$elm$html$Html$a,
 																						_List_fromArray(
 																							[
-																								$elm$html$Html$Events$onClick($author$project$Main$LoadUserPlaylist),
+																								$elm$html$Html$Events$onClick($author$project$Main$GetUserPlaylist),
 																								$elm$html$Html$Attributes$href('#getPlaylists')
 																							]),
 																						_List_fromArray(
@@ -6714,7 +6744,7 @@ var $author$project$Main$pageMain = function (model) {
 																						$elm$html$Html$a,
 																						_List_fromArray(
 																							[
-																								$elm$html$Html$Events$onClick($author$project$Main$LoadTopTracks),
+																								$elm$html$Html$Events$onClick($author$project$Main$GetTopTracks),
 																								$elm$html$Html$Attributes$href('#getTopTracks')
 																							]),
 																						_List_fromArray(
@@ -6731,7 +6761,7 @@ var $author$project$Main$pageMain = function (model) {
 																						$elm$html$Html$a,
 																						_List_fromArray(
 																							[
-																								$elm$html$Html$Events$onClick($author$project$Main$LoadUserData),
+																								$elm$html$Html$Events$onClick($author$project$Main$GetUserData),
 																								$elm$html$Html$Attributes$href('#getUserInfo')
 																							]),
 																						_List_fromArray(
@@ -6837,8 +6867,8 @@ var $author$project$Main$pageMain = function (model) {
 																$elm$html$Html$button,
 																_List_fromArray(
 																	[
-																		$elm$html$Html$Events$onClick($author$project$Main$LoadUserData),
-																		$elm$html$Html$Attributes$class('button is-medium  is-success mt-2')
+																		$elm$html$Html$Events$onClick($author$project$Main$GetUserData),
+																		$elm$html$Html$Attributes$class('button is-medium is-success mt-2')
 																	]),
 																_List_fromArray(
 																	[
@@ -6848,47 +6878,58 @@ var $author$project$Main$pageMain = function (model) {
 																$elm$html$Html$a,
 																_List_fromArray(
 																	[
-																		$elm$html$Html$Events$onClick($author$project$Main$LoadUserPlaylist),
-																		$elm$html$Html$Attributes$href('#getPlaylists'),
-																		$elm$html$Html$Attributes$class('button is-medium  is-success mt-2')
+																		$elm$html$Html$Events$onClick($author$project$Main$GetUserPlaylist),
+																		$elm$html$Html$Attributes$href('http://localhost:8000/#getTopPlaylists'),
+																		$elm$html$Html$Attributes$class('button is-medium is-success mt-2')
 																	]),
 																_List_fromArray(
 																	[
-																		$elm$html$Html$text('Get Playlists')
+																		$elm$html$Html$text('my top Playlists')
 																	])),
 																A2(
 																$elm$html$Html$a,
 																_List_fromArray(
 																	[
-																		$elm$html$Html$Events$onClick($author$project$Main$LoadTopTracks),
-																		$elm$html$Html$Attributes$href('#getTopTracks'),
-																		$elm$html$Html$Attributes$class('button is-medium  is-success mt-2')
+																		$elm$html$Html$Events$onClick($author$project$Main$GetTopTracks),
+																		$elm$html$Html$Attributes$href('http://localhost:8000/#getTopTracks'),
+																		$elm$html$Html$Attributes$class('button is-medium is-success mt-2')
 																	]),
 																_List_fromArray(
 																	[
-																		$elm$html$Html$text('Get Top Tracks')
+																		$elm$html$Html$text('my Top Tracks')
 																	])),
 																A2(
 																$elm$html$Html$a,
 																_List_fromArray(
 																	[
-																		$elm$html$Html$Attributes$href('#getUserInfo'),
-																		$elm$html$Html$Attributes$class('button is-medium  is-success mt-2')
+																		$elm$html$Html$Attributes$href('http://localhost:8000/#getUserInfo'),
+																		$elm$html$Html$Attributes$class('button is-medium is-success mt-2')
 																	]),
 																_List_fromArray(
 																	[
-																		$elm$html$Html$text('get Profile Information')
+																		$elm$html$Html$text('my Profile')
 																	])),
 																A2(
 																$elm$html$Html$a,
 																_List_fromArray(
 																	[
-																		$elm$html$Html$Attributes$href('#errorPage'),
-																		$elm$html$Html$Attributes$class('button is-medium  is-success mt-2')
+																		$elm$html$Html$Attributes$href('http://localhost:8000/#errorPage'),
+																		$elm$html$Html$Attributes$class('button is-medium is-success mt-2')
 																	]),
 																_List_fromArray(
 																	[
-																		$elm$html$Html$text('go To Error Page')
+																		$elm$html$Html$text('Error Page (for testing)')
+																	])),
+																A2(
+																$elm$html$Html$a,
+																_List_fromArray(
+																	[
+																		$elm$html$Html$Attributes$href('http://localhost:8000/#musicPlayer'),
+																		$elm$html$Html$Attributes$class('button is-medium is-success mt-2')
+																	]),
+																_List_fromArray(
+																	[
+																		$elm$html$Html$text('Music Player')
 																	]))
 															]))
 													]))
@@ -6934,8 +6975,7 @@ var $author$project$Main$pageMain = function (model) {
 													[
 														$elm$html$Html$text('Eremiya Rifat')
 													])),
-												$elm$html$Html$text(' and Xaver Fronske'),
-												$elm$html$Html$text('. The source code is on '),
+												$elm$html$Html$text(' and Xaver Fronske. The source code is on '),
 												A2(
 												$elm$html$Html$a,
 												_List_fromArray(
@@ -6953,7 +6993,263 @@ var $author$project$Main$pageMain = function (model) {
 					]))
 			]));
 };
-var $author$project$Main$playlistItemView = function (playlist) {
+var $author$project$Main$DecVolume = {$: 'DecVolume'};
+var $author$project$Main$IncVolume = {$: 'IncVolume'};
+var $author$project$Main$NextTrack = {$: 'NextTrack'};
+var $author$project$Main$PrevTrack = {$: 'PrevTrack'};
+var $author$project$Main$TogglePlay = {$: 'TogglePlay'};
+var $elm$core$Basics$ge = _Utils_ge;
+var $elm$svg$Svg$Attributes$fill = _VirtualDom_attribute('fill');
+var $elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
+var $elm$svg$Svg$Attributes$points = _VirtualDom_attribute('points');
+var $elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
+var $elm$svg$Svg$polyline = $elm$svg$Svg$trustedNode('polyline');
+var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
+var $elm$svg$Svg$svg = $elm$svg$Svg$trustedNode('svg');
+var $elm$svg$Svg$Attributes$viewBox = _VirtualDom_attribute('viewBox');
+var $elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
+var $author$project$Main$svgVolumeHigh = A2(
+	$elm$svg$Svg$svg,
+	_List_fromArray(
+		[
+			$elm$svg$Svg$Attributes$width('40'),
+			$elm$svg$Svg$Attributes$height('20'),
+			$elm$svg$Svg$Attributes$viewBox('0 0 30 20'),
+			$elm$svg$Svg$Attributes$stroke('black')
+		]),
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$polyline,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$fill('black'),
+					$elm$svg$Svg$Attributes$stroke('black'),
+					$elm$svg$Svg$Attributes$points('0,10 10,3 10,17 0,10')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$polyline,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$fill('none'),
+					$elm$svg$Svg$Attributes$points('15,6 17,9 18,10 17,11 15,14')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$polyline,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$fill('none'),
+					$elm$svg$Svg$Attributes$points('20,5 22,8 23,10 22,12 20,15')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$polyline,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$fill('none'),
+					$elm$svg$Svg$Attributes$points('25,4 27,7 28,10 27,13 25,16')
+				]),
+			_List_Nil)
+		]));
+var $author$project$Main$svgVolumeLow = A2(
+	$elm$svg$Svg$svg,
+	_List_fromArray(
+		[
+			$elm$svg$Svg$Attributes$width('40'),
+			$elm$svg$Svg$Attributes$height('20'),
+			$elm$svg$Svg$Attributes$viewBox('0 0 30 20'),
+			$elm$svg$Svg$Attributes$stroke('black')
+		]),
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$polyline,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$fill('black'),
+					$elm$svg$Svg$Attributes$points('0,10 10,3 10,17 0,10')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$polyline,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$fill('none'),
+					$elm$svg$Svg$Attributes$points('15,6 17,9 18,10 17,11 15,14')
+				]),
+			_List_Nil)
+		]));
+var $author$project$Main$svgVolumeMed = A2(
+	$elm$svg$Svg$svg,
+	_List_fromArray(
+		[
+			$elm$svg$Svg$Attributes$width('40'),
+			$elm$svg$Svg$Attributes$height('20'),
+			$elm$svg$Svg$Attributes$viewBox('0 0 30 20'),
+			$elm$svg$Svg$Attributes$stroke('black')
+		]),
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$polyline,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$fill('black'),
+					$elm$svg$Svg$Attributes$stroke('black'),
+					$elm$svg$Svg$Attributes$points('0,10 10,3 10,17 0,10')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$polyline,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$fill('none'),
+					$elm$svg$Svg$Attributes$points('15,6 17,9 18,10 17,11 15,14')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$polyline,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$fill('none'),
+					$elm$svg$Svg$Attributes$points('20,5 22,8 23,10 22,12 20,15')
+				]),
+			_List_Nil)
+		]));
+var $elm$svg$Svg$line = $elm$svg$Svg$trustedNode('line');
+var $elm$svg$Svg$Attributes$x1 = _VirtualDom_attribute('x1');
+var $elm$svg$Svg$Attributes$x2 = _VirtualDom_attribute('x2');
+var $elm$svg$Svg$Attributes$y1 = _VirtualDom_attribute('y1');
+var $elm$svg$Svg$Attributes$y2 = _VirtualDom_attribute('y2');
+var $author$project$Main$svgVolumeNone = A2(
+	$elm$svg$Svg$svg,
+	_List_fromArray(
+		[
+			$elm$svg$Svg$Attributes$width('40'),
+			$elm$svg$Svg$Attributes$height('20'),
+			$elm$svg$Svg$Attributes$viewBox('0 0 30 20'),
+			$elm$svg$Svg$Attributes$fill('black')
+		]),
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$polyline,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$fill('black'),
+					$elm$svg$Svg$Attributes$stroke('black'),
+					$elm$svg$Svg$Attributes$points('0,10 10,3 10,17 0,10')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$line,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$x1('15'),
+					$elm$svg$Svg$Attributes$y1('5'),
+					$elm$svg$Svg$Attributes$x2('25'),
+					$elm$svg$Svg$Attributes$y2('15'),
+					$elm$svg$Svg$Attributes$stroke('black')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$line,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$x1('15'),
+					$elm$svg$Svg$Attributes$y1('15'),
+					$elm$svg$Svg$Attributes$x2('25'),
+					$elm$svg$Svg$Attributes$y2('5'),
+					$elm$svg$Svg$Attributes$stroke('black')
+				]),
+			_List_Nil)
+		]));
+var $elm$html$Html$th = _VirtualDom_node('th');
+var $author$project$Main$pageMusic = function (model) {
+	return A2(
+		$elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$th,
+				_List_Nil,
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$button,
+						_List_fromArray(
+							[
+								$elm$html$Html$Events$onClick($author$project$Main$IncVolume)
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('+')
+							]))
+					])),
+				A2(
+				$elm$html$Html$th,
+				_List_Nil,
+				_List_fromArray(
+					[
+						(!model.volume) ? $author$project$Main$svgVolumeNone : (((model.volume > 0) && (model.volume < 5)) ? $author$project$Main$svgVolumeLow : (((model.volume >= 4) && (model.volume < 10)) ? $author$project$Main$svgVolumeMed : $author$project$Main$svgVolumeHigh))
+					])),
+				A2(
+				$elm$html$Html$th,
+				_List_Nil,
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$button,
+						_List_fromArray(
+							[
+								$elm$html$Html$Events$onClick($author$project$Main$DecVolume)
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('-')
+							]))
+					])),
+				$elm$html$Html$text(
+				$elm$core$String$fromInt(model.volume)),
+				A2(
+				$elm$html$Html$button,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('button is-success is-outlined is-rounded is-small'),
+						$elm$html$Html$Events$onClick($author$project$Main$NextTrack)
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('next')
+					])),
+				A2(
+				$elm$html$Html$button,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('button is-success is-outlined is-rounded is-small'),
+						$elm$html$Html$Events$onClick($author$project$Main$PrevTrack)
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('prev')
+					])),
+				A2(
+				$elm$html$Html$button,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('button is-dark is-outlined is-rounded is-small'),
+						$elm$html$Html$Events$onClick($author$project$Main$TogglePlay)
+					]),
+				_List_fromArray(
+					[
+						model.playbackState ? $elm$html$Html$text('pause') : $elm$html$Html$text('play')
+					]))
+			]));
+};
+var $author$project$Main$viewPlaylistItem = function (playlist) {
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
@@ -6986,7 +7282,7 @@ var $author$project$Main$playlistView = function (model) {
 						$elm$html$Html$h1,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('column is-size-1 is-full has-text-centered	')
+								$elm$html$Html$Attributes$class('column is-size-1 is-full has-text-centered  ')
 							]),
 						_List_fromArray(
 							[
@@ -6995,7 +7291,7 @@ var $author$project$Main$playlistView = function (model) {
 						A2(
 						$elm$html$Html$div,
 						_List_Nil,
-						A2($elm$core$List$map, $author$project$Main$playlistItemView, model.playlists))
+						A2($elm$core$List$map, $author$project$Main$viewPlaylistItem, model.playlists))
 					]))
 			]));
 };
@@ -7022,9 +7318,7 @@ var $author$project$Main$displayHistogram = function (histogram) {
 		_List_Nil,
 		A2($elm$core$List$map, toBar, sortedHistogram));
 };
-var $elm$svg$Svg$Attributes$fill = _VirtualDom_attribute('fill');
 var $elm$core$String$fromFloat = _String_fromNumber;
-var $elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
 var $elm$core$List$maximum = function (list) {
 	if (list.b) {
 		var x = list.a;
@@ -7035,15 +7329,11 @@ var $elm$core$List$maximum = function (list) {
 		return $elm$core$Maybe$Nothing;
 	}
 };
-var $elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
 var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
 var $elm$core$Tuple$second = function (_v0) {
 	var y = _v0.b;
 	return y;
 };
-var $elm$svg$Svg$svg = $elm$svg$Svg$trustedNode('svg');
-var $elm$svg$Svg$Attributes$viewBox = _VirtualDom_attribute('viewBox');
-var $elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
 var $elm$core$Maybe$withDefault = F2(
 	function (_default, maybe) {
 		if (maybe.$ === 'Just') {
@@ -7202,7 +7492,7 @@ var $author$project$Main$trackItemView = function (track) {
 					]))
 			]));
 };
-var $author$project$Main$tracksView = function (model) {
+var $author$project$Main$viewTracks = function (model) {
 	var svgHistogram = $author$project$Main$histogramToSvg(
 		$author$project$Main$popularityHistogram(model.topTracks));
 	var histogram = $author$project$Main$displayHistogram(
@@ -7231,7 +7521,7 @@ var $author$project$Main$tracksView = function (model) {
 							]),
 						_List_fromArray(
 							[
-								$elm$html$Html$text('Meine Topa Tracks')
+								$elm$html$Html$text('Meine Top Tracks')
 							])),
 						A2(
 						$elm$html$Html$div,
@@ -7246,7 +7536,7 @@ var $author$project$Main$tracksView = function (model) {
 					]))
 			]));
 };
-var $author$project$Main$userInfoView = function (model) {
+var $author$project$Main$viewUserInfo = function (model) {
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
@@ -7357,7 +7647,7 @@ var $author$project$Main$userInfoView = function (model) {
 var $author$project$Main$view = function (model) {
 	var currentPath = $elm$url$Url$toString(model.url);
 	switch (currentPath) {
-		case 'https://xfronske.github.io/#getPlaylists':
+		case 'http://localhost:8000/#getTopPlaylists':
 			return {
 				body: _List_fromArray(
 					[
@@ -7365,29 +7655,37 @@ var $author$project$Main$view = function (model) {
 					]),
 				title: 'My Playlists'
 			};
-		case 'https://xfronske.github.io/#getTopTracks':
+		case 'http://localhost:8000/#getTopTracks':
 			return {
 				body: _List_fromArray(
 					[
-						$author$project$Main$tracksView(model)
+						$author$project$Main$viewTracks(model)
 					]),
 				title: 'Top Tracks'
 			};
-		case 'https://xfronske.github.io//#getUserInfo':
+		case 'http://localhost:8000/#getUserInfo':
 			return {
 				body: _List_fromArray(
 					[
-						$author$project$Main$userInfoView(model)
+						$author$project$Main$viewUserInfo(model)
 					]),
 				title: 'Profile'
 			};
-		case 'https://xfronske.github.io/#errorPage':
+		case 'http://localhost:8000/#errorPage':
 			return {
 				body: _List_fromArray(
 					[
 						$elm$html$Html$text('Hallo Error')
 					]),
 				title: 'Profile'
+			};
+		case 'http://localhost:8000/#musicPlayer':
+			return {
+				body: _List_fromArray(
+					[
+						$author$project$Main$pageMusic(model)
+					]),
+				title: 'Music via Spotify'
 			};
 		default:
 			return {

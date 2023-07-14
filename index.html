@@ -84,7 +84,7 @@ app.ports.sendMessage.subscribe(
         'https://accounts.spotify.com/authorize',
         {
           response_type: 'code',
-          client_id: '95b88d3b5a5745748fb58777ed7a1318',
+          client_id: 'c294decfda3b412bb97b8c7951d93631',
           scope: 'user-read-private user-read-email user-top-read streaming user-modify-playback-state',
           code_challenge_method: 'S256',
           code_challenge,
@@ -178,8 +178,8 @@ app.ports.sendMessage.subscribe(
 
 
 
-  const client_id = '95b88d3b5a5745748fb58777ed7a1318';
-  const redirect_uri = 'https://xfronske.github.io/MusicApp_uni/home.html'; // Your redirect uri
+  const client_id = 'c294decfda3b412bb97b8c7951d93631';
+  const redirect_uri = 'https://xfronske.github.io/home.html'; // Your redirect uri
 
   // Restore tokens from localStorage
   let access_token = localStorage.getItem('access_token') || null;

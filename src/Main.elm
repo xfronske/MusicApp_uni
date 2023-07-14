@@ -11,8 +11,8 @@ import Http exposing (..)
 import Html exposing (img)
 import Url
 import Browser.Navigation as Nav
-import Svg 
-import Svg.Attributes  
+import Svg exposing (..)
+import Svg.Attributes as SVG exposing (x, y, width, height, fill)
 import Debug exposing (toString)
 import Dict exposing (Dict)
 
@@ -27,108 +27,29 @@ import Dict exposing (Dict)
 -- beim clonen auf die SpotifyAPI client_id und redirect uri achten
 -- dieser Coder verwerden : http://127.0.0.1:5500/ als uri 
 
+main : Program () Model Msg
+main =
+  Browser.application
+    { init = init
+    , view = view
+    , update = update
+    , subscriptions = subscriptions
+    , onUrlChange = UrlChanged
+    , onUrlRequest = LinkClicked ----- TODO app.ports sub batch und dann nachricht ausgeben von player
+    }
+
     
---##########.Ports
-port sendMessage: String -> Cmd msg
+--##########.Ports.##########
+
+port sendMessage : String -> Cmd msg
 
 port messageReceiver : (String -> msg) -> Sub msg
-port loginStatePort : (String -> msg) -> Sub msg
-type alias Model =
-    { currentPage : Int
-    , dropdownState : Bool 
-    , key : Nav.Key
-    , url : Url.Url
-    
-    -- Spotify
-    , spotifydDropdownState : Bool
-    , accountDropdownState : Bool
-    , loginState : Bool
-    , token : String
-    , currentUser : UserData,
-      topTracks : List Track
-
-    -- ports
-    , message : String
-    , accessToken: String
-    , playlists : List Playlist
-    }
-type alias TopTracksResponse =
-    { items : List Track }
-
-type alias UserData = 
-    { country : String
-    , display_name : String
-    , email : String
-    , id : String }
-
-type alias Playlist =
-    { id : String
-    , name : String
-    , href : String
-    }
-
-type alias PlaylistResponse =
-    { items : List Playlist }
-  
-type alias Track =
-    {
-     id : String
-    , name : String,
-    artists  : List Artist,
-    album : Album,
-    popularity : Int
-
-    }
-type alias Album =
-    { name : String
-    , id : String
-    , images : List Image
-    }
-type alias Image =
-    { url : String
-    , height : Int
-    , width : Int
-    }
-type alias Artist =
-    { name : String
-    }
-
-init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
-init flag url key =
-  ( { currentPage = 2 -- 0 = Main Page
-    , dropdownState = False
-
-    -- Spotify
-    , spotifydDropdownState = False
-    , key = key
-    , url = url
-    , accountDropdownState = False
-    , loginState = False
-    , token = ""
-    , currentUser = { country = ""
-                    , display_name = ""
-                    , email = ""
-                    , id = "" }
-    , playlists = [],
-     topTracks = []
-    
-    -- Flags
-    
-    -- Ports
-    , message = ""
-    , accessToken = ""
-
-    }
-  , Cmd.none
-  )
 
 --##########.Messages.and.Types.##########
 
-type Msg
-    = 
-     TogglePage Int
-    | LinkClicked Browser.UrlRequest
-    | UrlChanged Url.Url
+type Msg 
+    = TogglePage Int
+
     -- Dropdown
     | ToggleNavigationDropdown
     | ToggleSpotifyDropdown
@@ -141,16 +62,121 @@ type Msg
 
     -- Spotify
     | ToggleLoginState Bool
-    | LoadUserData
+    | GetUserData
     | GotUserData (Result Http.Error UserData) 
     | ToggleUserPage
     | GotPlaylists (Result Http.Error PlaylistResponse)
-    | InitiatePlaylistFetch
-    | LoadUserPlaylist
-    | LoadTopTracks
+    | GetPlaylists
+    | GetUserPlaylist
+    | GetTopTracks
     | GotTopTracks (Result Http.Error TopTracksResponse)
-     
+
+    -- Playback
+    | IncVolume
+    | DecVolume
+    | TogglePlay 
+    | NextTrack
+    | PrevTrack
+
+    -- URL-Nav
+    | LinkClicked Browser.UrlRequest
+    | UrlChanged Url.Url
+
+type alias Model =
+    { currentPage : Int
+    , dropdownState : Bool 
+    , key : Nav.Key
+    , url : Url.Url
     
+    -- Spotify
+    , spotifydDropdownState : Bool
+    , accountDropdownState : Bool
+    , loginState : Bool
+    , token : String
+    , currentUser : UserData
+    , topTracks : List Track
+
+    -- Playback
+    , volume : Int
+    , playbackState : Bool
+
+    -- ports
+    , message : String
+    , accessToken: String
+    , playlists : List Playlist
+    }
+
+type alias TopTracksResponse =
+    { items : List Track }
+
+type alias UserData = 
+    { country : String
+    , display_name : String
+    , email : String
+    , id : String }
+
+type alias Playlist =
+    { id : String
+    , name : String
+    , href : String }
+
+type alias PlaylistResponse =
+    { items : List Playlist }
+  
+type alias Track =
+    { id : String
+    , name : String
+    , artists  : List Artist
+    , album : Album 
+    , popularity : Int }
+
+type alias Album =
+    { name : String
+    , id : String
+    , images : List Image }
+
+type alias Image =
+    { url : String
+    , height : Int
+    , width : Int }
+
+type alias Artist =
+    { name : String }
+
+--##########.Init.##########
+
+init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
+init flag url key =
+  ( { currentPage = 2 -- 0 = Main Page
+    , dropdownState = False
+
+    -- Spotify
+    , spotifydDropdownState = False
+    , accountDropdownState = False
+    , loginState = False
+    , token = ""
+    , currentUser = { country = ""
+                    , display_name = ""
+                    , email = ""
+                    , id = "" }
+    , playlists = []
+    , topTracks = []
+
+    -- Playback
+    , volume = 5
+    , playbackState = False
+    
+    -- Ports
+    , message = ""
+    , accessToken = ""
+
+    -- URL-Navigation
+    , key = key
+    , url = url
+
+    }
+  , Cmd.none )
+
 --##########.Update.##########
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -163,36 +189,7 @@ update msg model =
         TogglePage newPage->
             ( { model | currentPage = newPage }
             , Cmd.none )
-
-        GotPlaylists (Ok response) ->
-            ( { model | playlists = response.items }, Cmd.none )
-
-        GotPlaylists (Err _) ->
-            -- hier sollten Sie die Fehlerbehandlung durchführen
-            ( model, Cmd.none )
-
-        LoadTopTracks ->
-            (model, getTopTracks model)
-
-        GotTopTracks (Ok response) ->
-            ({ model | topTracks = response.items }, Cmd.none)
-
-        GotTopTracks (Err _) ->
-            (model, Cmd.none)
-
-        LinkClicked urlRequest ->
-             case urlRequest of
-                Browser.Internal url ->
-                    ( model, Nav.pushUrl model.key (Url.toString url) )
-
-                Browser.External href ->
-                    ( model, Nav.load href )
-
-        UrlChanged url ->
-            ( { model | url = url }
-            , Cmd.none
-            )
-            
+         
 -- Spotify
 
         ToggleSpotifyDropdown ->
@@ -202,8 +199,6 @@ update msg model =
         ToggleAccountDropdown ->
             ( { model | accountDropdownState = not model.accountDropdownState }
             , Cmd.none )
-
-
 
         LogoutFromSpotify ->
             ( { model | accessToken = "" }
@@ -222,24 +217,20 @@ update msg model =
         ToggleLoginState state ->
             ( { model | loginState = state }
             , Cmd.none )
-        InitiatePlaylistFetch ->
-            ( model, getUserPlaylists model )
-
 
 -- Requests
 
-  -- Neue Cases für die Playlist-Funktionalität
-        LoadUserPlaylist ->
-            (model, getUserPlaylists model)
+        GetUserPlaylist ->
+            ( model, getUserPlaylists model )
         
-        LoadUserData ->
+        GetUserData ->
             ( { model | currentPage = 3 } 
             , ( getUserData model) )
 
         GotUserData userData ->
             case userData of 
                 Ok data -> 
-                    ( { model | currentUser = UserData data.country data.display_name data.email data.id} 
+                    ( { model | currentUser = UserData data.country data.display_name data.email data.id } 
                     , Cmd.none )
 
                 Err _ ->
@@ -248,7 +239,72 @@ update msg model =
         ToggleUserPage ->
             ( { model | currentPage = 0 }
             , Cmd.none )
--- Histogramm 
+
+        GetPlaylists ->
+            ( model, getUserPlaylists model )
+
+        GotPlaylists response ->
+            case response of 
+                Ok data ->
+                    ( { model | playlists = data.items }
+                    , Cmd.none )
+
+                Err _ ->
+                    ( model, Cmd.none )
+
+        GetTopTracks ->
+            (model, getTopTracks model)
+
+        GotTopTracks response ->
+            case response of 
+                Ok data ->
+                    ( { model | topTracks = data.items }
+                    , Cmd.none)
+
+                Err _ ->
+                     ( model, Cmd.none )
+
+-- Playback
+
+        IncVolume ->
+            if model.volume < 10 then 
+                ( { model | volume = model.volume + 1 }
+                , sendMessage "inc_vol" ) 
+            else ( model , Cmd.none )
+
+        DecVolume -> 
+            if model.volume > 0 then 
+                ( { model | volume = model.volume - 1 }
+                , sendMessage "dec_vol" ) 
+            else ( model , Cmd.none )
+
+        TogglePlay ->
+            ( { model | playbackState = not model.playbackState } 
+            , sendMessage "toggle_play" )
+
+        NextTrack ->
+            ( model, sendMessage "next_track" )
+
+        PrevTrack ->
+            ( model, sendMessage"prev_track" )
+
+-- URL-Nav
+        LinkClicked urlRequest ->
+             case urlRequest of
+                Browser.Internal url ->
+                    ( model
+                    , Nav.pushUrl model.key (Url.toString url) )
+
+                Browser.External href ->
+                    ( model
+                    , Nav.load href )
+
+        UrlChanged url ->
+            ( { model | url = url }
+            , Cmd.none )
+
+--##########.Histogram.##########
+
 popularityHistogram : List Track -> Dict Int Int
 popularityHistogram tracks =
     List.foldl (\track acc -> 
@@ -258,30 +314,32 @@ popularityHistogram tracks =
                     in 
                         Dict.insert popularity (count + 1) acc
                 ) Dict.empty tracks
+
 displayHistogram : Dict Int Int -> Html msg
 displayHistogram histogram =
     let
         toBar (popularity, count) =
-            div [] [ text (String.fromInt popularity ++ ": " ++ String.fromInt count) ]
+            div [] [ Html.text (String.fromInt popularity ++ ": " ++ String.fromInt count) ]
 
         sortedHistogram =
             List.sortBy Tuple.first (Dict.toList histogram)
     in
     div [] (List.map toBar sortedHistogram)
+
 histogramToSvg : Dict.Dict Int Int -> Svg.Svg Msg
 histogramToSvg histogram =
     let
         dictList = Dict.toList histogram
         maxCount = List.maximum (List.map Tuple.second dictList) |> Maybe.withDefault 0
     in
-    Svg.svg [ Svg.Attributes.width "100%", Svg.Attributes.height "100%", Svg.Attributes.viewBox "0 0 100 100" ] 
+    Svg.svg [ SVG.width "100%", SVG.height "100%", SVG.viewBox "0 0 100 100" ] 
         (List.indexedMap (\i (popularity, count) -> 
             Svg.rect 
-            [ Svg.Attributes.x <| String.fromFloat (toFloat i ) 
-            , Svg.Attributes.y <| String.fromFloat (toFloat (100 - (count * 10 // maxCount))) 
-            , Svg.Attributes.width "1"
-            , Svg.Attributes.height <| String.fromFloat (toFloat (count * 10 // maxCount))
-            , Svg.Attributes.fill "black"
+            [ SVG.x <| String.fromFloat (toFloat i ) 
+            , SVG.y <| String.fromFloat (toFloat (100 - (count * 10 // maxCount))) 
+            , SVG.width "1"
+            , SVG.height <| String.fromFloat (toFloat (count * 10 // maxCount))
+            , SVG.fill "black"
             ] 
             []
         ) dictList)
@@ -295,23 +353,26 @@ view model =
     currentPath = Url.toString model.url
   in
     case currentPath of
-      "https://xfronske.github.io/#getPlaylists" ->
+      "Https://xfronske.github.io/#getTopPlaylists" ->
         { title = "My Playlists"
-        , body = [ playlistView model ]
-        }
+        , body = [ playlistView model ] }
         
-      "https://xfronske.github.io/#getTopTracks" ->
+      "Https://xfronske.github.io/#getTopTracks" ->
         { title = "Top Tracks"
-        , body = [ tracksView model ]
-        }
-      "https://xfronske.github.io//#getUserInfo" ->
+        , body = [ viewTracks model ] }
+
+      "Https://xfronske.github.io/#getUserInfo" ->
         { title = "Profile"
-        , body = [ userInfoView model ]
-        }
-      "https://xfronske.github.io/#errorPage" ->
+        , body = [ viewUserInfo model ] }
+
+      "Https://xfronske.github.io/#errorPage" ->
         { title = "Profile"
-        , body = [ text "Hallo Error" ]
-        }
+        , body = [ Html.text "Hallo Error" ] }
+
+      "Https://xfronske.github.io/#musicPlayer" ->
+        { title = "Music via Spotify"
+        , body = [ pageMusic model] }
+
       _ ->
         { title = "Home"
         , body = [ pageMain model ]
@@ -327,7 +388,7 @@ pageMain model =
             [ nav [ class "navbar" ]
                 [ div [ class "container" ]
                     [ div [ class "navbar-brand" ]
-                        [ a [ class " is-rounded ",style "width" "80px", href "" ]
+                        [ Html.a [ class " is-rounded ",Html.Attributes.style "width" "80px", href "" ]
                             [ img [ src "https://eremiyarifat.de/logoDesign2.png",  alt "Logo" ] []
                             ]
                         , span [ class "navbar-burger burger", attribute "data-target" "navbarMenu" ]
@@ -340,10 +401,10 @@ pageMain model =
                         [ div [ class "navbar-end" ]
                             [ div [ class "tabs is-right" ]
                                 [ ul []
-                                    [ li [ class "is-active" ] [ a [] [ text "Home" ] ]
-                                    , li [] [ a [onClick LoadUserPlaylist, href "#getPlaylists" ] [ text "My Playlists" ] ]
-                                    , li [] [ a [onClick LoadTopTracks, href "#getTopTracks" ] [ text "Top Tracks" ] ]
-                                    , li [] [ a [onClick LoadUserData, href "#getUserInfo" ] [ text "User Info" ] ]
+                                    [ li [ class "is-active" ] [ Html.a [] [ Html.text "Home" ] ]
+                                    , li [] [ Html.a [onClick GetUserPlaylist, href "#getPlaylists" ] [ Html.text "My Playlists" ] ]
+                                    , li [] [ Html.a [onClick GetTopTracks, href "#getTopTracks" ] [ Html.text "Top Tracks" ] ]
+                                    , li [] [ Html.a [onClick GetUserData, href "#getUserInfo" ] [ Html.text "User Info" ] ]
                                     ]
                                 ]
                             ]
@@ -360,110 +421,159 @@ pageMain model =
                             ]
                         ]
                     , div [ class "column is-6 is-offset-1" ]
-                        [ h1 [ class "title is-2" ] [ text "KlangKapsel - Musik neu erleben" ]
-                        , h2 [ class "subtitle is-4" ] [ text "Ihr Soundtrack auf Knopfdruck" ]
-                        , br [] []
-                        , div [ class "column is-1 has-text-centered " ]
-                            [ 
-                              button [ onClick LoadUserData,class "button is-medium  is-success mt-2" ] [ text "Get User Data" ],
-                              a [ onClick LoadUserPlaylist, href "#getPlaylists",class "button is-medium  is-success mt-2" ] [ text "Get Playlists" ],
-                              a [ onClick LoadTopTracks, href "#getTopTracks" ,class "button is-medium  is-success mt-2" ] [ text "Get Top Tracks" ],
-                              a [ href "#getUserInfo" ,class "button is-medium  is-success mt-2" ] [ text "get Profile Information" ],
-                              a [ href "#errorPage" ,class "button is-medium  is-success mt-2" ] [ text "go To Error Page" ]
-                            ]
-                        ]
+                          [ h1 [ class "title is-2" ] [ Html.text "KlangKapsel - Musik neu erleben" ]
+                          , h2 [ class "subtitle is-4" ] [ Html.text "Ihr Soundtrack auf Knopfdruck" ]
+                          , br [] []
+                          , div [ class "column is-1 has-text-centered " ]
+                              [ button [ onClick GetUserData,                                                    class "button is-medium is-success mt-2" ][ Html.text "Get User Data" ]
+                              , Html.a [ onClick GetUserPlaylist, href "Https://xfronske.github.io/#getTopPlaylists", class "button is-medium is-success mt-2" ][ Html.text "my top Playlists" ]
+                              , Html.a [ onClick GetTopTracks,    href "Https://xfronske.github.io/#getTopTracks",    class "button is-medium is-success mt-2" ][ Html.text "my Top Tracks" ]
+                              , Html.a [                          href "Https://xfronske.github.io/#getUserInfo",     class "button is-medium is-success mt-2" ][ Html.text "my Profile" ]
+                              , Html.a [                          href "Https://xfronske.github.io/#errorPage",       class "button is-medium is-success mt-2" ][ Html.text "Error Page (for testing)" ]
+                              , Html.a [                          href "Https://xfronske.github.io/#musicPlayer",     class "button is-medium is-success mt-2" ][ Html.text "Music Player" ]
+
+                              ]
+                          ]
                     ]
                 ]
             ]
         ,   footer [class "footer"]
         [ div [class "content has-text-centered"]
             [ p []
-                [ strong [] [text "Klangkapsel"]
-                , text " by "
-                , a [href "https://eremiyarifat.de"] [text "Eremiya Rifat"]
-                , text " and Xaver Fronske" 
-                , text ". The source code is on "
-                , a [href "https://github.com/xfronske/MusicApp_uni/"] [text "GitHub"]
-                , text ". The website content is made with Elm "
+                [ strong [] [ Html.text "Klangkapsel"]
+                , Html.text " by "
+                , Html.a [href "https://eremiyarifat.de"] [ Html.text "Eremiya Rifat"]
+                , Html.text " and Xaver Fronske. The source code is on "
+                , Html.a [href "https://github.com/xfronske/MusicApp_uni/"] [ Html.text "GitHub"]
+                , Html.text ". The website content is made with Elm "
                 ]
             ]
         ]
     ]
     ]
+
 playlistView : Model -> Html Msg
 playlistView model = 
     div[class "columns"][
         div[class "column is-full"][
-            h1[class "column is-size-1 is-full has-text-centered	"][text "Meine Playlists"],
-             div [] (List.map playlistItemView model.playlists)
+            h1[class "column is-size-1 is-full has-text-centered  "][ Html.text "Meine Playlists"],
+             div [] (List.map viewPlaylistItem model.playlists)
         ]
     ]
-playlistItemView : Playlist -> Html Msg
-playlistItemView playlist =
-    div [class "column is-full has-background-primary m-2 strong has-text-centered has-text-weight-bold"] [text playlist.name]      
-tracksView : Model -> Html Msg
-tracksView model =
+
+viewPlaylistItem : Playlist -> Html Msg
+viewPlaylistItem playlist =
+    div [class "column is-full has-background-primary m-2 strong has-text-centered has-text-weight-bold"] [ Html.text playlist.name]      
+
+viewTracks : Model -> Html Msg
+viewTracks model =
     let
         histogram = model.topTracks |> popularityHistogram |> displayHistogram
         svgHistogram = histogramToSvg (popularityHistogram model.topTracks)
     in
     div [class "columns"]
         [ div [class "column is-full"]
-            [ h1 [class "column is-size-1 is-full has-text-centered"] [text "Meine Topa Tracks"]
+            [ h1 [class "column is-size-1 is-full has-text-centered"] [ Html.text "Meine Top Tracks"]
             , div [] (List.map trackItemView model.topTracks)
             , histogram
-            ,div [] [  svgHistogram  ]
+            , div [] [  svgHistogram  ]
             ]
         ]
+
 trackItemView : Track -> Html Msg
 trackItemView track =
     div [class "column is-full  m-2 strong has-text-centered has-text-weight-bold"] [
             case List.drop 1 track.album.images |> List.head  of
             Just firstImage -> viewImage firstImage
-            Nothing -> text "",
-            p [] [ text (track.name ++ " - "  ) ]
-            , p[] (List.map artistNames track.artists) ,
-            p [][text (String.fromInt track.popularity)]
-    ]      
+            Nothing -> Html.text "",
+              p [] [ Html.text (track.name ++ " - "  ) ]
+            , p [] (List.map artistNames track.artists) 
+            , p [] [ Html.text (String.fromInt track.popularity)]
+        ]      
 
-userInfoView : Model -> Html Msg
-userInfoView model = 
-    div[class "columns"][
-        div[class "column is-full"][
-            h1[class "column is-size-1 is-full has-text-centered"][text "Mein Profil"],
-            div[class "column has-text-centered "][p[][strong[class "has-text-weight-bold"][text "Name : "],text model.currentUser.display_name]],
-            div[class "column has-text-centered "][p[][strong[class "has-text-weight-bold"][text "Email : "],text model.currentUser.email]],
-            div[class "column has-text-centered "][p[][strong[class "has-text-weight-bold"][text "Country : "],text model.currentUser.country]]
+viewUserInfo : Model -> Html Msg
+viewUserInfo model = 
+    div[ class "columns"][
+         div[class "column is-full"][
+            h1 [class "column is-size-1 is-full has-text-centered"][ Html.text "Mein Profil"],
+            div [class "column has-text-centered "][p[][strong[class "has-text-weight-bold"][ Html.text "Name : "], Html.text model.currentUser.display_name]],
+            div [class "column has-text-centered "][p[][strong[class "has-text-weight-bold"][ Html.text "Email : "], Html.text model.currentUser.email]],
+            div [class "column has-text-centered "][p[][strong[class "has-text-weight-bold"][ Html.text "Country : "], Html.text model.currentUser.country]]
              
+            ]
         ]
-    ]
 
 viewImage : Image -> Html Msg
 viewImage image =
     div []
         [ img [src image.url] [] ]
+
 artistNames : Artist -> Html Msg
 artistNames artists =
-    span[][text artists.name]
+    span[][ Html.text artists.name]
+
 -- Funktion zum Erzeugen der Anzeige eines Playlist-Namens
-  
-    
-pageSpotify : Model -> Html Msg
-pageSpotify model = 
-    div [ class "container for spotify" ][
-          text ( "Token: " ++ model.accessToken)
-        ]
 
 pageUserAccount : Model -> Html Msg 
 pageUserAccount model = 
-    div [][ tr [] [ text ("email: " ++ model.currentUser.email)]
-          , tr [] [ text ("display name: " ++ model.currentUser.display_name)]
-          , tr [] [ text ("country:  " ++ model.currentUser.country)]
-          , tr [] [ text ("Spotify Id: " ++ model.currentUser.id)]
+    div [][ tr [] [ Html.text ("email: " ++ model.currentUser.email)]
+          , tr [] [ Html.text ("display name: " ++ model.currentUser.display_name)]
+          , tr [] [ Html.text ("country:  " ++ model.currentUser.country)]
+          , tr [] [ Html.text ("Spotify Id: " ++ model.currentUser.id)]
+          ]
+
+pageMusic : Model -> Html Msg 
+pageMusic model = 
+    div []
+        [ th [][ button [ onClick IncVolume ][ Html.text "+" ] ]
+        , th [][ if model.volume == 0 then svgVolumeNone 
+                    else if model.volume > 0 && model.volume < 5 then svgVolumeLow 
+                    else if model.volume >= 4 && model.volume <10 then svgVolumeMed 
+                    else svgVolumeHigh 
+               ] 
+        , th [] [ button [ onClick DecVolume ][ Html.text "-" ] ]
+        
+        , Html.text (String.fromInt model.volume )
+
+        , button [ class "button is-success is-outlined is-rounded is-small", onClick NextTrack ]
+             [ Html.text "next" ]
+        , button [ class "button is-success is-outlined is-rounded is-small", onClick PrevTrack ]
+             [ Html.text "prev" ]
+        , button [ class "button is-dark is-outlined is-rounded is-small", onClick TogglePlay ]
+             [ if model.playbackState then Html.text "pause" else Html.text "play" ]
+         ]
+
+
+--##########.SVG.##########
+
+svgVolumeNone = 
+    svg [ SVG.width "40", SVG.height "20", SVG.viewBox "0 0 30 20", SVG.fill "black"]
+        [ polyline [ SVG.fill "black", SVG.stroke "black", SVG.points "0,10 10,3 10,17 0,10" ] []
+        , line [ SVG.x1 "15", SVG.y1 "5", SVG.x2 "25", SVG.y2 "15", SVG.stroke "black" ] []
+        , line [ SVG.x1 "15", SVG.y1 "15", SVG.x2 "25", SVG.y2 "5", SVG.stroke "black" ] []
         ]
 
---##########.Spotify.stuff.##########
+svgVolumeLow = 
+    svg [ SVG.width "40", SVG.height "20", SVG.viewBox "0 0 30 20", SVG.stroke "black" ]
+        [ polyline [ SVG.fill "black", SVG.points "0,10 10,3 10,17 0,10" ] []
+        , polyline [ SVG.fill "none", SVG.points "15,6 17,9 18,10 17,11 15,14" ] []        
+        ]
 
+svgVolumeMed = 
+    svg [ SVG.width "40", SVG.height "20", SVG.viewBox "0 0 30 20", SVG.stroke "black"]
+        [ polyline [ SVG.fill "black", SVG.stroke "black", SVG.points "0,10 10,3 10,17 0,10" ] []
+        , polyline [ SVG.fill "none", SVG.points "15,6 17,9 18,10 17,11 15,14" ] []
+        , polyline [ SVG.fill "none", SVG.points "20,5 22,8 23,10 22,12 20,15" ] []
+        ]
+
+svgVolumeHigh = 
+    svg [ SVG.width "40", SVG.height "20", SVG.viewBox "0 0 30 20", SVG.stroke "black"]
+        [ polyline [ SVG.fill "black", SVG.stroke "black", SVG.points "0,10 10,3 10,17 0,10" ] []
+        , polyline [ SVG.fill "none", SVG.points "15,6 17,9 18,10 17,11 15,14" ] []
+        , polyline [ SVG.fill "none", SVG.points "20,5 22,8 23,10 22,12 20,15" ] []
+        , polyline [ SVG.fill "none", SVG.points "25,4 27,7 28,10 27,13 25,16" ] [] ]
+
+--##########.Spotify.stuff.##########
 
 -- Gets User Data 
 getUserData : Model -> Cmd Msg  
@@ -480,7 +590,6 @@ getUserData model =
 
 getUserPlaylists : Model -> Cmd Msg  
 getUserPlaylists model =
-
   Http.request
     { method = "GET"
     , headers = [Http.header "Authorization" model.token]
@@ -490,18 +599,19 @@ getUserPlaylists model =
     , timeout = Nothing
     , tracker = Nothing
     }
+
 getTopTracks : Model -> Cmd Msg
 getTopTracks model =
     Http.request
-        { 
-            method = "GET",
-            headers = [ Http.header "Authorization" model.token ],
-            url = "https://api.spotify.com/v1/me/top/tracks",
-            body = Http.emptyBody,
-            expect = Http.expectJson GotTopTracks topTracksResponseDecoder,
-            timeout = Nothing,
-            tracker = Nothing
+        { method = "GET"
+        , headers = [Http.header "Authorization" model.token]
+        , url = "https://api.spotify.com/v1/me/top/tracks"
+        , body = Http.emptyBody
+        , expect = Http.expectJson GotTopTracks topTracksResponseDecoder
+        , timeout = Nothing
+        , tracker = Nothing
         }
+
 -- DECODER 
 
 topTracksResponseDecoder : Decoder TopTracksResponse
@@ -521,12 +631,14 @@ trackDecoder =
 artistDecoder : Decoder Artist
 artistDecoder =
     Json.Decode.map Artist (field "name" string)
+
 imageDecoder : Decoder Image
 imageDecoder =
     Json.Decode.map3 Image
         (field "url" string)
         (field "height" int)
         (field "width" int)
+
 albumDecoder : Decoder Album
 albumDecoder =
     Json.Decode.map3 Album
@@ -564,19 +676,3 @@ decodeUserData =
 subscriptions : Model -> Sub Msg
 subscriptions _ =
   messageReceiver RecFromJS
-
-
-main : Program () Model Msg
-main =
-  Browser.application
-    { init = init
-    , view = view
-    , update = update
-    , subscriptions = subscriptions
-    , onUrlChange = UrlChanged
-    , onUrlRequest = LinkClicked
-    }
-
-
-{-model =
-  Time.every 1000 Tick-}

@@ -11,6 +11,7 @@
 
 <body>
     <div id="app"></div>
+    <script src="https://sdk.scdn.co/spotify-player.js"></script>
 </body>
 
 <script type="text/javascript">
@@ -32,29 +33,141 @@ var app = Elm.Main.init({
       case 'refreshToken':
         refreshToken();
         break;
+
+      case 'userArtist':
+        getUserArtist();
+        break;
+
+      case 'toggle_play':
+        window.player.togglePlay();
+        console.log("toggled");
+        //console.log(window.player);
+        break; 
+
+      case 'inc_vol':
+        window.volume += 1;
+        window.player.setVolume(window.volume/10).then (() => { 
+        });
+        
+        break;
+
+      case 'dec_vol':
+        window.volume -= 1;
+        window.player.setVolume(window.volume/10).then (() => {
+          
+        });
+        console.log(window.volume);
+        break;
+
+      case 'next_track':
+        window.volume -= 1;
+        window.player.nextTrack().then (() => {
+          console.log("next Track!");
+        });
+        break;
+
+      case 'prev_track':
+        window.player.previousTrack().then (() => {
+          console.log("prev Track!");
+        });
+        break;
       }
     }
   );
 
-
-
-  const args = new URLSearchParams(window.location.search);
+const args = new URLSearchParams(window.location.search);
   const code = args.get('code');
 
-  const client_id = '95b88d3b5a5745748fb58777ed7a1318';
-  const redirect_uri = 'https://xfronske.github.io/MusicApp_uni/home.html'; // Your redirect uri
+  const client_id = 'c294decfda3b412bb97b8c7951d93631';
+  const redirect_uri = 'http://localhost:8000/home.html'; // Your redirect uri
+
+  //window.volume = 5;
 
   // after recieving the code from spotify it gets exchanged for the accessToken
   if (code) {
-    console.log(code);
    exchangeToken(code);
+
+  if (!window.volume) {window.volume = 5;}
+
+   window.onSpotifyWebPlaybackSDKReady = () => {
+        var volume = window.volume;
+        const token = localStorage.getItem('access_token');
+        console.log(token);
+        window.player = new Spotify.Player({
+            name: 'MusicApp Spotify Player',
+            getOAuthToken: cb => { cb(token); },
+            volume: volume/10
+        });
+
+        // Ready
+        player.addListener('ready', ({ device_id }) => {
+            app.ports.messageReceiver.send('ready');
+        });
+
+        // Not Ready
+        player.addListener('not_ready', ({ device_id }) => {
+            console.log('Device ID has gone offline', device_id);
+        });
+
+        player.addListener('initialization_error', ({ message }) => {
+            console.error(message);
+        });
+
+        player.addListener('authentication_error', ({ message }) => {
+            console.error(message);
+        });
+
+        player.addListener('account_error', ({ message }) => {
+            console.error(message);
+        });
+
+        player.addListener('player_state_changed', ({
+          position, duration, track_window: { current_track }
+        }) => {
+          console.log('Currently Playing', current_track);
+          console.log('Position in Song', position);
+          console.log('Duration of Song', duration);
+        });
+
+        player.connect();
+    }
   } 
+
+
+
+  function getArtist(artistName) {
+    let artist = artistName.replace(" ", "+");
+    console.log(artist);
+    fetch('https://api.spotify.com/v1/search?q='+ artist +'&type=artist', {
+      method : 'GET',
+      headers : {'authorization': 'Bearer ' + localStorage.getItem('access_token')}
+    })
+    .then(addThrowErrorToFetch)
+      .then((data) => {
+        processArtistResponse(data);
+        window.history.replaceState({}, document.title, '/');
+  
+      })
+      .catch(handleError);
+  }
+
+  function getUserArtist() {
+    fetch('https://api.spotify.com/v1/artists/2X5DLfWm532qxKFh7fGpXP', {
+      method: 'GET',
+      headers: {'Authorization': 'Bearer ' + localStorage.getItem('access_token')}
+    })
+    .then(addThrowErrorToFetch)
+      .then((data) => {
+        processArtistResponse(data);
+        window.history.replaceState({}, document.title, '/');
+  
+      })
+      .catch(handleError);
+  }
 
   // Nimmt den Authentication Code und wandelt ihn in richtigen Token um
   function exchangeToken(code) {
     const code_verifier = localStorage.getItem('code_verifier');
-
-    console.log("HALOOO  "+redirect_uri)
 
     fetch('https://accounts.spotify.com/api/token', {
       method: 'POST',
@@ -71,7 +184,7 @@ var app = Elm.Main.init({
     })
       .then(addThrowErrorToFetch)
       .then((data) => {
-        console.log("asdasdkjsakldasd"+data)
+        //console.log(data);
         processTokenResponse(data)
         // clear search query params in the url
         window.history.replaceState({}, document.title, '/');
@@ -127,14 +240,31 @@ var app = Elm.Main.init({
     localStorage.setItem('access_token', access_token);
     localStorage.setItem('refresh_token', refresh_token);
     localStorage.setItem('expires_at', expires_at);
+  }
+
+  function processIdResponse(data) {
+    name = data.name;
+
+    console.log("name " + name);
+  }
+
+  function processArtistResponse(data) {
+    let artist = { name: data.artists.items[0].name,
+                 followers: { href: data.artists.items[0].followers.href,
+                              total: data.artists.items[0].followers.total },
+                 id: data.artists.items[0].id,
+                 href: data.artists.items[0].href };
+
+    console.log(artist);
 
 
+    //app.ports.recieveArtist.send(artist);
   }
 
   // Restore tokens from localStorage
   let access_token = localStorage.getItem('access_token') || null;
   let refresh_token = localStorage.getItem('refresh_token') || null;
-  let expires_at = localStorage.getItem('expires_at') || null;
+  let expires_at = localStorage.getItem('expires_at') || null;   
 
 
 
