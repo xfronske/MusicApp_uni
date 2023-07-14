@@ -353,23 +353,23 @@ view model =
     currentPath = Url.toString model.url
   in
     case currentPath of
-      "Https://xfronske.github.io/#getTopPlaylists" ->
+      "Https://xfronske.github.io/MusicApp_uni/#getTopPlaylists" ->
         { title = "My Playlists"
         , body = [ playlistView model ] }
         
-      "Https://xfronske.github.io/#getTopTracks" ->
+      "Https://xfronske.github.io/MusicApp_uni/#getTopTracks" ->
         { title = "Top Tracks"
         , body = [ viewTracks model ] }
 
-      "Https://xfronske.github.io/#getUserInfo" ->
+      "Https://xfronske.github.io/MusicApp_uni/#getUserInfo" ->
         { title = "Profile"
         , body = [ viewUserInfo model ] }
 
-      "Https://xfronske.github.io/#errorPage" ->
+      "Https://xfronske.github.io/MusicApp_uni/#errorPage" ->
         { title = "Profile"
         , body = [ Html.text "Hallo Error" ] }
 
-      "Https://xfronske.github.io/#musicPlayer" ->
+      "Https://xfronske.github.io/MusicApp_uni/#musicPlayer" ->
         { title = "Music via Spotify"
         , body = [ pageMusic model] }
 
@@ -426,11 +426,11 @@ pageMain model =
                           , br [] []
                           , div [ class "column is-1 has-text-centered " ]
                               [ button [ onClick GetUserData,                                                    class "button is-medium is-success mt-2" ][ Html.text "Get User Data" ]
-                              , Html.a [ onClick GetUserPlaylist, href "Https://xfronske.github.io/#getTopPlaylists", class "button is-medium is-success mt-2" ][ Html.text "my top Playlists" ]
-                              , Html.a [ onClick GetTopTracks,    href "Https://xfronske.github.io/#getTopTracks",    class "button is-medium is-success mt-2" ][ Html.text "my Top Tracks" ]
-                              , Html.a [                          href "Https://xfronske.github.io/#getUserInfo",     class "button is-medium is-success mt-2" ][ Html.text "my Profile" ]
-                              , Html.a [                          href "Https://xfronske.github.io/#errorPage",       class "button is-medium is-success mt-2" ][ Html.text "Error Page (for testing)" ]
-                              , Html.a [                          href "Https://xfronske.github.io/#musicPlayer",     class "button is-medium is-success mt-2" ][ Html.text "Music Player" ]
+                              , Html.a [ onClick GetUserPlaylist, href "Https://xfronske.github.io/MusicApp_uni/#getTopPlaylists", class "button is-medium is-success mt-2" ][ Html.text "my top Playlists" ]
+                              , Html.a [ onClick GetTopTracks,    href "Https://xfronske.github.io/MusicApp_uni/#getTopTracks",    class "button is-medium is-success mt-2" ][ Html.text "my Top Tracks" ]
+                              , Html.a [                          href "Https://xfronske.github.io/MusicApp_uni/#getUserInfo",     class "button is-medium is-success mt-2" ][ Html.text "my Profile" ]
+                              , Html.a [                          href "Https://xfronske.github.io/MusicApp_uni/#errorPage",       class "button is-medium is-success mt-2" ][ Html.text "Error Page (for testing)" ]
+                              , Html.a [                          href "Https://xfronske.github.io/MusicApp_uni/#musicPlayer",     class "button is-medium is-success mt-2" ][ Html.text "Music Player" ]
 
                               ]
                           ]
