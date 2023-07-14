@@ -5351,9 +5351,11 @@ var $author$project$Main$init = F3(
 				currentPage: 2,
 				currentUser: {country: '', display_name: '', email: '', id: ''},
 				dropdownState: false,
+				infoText: '',
 				key: key,
 				loginState: false,
 				message: '',
+				playbackReady: false,
 				playbackState: false,
 				playlists: _List_Nil,
 				spotifydDropdownState: false,
@@ -5367,10 +5369,20 @@ var $author$project$Main$init = F3(
 var $author$project$Main$RecFromJS = function (a) {
 	return {$: 'RecFromJS', a: a};
 };
+var $author$project$Main$RecPlayer = function (a) {
+	return {$: 'RecPlayer', a: a};
+};
+var $elm$core$Platform$Sub$batch = _Platform_batch;
 var $elm$json$Json$Decode$string = _Json_decodeString;
 var $author$project$Main$messageReceiver = _Platform_incomingPort('messageReceiver', $elm$json$Json$Decode$string);
+var $author$project$Main$playbackRec = _Platform_incomingPort('playbackRec', $elm$json$Json$Decode$string);
 var $author$project$Main$subscriptions = function (_v0) {
-	return $author$project$Main$messageReceiver($author$project$Main$RecFromJS);
+	return $elm$core$Platform$Sub$batch(
+		_List_fromArray(
+			[
+				$author$project$Main$messageReceiver($author$project$Main$RecFromJS),
+				$author$project$Main$playbackRec($author$project$Main$RecPlayer)
+			]));
 };
 var $author$project$Main$UserData = F4(
 	function (country, display_name, email, id) {
@@ -6495,6 +6507,30 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					model,
 					$author$project$Main$sendMessage('prev_track'));
+			case 'RecPlayer':
+				var message = msg.a;
+				switch (message) {
+					case 'ready':
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{playbackReady: true}),
+							$elm$core$Platform$Cmd$none);
+					case 'Playing next track!':
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{infoText: message}),
+							$elm$core$Platform$Cmd$none);
+					case 'Playing previous track!':
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{infoText: message}),
+							$elm$core$Platform$Cmd$none);
+					default:
+						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
 			case 'LinkClicked':
 				var urlRequest = msg.a;
 				if (urlRequest.$ === 'Internal') {
@@ -6520,6 +6556,54 @@ var $author$project$Main$update = F2(
 					$elm$core$Platform$Cmd$none);
 		}
 	});
+var $elm$html$Html$div = _VirtualDom_node('div');
+var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $elm$html$Html$th = _VirtualDom_node('th');
+var $elm$html$Html$tr = _VirtualDom_node('tr');
+var $author$project$Main$pageHelp = function (model) {
+	return A2(
+		$elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$th,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('These are a few things that could have gone wrong:')
+					])),
+				A2(
+				$elm$html$Html$tr,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('- poor internet connection')
+					])),
+				A2(
+				$elm$html$Html$tr,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('- your device is not running right now')
+					])),
+				A2(
+				$elm$html$Html$tr,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('- something is wrong with the page (we don\'t hope that is the case)')
+					])),
+				A2(
+				$elm$html$Html$tr,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('')
+					]))
+			]));
+};
 var $author$project$Main$GetTopTracks = {$: 'GetTopTracks'};
 var $author$project$Main$GetUserData = {$: 'GetUserData'};
 var $author$project$Main$GetUserPlaylist = {$: 'GetUserPlaylist'};
@@ -6543,7 +6627,6 @@ var $elm$html$Html$Attributes$attribute = $elm$virtual_dom$VirtualDom$attribute;
 var $elm$html$Html$br = _VirtualDom_node('br');
 var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
-var $elm$html$Html$div = _VirtualDom_node('div');
 var $elm$html$Html$figure = _VirtualDom_node('figure');
 var $elm$html$Html$footer = _VirtualDom_node('footer');
 var $elm$html$Html$h1 = _VirtualDom_node('h1');
@@ -6587,8 +6670,6 @@ var $elm$html$Html$Attributes$src = function (url) {
 var $elm$html$Html$strong = _VirtualDom_node('strong');
 var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
-var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $elm$html$Html$ul = _VirtualDom_node('ul');
 var $author$project$Main$pageMain = function (model) {
 	return A2(
@@ -6919,17 +7000,68 @@ var $author$project$Main$pageMain = function (model) {
 																_List_fromArray(
 																	[
 																		$elm$html$Html$text('Error Page (for testing)')
-																	])),
-																A2(
-																$elm$html$Html$a,
+																	]))
+															])),
+														A2(
+														$elm$html$Html$div,
+														_List_fromArray(
+															[
+																$elm$html$Html$Attributes$class('tile')
+															]),
+														_List_fromArray(
+															[
+																(!model.playbackReady) ? A2(
+																$elm$html$Html$div,
+																_List_Nil,
 																_List_fromArray(
 																	[
-																		$elm$html$Html$Attributes$href('https://xfronske.github.io/MusicApp_uni/#musicPlayer'),
-																		$elm$html$Html$Attributes$class('button is-medium is-success mt-2')
-																	]),
+																		A2(
+																		$elm$html$Html$p,
+																		_List_fromArray(
+																			[
+																				$elm$html$Html$Attributes$class('has-background-primary')
+																			]),
+																		_List_fromArray(
+																			[
+																				$elm$html$Html$text('Your device is not connected (this may take a few seconds).')
+																			])),
+																		A2(
+																		$elm$html$Html$a,
+																		_List_fromArray(
+																			[
+																				$elm$html$Html$Attributes$href('https://xfronske.github.io/MusicApp_uni/#musicPlayerHelp'),
+																				$elm$html$Html$Attributes$class('button is-small is-success mt-2')
+																			]),
+																		_List_fromArray(
+																			[
+																				$elm$html$Html$text('Help')
+																			]))
+																	])) : A2(
+																$elm$html$Html$div,
+																_List_Nil,
 																_List_fromArray(
 																	[
-																		$elm$html$Html$text('Music Player')
+																		A2(
+																		$elm$html$Html$p,
+																		_List_fromArray(
+																			[
+																				$elm$html$Html$Attributes$class('has-background-primary')
+																			]),
+																		_List_fromArray(
+																			[
+																				$elm$html$Html$text('Your device is connected.')
+																			])),
+																		A2(
+																		$elm$html$Html$a,
+																		_List_fromArray(
+																			[
+																				$elm$html$Html$Attributes$href('https://xfronske.github.io/MusicApp_uni/#musicPlayer'),
+																				$elm$html$Html$Attributes$class('button is-medium is-success mt-2')
+																			]),
+																		_List_fromArray(
+																			[
+																				$elm$html$Html$text('Music Player')
+																			]))
 																	]))
 															]))
 													]))
@@ -7166,7 +7298,6 @@ var $author$project$Main$svgVolumeNone = A2(
 				]),
 			_List_Nil)
 		]));
-var $elm$html$Html$th = _VirtualDom_node('th');
 var $author$project$Main$pageMusic = function (model) {
 	return A2(
 		$elm$html$Html$div,
@@ -7174,78 +7305,119 @@ var $author$project$Main$pageMusic = function (model) {
 		_List_fromArray(
 			[
 				A2(
-				$elm$html$Html$th,
+				$elm$html$Html$h1,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Spotify Music Player')
+					])),
+				A2(
+				$elm$html$Html$div,
 				_List_Nil,
 				_List_fromArray(
 					[
 						A2(
-						$elm$html$Html$button,
+						$elm$html$Html$th,
+						_List_Nil,
 						_List_fromArray(
 							[
-								$elm$html$Html$Events$onClick($author$project$Main$IncVolume)
-							]),
-						_List_fromArray(
-							[
-								$elm$html$Html$text('+')
-							]))
-					])),
-				A2(
-				$elm$html$Html$th,
-				_List_Nil,
-				_List_fromArray(
-					[
-						(!model.volume) ? $author$project$Main$svgVolumeNone : (((model.volume > 0) && (model.volume < 5)) ? $author$project$Main$svgVolumeLow : (((model.volume >= 4) && (model.volume < 10)) ? $author$project$Main$svgVolumeMed : $author$project$Main$svgVolumeHigh))
-					])),
-				A2(
-				$elm$html$Html$th,
-				_List_Nil,
-				_List_fromArray(
-					[
+								A2(
+								$elm$html$Html$button,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('button is-success is-outlined is-rounded is-small'),
+										$elm$html$Html$Events$onClick($author$project$Main$IncVolume)
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('+')
+									]))
+							])),
 						A2(
-						$elm$html$Html$button,
+						$elm$html$Html$th,
+						_List_Nil,
 						_List_fromArray(
 							[
-								$elm$html$Html$Events$onClick($author$project$Main$DecVolume)
-							]),
+								A2(
+								$elm$html$Html$div,
+								_List_Nil,
+								_List_fromArray(
+									[
+										(model.volume < 10) ? $elm$html$Html$text(
+										'Volume: ' + $elm$core$String$fromInt(model.volume)) : $elm$html$Html$text(
+										'Volume: ' + $elm$core$String$fromInt(model.volume))
+									]))
+							])),
+						A2(
+						$elm$html$Html$th,
+						_List_Nil,
 						_List_fromArray(
 							[
-								$elm$html$Html$text('-')
-							]))
-					])),
-				$elm$html$Html$text(
-				$elm$core$String$fromInt(model.volume)),
-				A2(
-				$elm$html$Html$button,
-				_List_fromArray(
-					[
-						$elm$html$Html$Attributes$class('button is-success is-outlined is-rounded is-small'),
-						$elm$html$Html$Events$onClick($author$project$Main$NextTrack)
-					]),
-				_List_fromArray(
-					[
-						$elm$html$Html$text('next')
-					])),
-				A2(
-				$elm$html$Html$button,
-				_List_fromArray(
-					[
-						$elm$html$Html$Attributes$class('button is-success is-outlined is-rounded is-small'),
-						$elm$html$Html$Events$onClick($author$project$Main$PrevTrack)
-					]),
-				_List_fromArray(
-					[
-						$elm$html$Html$text('prev')
-					])),
-				A2(
-				$elm$html$Html$button,
-				_List_fromArray(
-					[
-						$elm$html$Html$Attributes$class('button is-dark is-outlined is-rounded is-small'),
-						$elm$html$Html$Events$onClick($author$project$Main$TogglePlay)
-					]),
-				_List_fromArray(
-					[
-						model.playbackState ? $elm$html$Html$text('pause') : $elm$html$Html$text('play')
+								A2(
+								$elm$html$Html$div,
+								_List_Nil,
+								_List_fromArray(
+									[
+										(!model.volume) ? $author$project$Main$svgVolumeNone : (((model.volume > 0) && (model.volume < 5)) ? $author$project$Main$svgVolumeLow : (((model.volume >= 4) && (model.volume < 10)) ? $author$project$Main$svgVolumeMed : $author$project$Main$svgVolumeHigh))
+									]))
+							])),
+						A2(
+						$elm$html$Html$th,
+						_List_Nil,
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$button,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('button is-success is-outlined is-rounded is-small'),
+										$elm$html$Html$Events$onClick($author$project$Main$DecVolume)
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('-')
+									]))
+							])),
+						A2(
+						$elm$html$Html$div,
+						_List_Nil,
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$button,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('button is-success is-outlined is-rounded is-small'),
+										$elm$html$Html$Events$onClick($author$project$Main$NextTrack)
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('next')
+									])),
+								A2(
+								$elm$html$Html$button,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('button is-success is-outlined is-rounded is-small'),
+										$elm$html$Html$Events$onClick($author$project$Main$PrevTrack)
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('prev')
+									])),
+								A2(
+								$elm$html$Html$button,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('button is-dark is-outlined is-rounded is-small'),
+										$elm$html$Html$Events$onClick($author$project$Main$TogglePlay)
+									]),
+								_List_fromArray(
+									[
+										model.playbackState ? $elm$html$Html$text('pause') : $elm$html$Html$text('play')
+									]))
+							])),
+						$elm$html$Html$text(model.infoText)
 					]))
 			]));
 };
@@ -7686,6 +7858,14 @@ var $author$project$Main$view = function (model) {
 						$author$project$Main$pageMusic(model)
 					]),
 				title: 'Music via Spotify'
+			};
+		case 'https://xfronske.github.io/MusicApp_uni/#musicPlayerHelp':
+			return {
+				body: _List_fromArray(
+					[
+						$author$project$Main$pageHelp(model)
+					]),
+				title: 'MusicPlayer Help'
 			};
 		default:
 			return {

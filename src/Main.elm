@@ -35,7 +35,7 @@ main =
     , update = update
     , subscriptions = subscriptions
     , onUrlChange = UrlChanged
-    , onUrlRequest = LinkClicked ----- TODO app.ports sub batch und dann nachricht ausgeben von player
+    , onUrlRequest = LinkClicked 
     }
 
     
@@ -44,6 +44,7 @@ main =
 port sendMessage : String -> Cmd msg
 
 port messageReceiver : (String -> msg) -> Sub msg
+port playbackRec : (String -> msg) -> Sub msg
 
 --##########.Messages.and.Types.##########
 
@@ -77,6 +78,8 @@ type Msg
     | TogglePlay 
     | NextTrack
     | PrevTrack
+    | RecPlayer String 
+
 
     -- URL-Nav
     | LinkClicked Browser.UrlRequest
@@ -99,6 +102,8 @@ type alias Model =
     -- Playback
     , volume : Int
     , playbackState : Bool
+    , playbackReady : Bool
+    , infoText : String
 
     -- ports
     , message : String
@@ -165,6 +170,8 @@ init flag url key =
     -- Playback
     , volume = 5
     , playbackState = False
+    , playbackReady = False
+    , infoText = ""
     
     -- Ports
     , message = ""
@@ -288,6 +295,25 @@ update msg model =
         PrevTrack ->
             ( model, sendMessage"prev_track" )
 
+        RecPlayer message -> 
+            case message of 
+                "ready" ->
+                    ( { model | playbackReady = True }
+                    , Cmd.none )
+
+                "Playing next track!" -> 
+                    ( { model | infoText = message}
+                    , Cmd.none )
+
+                "Playing previous track!" -> 
+                    ( { model | infoText = message}
+                    , Cmd.none )
+
+
+                _ -> 
+                    ( model, Cmd.none )
+
+
 -- URL-Nav
         LinkClicked urlRequest ->
              case urlRequest of
@@ -373,6 +399,10 @@ view model =
         { title = "Music via Spotify"
         , body = [ pageMusic model] }
 
+      "https://xfronske.github.io/MusicApp_uni/#musicPlayerHelp" ->
+        { title = "MusicPlayer Help"
+        , body = [ pageHelp model ] }
+
       _ ->
         { title = "Home"
         , body = [ pageMain model ]
@@ -384,7 +414,7 @@ pageMain : Model -> Html Msg
 pageMain model = 
     div [ class "container" ][
          section [ class "hero is-fullheight is-default is-bold" ]
-        [ div [ class "hero-head" ]
+                 [ div [ class "hero-head" ]
             [ nav [ class "navbar" ]
                 [ div [ class "container" ]
                     [ div [ class "navbar-brand" ]
@@ -412,26 +442,42 @@ pageMain model =
                     ]
                 ]
             ]
-        , div [ class "hero-body" ]
-            [ div [ class "container has-text-centered" ]
-                [ div [ class "columns is-vcentered" ]
-                    [ div [ class "column is-5" ]
-                        [ figure [ class "image is-1by1" ]
-                            [ img [ src "https://eremiyarifat.de/blondGirlMusic.png", alt "Description" ] []
-                            ]
-                        ]
-                    , div [ class "column is-6 is-offset-1" ]
-                          [ h1 [ class "title is-2" ] [ Html.text "KlangKapsel - Musik neu erleben" ]
-                          , h2 [ class "subtitle is-4" ] [ Html.text "Ihr Soundtrack auf Knopfdruck" ]
-                          , br [] []
-                          , div [ class "column is-1 has-text-centered " ]
-                              [ button [ onClick GetUserData,                                                    class "button is-medium is-success mt-2" ][ Html.text "Get User Data" ]
-                              , Html.a [ onClick GetUserPlaylist, href "https://xfronske.github.io/MusicApp_uni/#getTopPlaylists", class "button is-medium is-success mt-2" ][ Html.text "my top Playlists" ]
-                              , Html.a [ onClick GetTopTracks,    href "https://xfronske.github.io/MusicApp_uni/#getTopTracks",    class "button is-medium is-success mt-2" ][ Html.text "my Top Tracks" ]
-                              , Html.a [                          href "https://xfronske.github.io/MusicApp_uni/#getUserInfo",     class "button is-medium is-success mt-2" ][ Html.text "my Profile" ]
-                              , Html.a [                          href "https://xfronske.github.io/MusicApp_uni/#errorPage",       class "button is-medium is-success mt-2" ][ Html.text "Error Page (for testing)" ]
-                              , Html.a [                          href "https://xfronske.github.io/MusicApp_uni/#musicPlayer",     class "button is-medium is-success mt-2" ][ Html.text "Music Player" ]
-
+                 , div [ class "hero-body" ]
+                       [ div [ class "container has-text-centered" ]
+                             [ div [ class "columns is-vcentered" ]
+                                   [ div [ class "column is-5" ]
+                                         [ figure [ class "image is-1by1" ]
+                                                  [ img [ src "https://eremiyarifat.de/blondGirlMusic.png", alt "Description" ] [] ]
+                                         ] 
+                                   , div [ class "column is-6 is-offset-1" ]
+                                         [ h1 [ class "title is-2" ] [ Html.text "KlangKapsel - Musik neu erleben" ]
+                                         , h2 [ class "subtitle is-4" ] [ Html.text "Ihr Soundtrack auf Knopfdruck" ]
+                                         , br [] []
+                                         , div [ class "column is-1 has-text-centered " ]
+                                               [ button [ onClick GetUserData,                                                    class "button is-medium is-success mt-2" ]
+                                                        [ Html.text "Get User Data" ]
+                                               , Html.a [ onClick GetUserPlaylist, href "https://xfronske.github.io/MusicApp_uni/#getTopPlaylists", class "button is-medium is-success mt-2" ]
+                                                        [ Html.text "my top Playlists" ]
+                                               , Html.a [ onClick GetTopTracks,    href "https://xfronske.github.io/MusicApp_uni/#getTopTracks",    class "button is-medium is-success mt-2" ]
+                                                        [ Html.text "my Top Tracks" ]
+                                               , Html.a [                          href "https://xfronske.github.io/MusicApp_uni/#getUserInfo",     class "button is-medium is-success mt-2" ]
+                                                        [ Html.text "my Profile" ]
+                                               , Html.a [                          href "https://xfronske.github.io/MusicApp_uni/#errorPage",       class "button is-medium is-success mt-2" ]
+                                                        [ Html.text "Error Page (for testing)" ]
+                                               ]
+                              
+                                         , div [class "tile"]
+                                               [ if not model.playbackReady then 
+                                                   div [][ Html.p [class "has-background-primary"][Html.text "Your device is not connected (this may take a few seconds)." ] 
+                                                         , Html.a [ href "https://xfronske.github.io/MusicApp_uni/#musicPlayerHelp", class "button is-small is-success mt-2"][ Html.text "Help"]
+                                                         ]
+                                         
+                                                  else 
+                                                 div [][ Html.p [ class "has-background-primary" ]
+                                                     [ Html.text "Your device is connected." ]
+                                                     , Html.a [ href "https://xfronske.github.io/MusicApp_uni/#musicPlayer", class "button is-medium is-success mt-2" ]
+                                                              [ Html.text "Music Player" ]
+                                    ]
                               ]
                           ]
                     ]
@@ -524,24 +570,44 @@ pageUserAccount model =
 
 pageMusic : Model -> Html Msg 
 pageMusic model = 
-    div []
-        [ th [][ button [ onClick IncVolume ][ Html.text "+" ] ]
-        , th [][ if model.volume == 0 then svgVolumeNone 
-                    else if model.volume > 0 && model.volume < 5 then svgVolumeLow 
-                    else if model.volume >= 4 && model.volume <10 then svgVolumeMed 
-                    else svgVolumeHigh 
-               ] 
-        , th [] [ button [ onClick DecVolume ][ Html.text "-" ] ]
-        
-        , Html.text (String.fromInt model.volume )
+    div [][ h1 [] [ Html.text "Spotify Music Player" ] 
+    , div []
+        [ th [][ button [ class "button is-success is-outlined is-rounded is-small", onClick IncVolume ][ Html.text "+" ] ]
+        , th [][ div [][ if model.volume < 10 then 
+                            Html.text ( "Volume: " ++ (String.fromInt model.volume) ) 
+                          else 
+                            Html.text ( "Volume: " ++ (String.fromInt model.volume ) )
+                       ]
+               ]
 
-        , button [ class "button is-success is-outlined is-rounded is-small", onClick NextTrack ]
-             [ Html.text "next" ]
-        , button [ class "button is-success is-outlined is-rounded is-small", onClick PrevTrack ]
-             [ Html.text "prev" ]
-        , button [ class "button is-dark is-outlined is-rounded is-small", onClick TogglePlay ]
-             [ if model.playbackState then Html.text "pause" else Html.text "play" ]
-         ]
+        , th [][ div [][ if model.volume == 0 then svgVolumeNone 
+                         else if model.volume > 0 && model.volume < 5 then svgVolumeLow 
+                         else if model.volume >= 4 && model.volume <10 then svgVolumeMed 
+                         else svgVolumeHigh ]
+               ]
+
+        , th [] [ button [ class "button is-success is-outlined is-rounded is-small", onClick DecVolume ][ Html.text "-" ] ]
+
+        , div [][
+              button [ class "button is-success is-outlined is-rounded is-small", onClick NextTrack ]
+                     [ Html.text "next" ]
+            , button [ class "button is-success is-outlined is-rounded is-small", onClick PrevTrack ]
+                     [ Html.text "prev" ]
+            , button [ class "button is-dark is-outlined is-rounded is-small", onClick TogglePlay ]
+                     [ if model.playbackState then Html.text "pause" else Html.text "play" ]
+              ]
+        , Html.text model.infoText
+        ]
+        ]
+
+pageHelp : Model -> Html Msg 
+pageHelp model = 
+    div [][ th [][ Html.text "These are a few things that could have gone wrong:"]
+          , tr [][ Html.text "- poor internet connection"]
+          , tr [][ Html.text "- your device is not running right now"]
+          , tr [][ Html.text "- something is wrong with the page (we don't hope that is the case)"]
+          , tr [][ Html.text ""]
+          ] 
 
 
 --##########.SVG.##########
@@ -675,4 +741,4 @@ decodeUserData =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-  messageReceiver RecFromJS
+    Sub.batch [ (messageReceiver RecFromJS), (playbackRec RecPlayer) ]
