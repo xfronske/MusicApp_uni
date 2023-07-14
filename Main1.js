@@ -6879,7 +6879,7 @@ var $author$project$Main$pageMain = function (model) {
 																_List_fromArray(
 																	[
 																		$elm$html$Html$Events$onClick($author$project$Main$GetUserPlaylist),
-																		$elm$html$Html$Attributes$href('Https://xfronske.github.io/MusicApp_uni/#getTopPlaylists'),
+																		$elm$html$Html$Attributes$href('https://xfronske.github.io/MusicApp_uni/#getTopPlaylists'),
 																		$elm$html$Html$Attributes$class('button is-medium is-success mt-2')
 																	]),
 																_List_fromArray(
@@ -6891,7 +6891,7 @@ var $author$project$Main$pageMain = function (model) {
 																_List_fromArray(
 																	[
 																		$elm$html$Html$Events$onClick($author$project$Main$GetTopTracks),
-																		$elm$html$Html$Attributes$href('Https://xfronske.github.io/MusicApp_uni/#getTopTracks'),
+																		$elm$html$Html$Attributes$href('https://xfronske.github.io/MusicApp_uni/#getTopTracks'),
 																		$elm$html$Html$Attributes$class('button is-medium is-success mt-2')
 																	]),
 																_List_fromArray(
@@ -6902,7 +6902,7 @@ var $author$project$Main$pageMain = function (model) {
 																$elm$html$Html$a,
 																_List_fromArray(
 																	[
-																		$elm$html$Html$Attributes$href('Https://xfronske.github.io/MusicApp_uni/#getUserInfo'),
+																		$elm$html$Html$Attributes$href('https://xfronske.github.io/MusicApp_uni/#getUserInfo'),
 																		$elm$html$Html$Attributes$class('button is-medium is-success mt-2')
 																	]),
 																_List_fromArray(
@@ -6913,7 +6913,7 @@ var $author$project$Main$pageMain = function (model) {
 																$elm$html$Html$a,
 																_List_fromArray(
 																	[
-																		$elm$html$Html$Attributes$href('Https://xfronske.github.io/MusicApp_uni/#errorPage'),
+																		$elm$html$Html$Attributes$href('https://xfronske.github.io/MusicApp_uni/#errorPage'),
 																		$elm$html$Html$Attributes$class('button is-medium is-success mt-2')
 																	]),
 																_List_fromArray(
@@ -6924,7 +6924,7 @@ var $author$project$Main$pageMain = function (model) {
 																$elm$html$Html$a,
 																_List_fromArray(
 																	[
-																		$elm$html$Html$Attributes$href('Https://xfronske.github.io/MusicApp_uni/#musicPlayer'),
+																		$elm$html$Html$Attributes$href('https://xfronske.github.io/MusicApp_uni/#musicPlayer'),
 																		$elm$html$Html$Attributes$class('button is-medium is-success mt-2')
 																	]),
 																_List_fromArray(
@@ -7647,7 +7647,7 @@ var $author$project$Main$viewUserInfo = function (model) {
 var $author$project$Main$view = function (model) {
 	var currentPath = $elm$url$Url$toString(model.url);
 	switch (currentPath) {
-		case 'Https://xfronske.github.io/MusicApp_uni/#getTopPlaylists':
+		case 'https://xfronske.github.io/MusicApp_uni/#getTopPlaylists':
 			return {
 				body: _List_fromArray(
 					[
@@ -7655,7 +7655,7 @@ var $author$project$Main$view = function (model) {
 					]),
 				title: 'My Playlists'
 			};
-		case 'Https://xfronske.github.io/MusicApp_uni/#getTopTracks':
+		case 'https://xfronske.github.io/MusicApp_uni/#getTopTracks':
 			return {
 				body: _List_fromArray(
 					[
@@ -7663,7 +7663,7 @@ var $author$project$Main$view = function (model) {
 					]),
 				title: 'Top Tracks'
 			};
-		case 'Https://xfronske.github.io/MusicApp_uni/#getUserInfo':
+		case 'https://xfronske.github.io/MusicApp_uni/#getUserInfo':
 			return {
 				body: _List_fromArray(
 					[
@@ -7671,7 +7671,7 @@ var $author$project$Main$view = function (model) {
 					]),
 				title: 'Profile'
 			};
-		case 'Https://xfronske.github.io/MusicApp_uni/#errorPage':
+		case 'https://xfronske.github.io/MusicApp_uni/#errorPage':
 			return {
 				body: _List_fromArray(
 					[
@@ -7679,7 +7679,7 @@ var $author$project$Main$view = function (model) {
 					]),
 				title: 'Profile'
 			};
-		case 'Https://xfronske.github.io/MusicApp_uni/#musicPlayer':
+		case 'https://xfronske.github.io/MusicApp_uni/#musicPlayer':
 			return {
 				body: _List_fromArray(
 					[
